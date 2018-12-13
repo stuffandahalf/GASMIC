@@ -22,4 +22,10 @@ typedef struct {
     int op_shift;
 } Instruction;
 
+typedef struct {
+    char *label;
+    char *mnemonic;
+    char *args[];
+} Input;
+
 #endif

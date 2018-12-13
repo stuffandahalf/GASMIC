@@ -5,6 +5,6 @@
  * .equ
  * .include
  * .org
+ * .resb
  * .fcb
- *
  */
