@@ -35,12 +35,12 @@ int main(int argc, char **argv) {
     while (fgets(buffer, LINEBUFFERSIZE, in) != NULL) {
         str_to_upper(buffer);
         //Instruction *i = find_instruction(str_to_upper(buffer));
-        fprintf(out, "buffer after conversion contains %s\n", buffer);
+        //printf("buffer after conversion contains %s\n", buffer);
         
         
         Instruction *i = find_instruction(buffer);
         if (i != NULL) {
-            fprintf(out, "%s, %X, %X\n", i->mne, i->base_opcode, i->regs);
+            printf("%s, %X, %X\n", i->mne, i->base_opcode, i->regs);
         }
     }
     
@@ -83,7 +83,7 @@ static Architecture *str_to_arch(const char arch_name[]) {
     return NULL;
 }
 
-static char *str_to_upper(char *str) {
+static char *str_to_upper(char str[]) {
     char *c;
     for (c = str; *c != '\0'; c++) {
         if (*c >= 'a' && *c <= 'z') {
