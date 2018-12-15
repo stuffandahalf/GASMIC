@@ -1,4 +1,4 @@
-#include "arch.h"
+#include <arch.h>
 
 Architecture architectures[] = {
     { "6809", MC6809 },

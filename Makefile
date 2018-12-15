@@ -12,7 +12,7 @@ CC=cc
 CFLAGS=-c -I$(SOURCE_DIR) -I$(TARGET_DIR)
 LFLAGS=
 
-_OBJS=main.o pseudo.o arch.o
+_OBJS=main.o pseudo.o arch.o smem.o
 OBJS=$(patsubst %,$(BUILD_DIR)/%,$(_OBJS))
 
 .PHONY: all
