@@ -1,7 +1,6 @@
 #ifndef _ARCH_H
 #define _ARCH_H
 
-#include <stddef.h>
 #include <as.h>
 
 enum arcs { MC6809 = 1, HD6309 = 2 };

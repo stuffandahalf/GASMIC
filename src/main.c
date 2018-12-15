@@ -21,9 +21,12 @@ FILE *out;
 Architecture *arch;
 size_t address;
 size_t line_num;
+SymTab *symtab;
 
 int main(int argc, char **argv) {
-    out_fname = strdup("a.out");
+    if ((out_fname = strdup("a.out")) == NULL) {
+        die("Failed to duplicate string\n");
+    }
     in = stdin;
     //out = stdout;
     arch = architectures;
@@ -35,6 +38,8 @@ int main(int argc, char **argv) {
     //out = fopen(out_fname, "w+");
     free(out_fname);
     
+    symtab = salloc(sizeof(SymTab));
+    
     while (fgets(buffer, LINEBUFFERSIZE, in) != NULL) {
         //str_to_upper(buffer);
         //Instruction *i = find_instruction(str_to_upper(buffer));
@@ -42,25 +47,36 @@ int main(int argc, char **argv) {
         
         if (buffer[0] != '\0' || buffer[0] != '\n') {
             Line *l;
-            salloc(l, sizeof(Line));
+            //salloc(l, sizeof(Line));
+            /*if ((l = malloc(sizeof(Line))) == NULL) {
+                free(symtab);
+                die(
+            }*/
+            l = salloc(sizeof(Line));
             parse_line(l, buffer);
             
-            printf("parsed line: %s\t%s", l->label, l->mnemonic);
+            printf("parsed line: label - %s\tmnemonic - %s", l->label, l->mnemonic);
             for (int i = 0; i < l->argc; i++) {
-                printf("\t%s", l->argv[i]);
+                printf("\targ - %s", l->argv[i]);
             }
             printf("\n");
+            
+            if (l->line_state & LABEL_STATE) {
+                
+            }
             
             /*Instruction *i = find_instruction(buffer);
             if (i != NULL) {
                 printf("%s, %X, %X\n", i->mne, i->base_opcode, i->regs);
             }*/
             
-            free(l->argv);
-            free(l);
+            sfree(l->argv);
+            sfree(l);
         }
         line_num++;
     }
+    
+    free(symtab);
     
     //fclose(out);
 
@@ -77,12 +93,15 @@ static void configure(int argc, char *argv[]) {
         case 'm':
             arch = str_to_arch(optarg);
             if (arch == NULL) {
+                free(out_fname);
                 die("Unsupported architecture: %s\n", optarg);
             }
             break;
         case 'o':
             free(out_fname);
-            out_fname = strdup(optarg);
+            if ((out_fname = strdup(optarg)) == NULL) {
+                die("Failed to allocate new output file name");
+            }
             break;
         case 'f':
             break;
@@ -115,13 +134,9 @@ static char *str_to_upper(char str[]) {
 }
 
 static void parse_line(Line *l, char *buffer) {
-    #define LABEL_STATE (1)
-    #define MNEMONIC_STATE (2)
-    
     l->line_state = 0;
     l->arg_buf_size = 3;
-    //l->argv = malloc(sizeof(char *) * l->arg_buf_size);
-    salloc(l->argv, sizeof(char *) * l->arg_buf_size);
+    l->argv = salloc(sizeof(char *) * l->arg_buf_size);
     l->argc = 0;
     
     char *c;
@@ -134,8 +149,6 @@ static void parse_line(Line *l, char *buffer) {
             if (c != buffer) {
                 if (!(l->line_state & MNEMONIC_STATE)) {    // if mnemonic is not set
                     if (*c == ',') {
-                        free(l->argv);
-                        free(l);
                         die("Error on line %ld. Unexpected ',' character\n", line_num);
                     }
                     l->mnemonic = buffer;
@@ -157,8 +170,6 @@ static void parse_line(Line *l, char *buffer) {
             break;
         case ':':
             if (l->line_state & MNEMONIC_STATE) {
-                free(l->argv);
-                free(l);
                 die("Error on line %ld. Label must occur at the beginning of a line.\n", line_num);
             }
             l->label = buffer;
