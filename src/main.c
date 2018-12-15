@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
         
         if (buffer[0] != '\0' || buffer[0] != '\n') {
             Line *l;
-            galloc(l, sizeof(Line));
+            salloc(l, sizeof(Line));
             parse_line(l, buffer);
             
             printf("parsed line: %s\t%s\n", l->label, l->mnemonic);
@@ -126,7 +126,7 @@ static void parse_line(Line *l, char *buffer) {
     l->line_state = 0;
     l->arg_buf_size = 3;
     //l->argv = malloc(sizeof(char *) * l->arg_buf_size);
-    galloc(l->argv, sizeof(char *) * l->arg_buf_size);
+    salloc(l->argv, sizeof(char *) * l->arg_buf_size);
     l->argc = 0;
     
     char *c;
