@@ -5,17 +5,7 @@
 #include <as.h>
 #include <arch.h>
 
-typedef struct {
-    char *label;
-    char *mnemonic;
-    char **argv;
-    size_t argc;
-    unsigned char arg_buf_size;
-    unsigned char line_state;
-} Line;
-
 #define LINEBUFFERSIZE 256
-
 char buffer[LINEBUFFERSIZE];
 
 static void configure(int argc, char *argv[]);
@@ -62,6 +52,7 @@ int main(int argc, char **argv) {
                 printf("%s, %X, %X\n", i->mne, i->base_opcode, i->regs);
             }*/
             
+            free(l->argv);
             free(l);
         }
         line_num++;
@@ -138,6 +129,7 @@ static void parse_line(Line *l, char *buffer) {
         case '\n':
         case '\t':
         case ' ':
+        //case ',':
             if (c != buffer) {              // Otherwise save the current token
                 if (!(l->line_state & MNEMONIC_STATE)) {       // if mnemonic is not set
                     l->mnemonic = buffer;
@@ -145,8 +137,12 @@ static void parse_line(Line *l, char *buffer) {
                     l->line_state |= MNEMONIC_STATE;
                 }
                 else {                                      // Argument
-                    printf("wtf is this %s\n", buffer);
-                    
+                    //printf("wtf is this %s\n", buffer);
+                    if (l->argc == l->arg_buf_size) {
+                        l->arg_buf_size += 2;
+                        srealloc(l->argv, sizeof(char *) * l->arg_buf_size);
+                    }
+                    l->argv[l->argc++] = buffer;
                 }
                 
                 *c = '\0';
