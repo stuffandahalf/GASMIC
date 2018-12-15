@@ -40,16 +40,12 @@ int main(int argc, char **argv) {
     
     symtab = salloc(sizeof(SymTab));
     
-    while (fgets(buffer, LINEBUFFERSIZE, in) != NULL) {
-        //str_to_upper(buffer);
-        //Instruction *i = find_instruction(str_to_upper(buffer));
-        //printf("buffer after conversion contains %s\n", buffer);
-        
+    while (fgets(buffer, LINEBUFFERSIZE, in) != NULL) {        
         if (buffer[0] != '\0' || buffer[0] != '\n') {
             Line *l = salloc(sizeof(Line));
             parse_line(l, buffer);
             
-            printf("parsed line: label - %s\tmnemonic - %s", l->label, l->mnemonic);
+            //printf("parsed line: label - %s\tmnemonic - %s", l->label, l->mnemonic);
             for (int i = 0; i < l->argc; i++) {
                 printf("\targ - %s", l->argv[i]);
             }
@@ -58,27 +54,26 @@ int main(int argc, char **argv) {
             if (l->line_state & LABEL_STATE) {
                 
             }
+            if (l->line_state & MNEMONIC_STATE) {
+                str_to_upper(l->mnemonic);
+                Instruction *i = find_instruction(l->mnemonic);
+                if (i != NULL) {
+                    printf("%s, %X, %X\n", i->mne, i->base_opcode, i->regs);
+                }
+            }
             
-            /*Instruction *i = find_instruction(buffer);
-            if (i != NULL) {
-                printf("%s, %X, %X\n", i->mne, i->base_opcode, i->regs);
-            }*/
-            
-            printf("address of l->argv is %p\n", l->argv);
+            //printf("address of l->argv is %p\n", l->argv);
             sfree(l->argv);
-            printf("address of l is %p\n", l);
+            //printf("address of l is %p\n", l);
             sfree(l);
         }
         line_num++;
     }
     
-    printf("address of symtab is %p\n", symtab);
+    //printf("address of symtab is %p\n", symtab);
     sfree(symtab);
     
     //fclose(out);
-
-    /*printf("%s\n", find_instruction("ADC")->mne);
-    printf("%s\n", arch->name);*/
     
 	return 0;
 }
@@ -181,6 +176,7 @@ static void parse_line(Line *l, char *buffer) {
         case ';':
             return;
         }
+        //buffer++;     // Why doesnt this work?
     }
 }
 
