@@ -46,13 +46,7 @@ int main(int argc, char **argv) {
         //printf("buffer after conversion contains %s\n", buffer);
         
         if (buffer[0] != '\0' || buffer[0] != '\n') {
-            Line *l;
-            //salloc(l, sizeof(Line));
-            /*if ((l = malloc(sizeof(Line))) == NULL) {
-                free(symtab);
-                die(
-            }*/
-            l = salloc(sizeof(Line));
+            Line *l = salloc(sizeof(Line));
             parse_line(l, buffer);
             
             printf("parsed line: label - %s\tmnemonic - %s", l->label, l->mnemonic);
@@ -76,7 +70,7 @@ int main(int argc, char **argv) {
         line_num++;
     }
     
-    free(symtab);
+    sfree(symtab);
     
     //fclose(out);
 

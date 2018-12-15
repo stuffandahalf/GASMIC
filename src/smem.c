@@ -35,6 +35,15 @@ static struct alloced *find_memory(void *ptr) {
     return mem;
 }
 
+static void diagnostic() {
+    struct alloced *a = alloced_mem.first;
+    while (a != NULL) {
+        printf("%p\t", a->address);
+        a = a->next;
+    }
+    puts("");
+}
+
 void *salloc(size_t size) {
     void *tmp;
     if ((tmp = malloc(size)) == NULL) {
@@ -47,6 +56,7 @@ void *salloc(size_t size) {
     }
     
     a->address = tmp;
+    a->next = NULL;
     
     if (alloced_mem.first == NULL) {
         alloced_mem.first = a;
@@ -71,21 +81,30 @@ void *srealloc(void *ptr, size_t size) {
 }
 
 void sfree(void *ptr) {
-    /*struct alloced *a = find_memory(ptr);
-    free(a->address);*/
+    struct alloced *prev = NULL;
     struct alloced *a = alloced_mem.first;
-    while (a != NULL && a->next != NULL) {
-        if (a->next->address == ptr) {
+    printf("lookinf for address: %p\n", ptr);
+    while (a != NULL) {
+        if (a->address == ptr) {
             break;
         }
+        prev = a;
+        a = a->next;
     }
-    if (a->next == NULL || a->next->address != ptr) {
+    if (a == NULL || a->address != ptr) {
         die("Failed to locate the given address. are you sure it was salloced?\n");
     }
     
-    struct alloced *tbr = a->next;
-    a->next = tbr->next;
+    if (alloced_mem.first == a) {
+        if (alloced_mem.last == a) {
+            alloced_mem.last = NULL;
+        }
+        alloced_mem.first = a->next;
+    }
+    else {
+        prev->next = a->next;
+    }
     
-    free(tbr->address);
-    free(tbr);
+    free(a->address);
+    free(a);
 }
