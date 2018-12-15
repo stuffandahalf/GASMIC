@@ -5,17 +5,7 @@
 #include <as.h>
 #include <arch.h>
 
-typedef struct {
-    char *label;
-    char *mnemonic;
-    char **argv;
-    size_t argc;
-    unsigned char arg_buf_size;
-    unsigned char line_state;
-} Line;
-
 #define LINEBUFFERSIZE 256
-
 char buffer[LINEBUFFERSIZE];
 
 static void configure(int argc, char *argv[]);
@@ -79,20 +69,20 @@ static void configure(int argc, char *argv[]) {
     int c;
     while ((c = getopt(argc, argv, "m:o:f:")) != -1) {
         switch (c) {
-            case 'm':
-                arch = str_to_arch(optarg);
-                if (arch == NULL) {
-                    die("Unsupported architecture: %s\n", optarg);
-                }
-                break;
-            case 'o':
-                free(out_fname);
-                out_fname = strdup(optarg);
-                break;
-            case 'f':
-                break;
-            case 0:
-                break;
+        case 'm':
+            arch = str_to_arch(optarg);
+            if (arch == NULL) {
+                die("Unsupported architecture: %s\n", optarg);
+            }
+            break;
+        case 'o':
+            free(out_fname);
+            out_fname = strdup(optarg);
+            break;
+        case 'f':
+            break;
+        case 0:
+            break;
         }
     }
 }
@@ -139,14 +129,12 @@ static void parse_line(Line *l, char *buffer) {
         case '\t':
         case ' ':
             if (c != buffer) {              // Otherwise save the current token
-                if (!(l->line_state & MNEMONIC_STATE)) {       // if mnemonic is not set
+                if (!(l->line_state & MNEMONIC_STATE)) {    // if mnemonic is not set
                     l->mnemonic = buffer;
-                    printf("parsed mnemonic = %s\n", l->mnemonic);
                     l->line_state |= MNEMONIC_STATE;
                 }
-                else {                                      // Argument
-                    printf("wtf is this %s\n", buffer);
-                    
+                else {                                      // Arguments
+                    //printf("wtf is this %s\n", buffer);
                 }
                 
                 *c = '\0';
@@ -162,8 +150,6 @@ static void parse_line(Line *l, char *buffer) {
             *c = '\0';
             buffer = c;
             buffer++;
-            
-            l->line_state |= LABEL_STATE;
             
             printf("parsed label = %s\n", l->label);
             //label_set = 1;

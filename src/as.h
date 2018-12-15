@@ -30,7 +30,10 @@ typedef struct {
 typedef struct {
     char *label;
     char *mnemonic;
-    char *args[];
-} Input;
+    char **argv;
+    size_t argc;
+    unsigned char arg_buf_size;
+    unsigned char line_state;
+} Line;
 
 #endif
