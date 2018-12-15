@@ -64,12 +64,15 @@ int main(int argc, char **argv) {
                 printf("%s, %X, %X\n", i->mne, i->base_opcode, i->regs);
             }*/
             
+            printf("address of l->argv is %p\n", l->argv);
             sfree(l->argv);
+            printf("address of l is %p\n", l);
             sfree(l);
         }
         line_num++;
     }
     
+    printf("address of symtab is %p\n", symtab);
     sfree(symtab);
     
     //fclose(out);

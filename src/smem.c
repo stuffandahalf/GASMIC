@@ -63,7 +63,7 @@ void *salloc(size_t size) {
     }
     alloced_mem.last = a;
     
-    return tmp;
+    return a->address;
 }
 
 void *srealloc(void *ptr, size_t size) {
@@ -92,7 +92,7 @@ void sfree(void *ptr) {
         die("Failed to locate the given address. are you sure it was salloced?\n");
     }
     
-    if (alloced_mem.first == a) {
+    /*if (alloced_mem.first == a) {
         if (alloced_mem.last == a) {
             alloced_mem.last = NULL;
         }
@@ -100,6 +100,19 @@ void sfree(void *ptr) {
     }
     else {
         prev->next = a->next;
+    }*/
+    if (alloced_mem.first == a && alloced_mem.last == a) {
+        alloced_mem.first = NULL;
+        alloced_mem.last = NULL;
+    }
+    else if (alloced_mem.first == a) {
+        alloced_mem.first = a->next;
+    }
+    else if (alloced_mem.last == a) {
+        alloced_mem.last = prev;
+    }
+    else {
+        prev = a->next;
     }
     
     free(a->address);
