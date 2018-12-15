@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
     //out = stdout;
     arch = architectures;
     address = 0;
-    line_num = 0;
+    line_num = 1;
 
     configure(argc, argv);
 
@@ -127,15 +127,17 @@ static void parse_line(Line *l, char *buffer) {
     char *c;
     for (c = buffer; *c != '\0'; c++) {
         switch (*c) {
-        case ',':
-            
-            break;
         case '\n':
         case '\t':
         case ' ':
-        //case ',':
-            if (c != buffer) {              // Otherwise save the current token
+        case ',':
+            if (c != buffer) {
                 if (!(l->line_state & MNEMONIC_STATE)) {    // if mnemonic is not set
+                    if (*c == ',') {
+                        free(l->argv);
+                        free(l);
+                        die("Error on line %ld. Unexpected ',' character\n", line_num);
+                    }
                     l->mnemonic = buffer;
                     l->line_state |= MNEMONIC_STATE;
                 }
@@ -155,7 +157,9 @@ static void parse_line(Line *l, char *buffer) {
             break;
         case ':':
             if (l->line_state & MNEMONIC_STATE) {
-                die("Label must occur at the beginning of a line");
+                free(l->argv);
+                free(l);
+                die("Error on line %ld. Label must occur at the beginning of a line.\n", line_num);
             }
             l->label = buffer;
             *c = '\0';
