@@ -13,9 +13,9 @@ static struct {
 void release() {
     struct alloced *a = alloced_mem.first;
     while (a != NULL) {
-        free(a->address);
         struct alloced *tmp = a;
         a = a->next;
+        free(tmp->address);
         free(tmp);
     }
     alloced_mem.first = NULL;
@@ -45,17 +45,14 @@ static void diagnostic() {
 }
 
 void *salloc(size_t size) {
-    void *tmp;
-    if ((tmp = malloc(size)) == NULL) {
-        die("Failed to allocate memory\n");
-    }
-    
     struct alloced *a;
     if ((a = malloc(sizeof(struct alloced))) == NULL) {
         die("failed to allocate storage for alloced memory\n");
     }
     
-    a->address = tmp;
+    if ((a->address = malloc(size)) == NULL) {
+        die("Failed to allocate memory\n");
+    }
     a->next = NULL;
     
     if (alloced_mem.first == NULL) {
