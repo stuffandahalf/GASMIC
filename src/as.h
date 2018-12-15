@@ -8,17 +8,6 @@
 #include <smem.h>
 
 #define streq(__s1, __s2) !strcmp((const char *)__s1, (const char *)__s2)
-// Safe alloc
-/*#define salloc(dest, size) { \
-    if ((dest = malloc(size)) == NULL) { \
-        die("Failed to allocate memory for variable %s\n", #dest); \
-    } \
-}
-#define srealloc(dest, size) { \
-    if ((dest = realloc(dest, size)) == NULL) { \
-        die("Failed to reallocate memory for variable %s\n", #dest); \
-    } \
-}*/
 
 #define MAXMNEMONICSIZE 10
 typedef struct {

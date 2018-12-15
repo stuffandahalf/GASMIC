@@ -13,6 +13,7 @@ static Architecture *str_to_arch(const char arch_name[]);
 static char *str_to_upper(char str[]);
 static void trim_str(char str[]);
 static void parse_line(Line *l, char *buffer);
+static void process_label(char *l);
 Instruction *find_instruction(const char *mnem);
 
 char *out_fname;
@@ -46,15 +47,15 @@ int main(int argc, char **argv) {
             parse_line(l, buffer);
             
             //printf("parsed line: label - %s\tmnemonic - %s", l->label, l->mnemonic);
-            for (int i = 0; i < l->argc; i++) {
+            /*for (int i = 0; i < l->argc; i++) {
                 printf("\targ - %s", l->argv[i]);
             }
-            printf("\n");
+            printf("\n");*/
             
-            if (l->line_state & LABEL_STATE) {
-                
+            if (l->line_state & LABEL_STATE) {      // If current line has a label
+                process_label(l->label);
             }
-            if (l->line_state & MNEMONIC_STATE) {
+            if (l->line_state & MNEMONIC_STATE) {   // If current line has a mnemonic
                 str_to_upper(l->mnemonic);
                 Instruction *i = find_instruction(l->mnemonic);
                 if (i != NULL) {
@@ -68,6 +69,13 @@ int main(int argc, char **argv) {
             sfree(l);
         }
         line_num++;
+    }
+    
+    puts("symtab");
+    Symbol *sym = symtab->first;
+    while (sym != NULL) {
+        printf("label: %s\t%ld\n", sym->label, sym->address);
+        sym = sym->next;
     }
     
     //printf("address of symtab is %p\n", symtab);
@@ -178,6 +186,19 @@ static void parse_line(Line *l, char *buffer) {
         }
         //buffer++;     // Why doesnt this work?
     }
+}
+
+void process_label(char *l) {
+    Symbol *sym = salloc(sizeof(Symbol));
+    sym->label = strdup(l);
+    sym->address = address;
+    if (symtab->first == NULL) {
+        symtab->first = sym;
+    }
+    else {
+        symtab->last->next = sym;
+    }
+    symtab->last = sym;
 }
 
 Instruction *find_instruction(const char *mnem) {
