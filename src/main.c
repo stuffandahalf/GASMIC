@@ -8,7 +8,10 @@
 typedef struct {
     char *label;
     char *mnemonic;
-    char **args;
+    char **argv;
+    size_t argc;
+    unsigned char arg_buf_size;
+    unsigned char line_state;
 } Line;
 
 #define LINEBUFFERSIZE 256
@@ -48,8 +51,11 @@ int main(int argc, char **argv) {
         //printf("buffer after conversion contains %s\n", buffer);
         
         if (buffer[0] != '\0' || buffer[0] != '\n') {
-            Line *l = malloc(sizeof(Line));
+            Line *l;
+            galloc(l, sizeof(Line));
             parse_line(l, buffer);
+            
+            printf("parsed line: %s\t%s\n", l->label, l->mnemonic);
             
             /*Instruction *i = find_instruction(buffer);
             if (i != NULL) {
@@ -114,46 +120,57 @@ static char *str_to_upper(char str[]) {
 }
 
 static void parse_line(Line *l, char *buffer) {
-    unsigned char line_state = 0;
     #define LABEL_STATE (1)
     #define MNEMONIC_STATE (2)
     
-    unsigned char label_set = 0;
+    l->line_state = 0;
+    l->arg_buf_size = 3;
+    //l->argv = malloc(sizeof(char *) * l->arg_buf_size);
+    galloc(l->argv, sizeof(char *) * l->arg_buf_size);
+    l->argc = 0;
     
     char *c;
     for (c = buffer; *c != '\0'; c++) {
         switch (*c) {
+        case ',':
+            
+            break;
         case '\n':
         case '\t':
         case ' ':
-            if (c == buffer) {
-                buffer++;
-            }
-            else {
-                *c = '\0';
-                buffer = c;
-                buffer++;
-                if ((line_state & LABEL_STATE) && !(line_state & MNEMONIC_STATE)) {
+            if (c != buffer) {              // Otherwise save the current token
+                if (!(l->line_state & MNEMONIC_STATE)) {       // if mnemonic is not set
                     l->mnemonic = buffer;
                     printf("parsed mnemonic = %s\n", l->mnemonic);
-                    line_state |= MNEMONIC_STATE;
+                    l->line_state |= MNEMONIC_STATE;
                 }
-                else {
-                    printf("%s\n", buffer);
+                else {                                      // Argument
+                    printf("wtf is this %s\n", buffer);
+                    
                 }
+                
+                *c = '\0';
+                buffer = c;
             }
+            buffer++;
             break;
         case ':':
+            if (l->line_state & MNEMONIC_STATE) {
+                die("Label must occur at the beginning of a line");
+            }
             l->label = buffer;
             *c = '\0';
             buffer = c;
             buffer++;
             
-            line_state |= LABEL_STATE;
+            l->line_state |= LABEL_STATE;
             
             printf("parsed label = %s\n", l->label);
-            label_set = 1;
+            //label_set = 1;
+            l->line_state |= LABEL_STATE;
             break;
+        case ';':
+            return;
         }
     }
 }
