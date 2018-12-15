@@ -45,7 +45,11 @@ int main(int argc, char **argv) {
             salloc(l, sizeof(Line));
             parse_line(l, buffer);
             
-            printf("parsed line: %s\t%s\n", l->label, l->mnemonic);
+            printf("parsed line: %s\t%s", l->label, l->mnemonic);
+            for (int i = 0; i < l->argc; i++) {
+                printf("\t%s", l->argv[i]);
+            }
+            printf("\n");
             
             /*Instruction *i = find_instruction(buffer);
             if (i != NULL) {
