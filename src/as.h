@@ -18,7 +18,7 @@
     } \
 }
 #define srealloc(dest, size) { \
-    if ((dest = realloc((dest), (size)) == NULL) { \
+    if ((dest = realloc(dest, size)) == NULL) { \
         die("Failed to reallocate memory for variable %s\n", #dest); \
     } \
 }
