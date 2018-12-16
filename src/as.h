@@ -33,7 +33,7 @@ typedef struct {
 
 typedef struct symtab_entry {
     char *label;
-    size_t address;
+    size_t value;
     struct symtab_entry *next;
 } Symbol;
 
@@ -41,5 +41,10 @@ typedef struct {
     Symbol *first;
     Symbol *last;
 } SymTab;
+
+extern size_t line_num;
+extern SymTab *symtab;
+
+void parse_pseudo_op(Line *line);
 
 #endif

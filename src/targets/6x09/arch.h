@@ -3,14 +3,16 @@
 
 #include <as.h>
 
-enum arcs { MC6809 = 1, HD6309 = 2 };
+#define MC6809 1
+#define HD6309 2
 
 typedef struct {
     char name[10];
+    void (*parse_instruction)(Line *l);
     int value;
 } Architecture;
 
-typedef enum {
+enum register_values {
     NR = 0,
     RA = 1,
     RB = 2,
@@ -29,7 +31,13 @@ typedef enum {
     RDP = 16384,
     RCC = 32768,
     RMD = 65536
-} registers;
+};
+
+typedef struct {
+    char name[5];
+    uint32_t value;
+    int arcs;
+} Register;
 
 typedef enum {
     INHERENT = 1,

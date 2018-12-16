@@ -13,8 +13,8 @@ static Architecture *str_to_arch(const char arch_name[]);
 static char *str_to_upper(char str[]);
 static void trim_str(char str[]);
 static void parse_line(Line *l, char *buffer);
-static void process_label(char *l);
-Instruction *find_instruction(const char *mnem);
+static void add_label(Line *l);
+static void parse_mnemonic(Line *l);
 
 struct {
     char *out_fname;
@@ -28,6 +28,7 @@ FILE *out;
 size_t address;
 size_t line_num;
 SymTab *symtab;
+SymTab *undefined_symtab;
 
 int main(int argc, char **argv) {
     if ((configuration.out_fname = strdup("a.out")) == NULL) {
@@ -47,26 +48,22 @@ int main(int argc, char **argv) {
     
     symtab = salloc(sizeof(SymTab));
     
+    
     while (fgets(buffer, LINEBUFFERSIZE, in) != NULL) {        
         if (buffer[0] != '\0' || buffer[0] != '\n') {
             Line *l = salloc(sizeof(Line));
             parse_line(l, buffer);
             
-            //printf("parsed line: label - %s\tmnemonic - %s", l->label, l->mnemonic);
-            /*for (int i = 0; i < l->argc; i++) {
-                printf("\targ - %s", l->argv[i]);
-            }
-            printf("\n");*/
-            
             if (l->line_state & LABEL_STATE) {      // If current line has a label
-                process_label(l->label);
+                add_label(l);
             }
             if (l->line_state & MNEMONIC_STATE) {   // If current line has a mnemonic
                 str_to_upper(l->mnemonic);
-                Instruction *i = find_instruction(l->mnemonic);
+                /*Instruction *i = find_instruction(l->mnemonic);
                 if (i != NULL) {
                     printf("%s, %X, %X\n", i->mne, i->base_opcode, i->regs);
-                }
+                }*/
+                parse_mnemonic(l);
             }
             
             //printf("address of l->argv is %p\n", l->argv);
@@ -80,7 +77,7 @@ int main(int argc, char **argv) {
     puts("symtab");
     Symbol *sym = symtab->first;
     while (sym != NULL) {
-        printf("label: %s\t%ld\n", sym->label, sym->address);
+        printf("label: %s\t%ld\n", sym->label, sym->value);
         sym = sym->next;
     }
     
@@ -126,8 +123,8 @@ static Architecture *str_to_arch(const char arch_name[]) {
     return NULL;
 }
 
-static char *str_to_upper(char str[]) {
-    char *c;
+ char *str_to_upper(char str[]) {
+    register char *c;
     for (c = str; *c != '\0'; c++) {
         if (*c >= 'a' && *c <= 'z') {
             *c += 'A' - 'a';
@@ -153,15 +150,14 @@ static void parse_line(Line *l, char *buffer) {
         case ' ':
         case ',':
             if (c != buffer) {
-                if (!(l->line_state & MNEMONIC_STATE)) {    // if mnemonic is not set
+                if (!(l->line_state & MNEMONIC_STATE)) { // if mnemonic is not set
                     if (*c == ',') {
                         die("Error on line %ld. Unexpected ',' character\n", line_num);
                     }
                     l->mnemonic = buffer;
                     l->line_state |= MNEMONIC_STATE;
                 }
-                else {                                      // Argument
-                    //printf("wtf is this %s\n", buffer);
+                else { // Argument
                     if (l->argc == l->arg_buf_size) {
                         l->arg_buf_size += 2;
                         srealloc(l->argv, sizeof(char *) * l->arg_buf_size);
@@ -183,7 +179,7 @@ static void parse_line(Line *l, char *buffer) {
             buffer = c;
             buffer++;
             
-            printf("parsed label = %s\n", l->label);
+            //printf("parsed label = %s\n", l->label);
             //label_set = 1;
             l->line_state |= LABEL_STATE;
             break;
@@ -194,10 +190,46 @@ static void parse_line(Line *l, char *buffer) {
     }
 }
 
-void process_label(char *l) {
+static void add_label(Line *l) {
     Symbol *sym = salloc(sizeof(Symbol));
-    sym->label = strdup(l);
-    sym->address = address;
+    if (l->label[0] == '.') {
+        if (symtab->last == NULL) {
+            die("Error on line %ld. local label cannot be defined before any non-local labels.", line_num);
+        }
+        // Count characters
+        size_t characters = 0;
+        register char *c;
+        for (c = symtab->last->label; *c != '.' && *c != '\0'; c++) {
+            characters++;
+        }
+        for (c = l->label; *c != '\0'; c++) {
+            characters++;
+        }
+        characters++;
+        
+        // Allocate that many bytes for the label
+        sym->label = salloc(sizeof(char) * characters);
+        
+        // Save the complete label
+        characters = 0;
+        for (c = symtab->last->label; *c != '.' && *c != '\0'; c++) {
+            sym->label[characters++] = *c;
+        }
+        for (c = l->label; *c != '\0'; c++) {
+            sym->label[characters++] = *c;
+        }
+        sym->label[characters] = '\0';
+        l->label = sym->label;
+    }
+    else {
+        sym->label = salloc(strlen(l->label) + 1);
+        strcpy(sym->label, l->label);
+    }
+    
+    printf("Parsed label = %s\n", sym->label);
+    
+    sym->value = address;
+    
     if (symtab->first == NULL) {
         symtab->first = sym;
     }
@@ -207,12 +239,13 @@ void process_label(char *l) {
     symtab->last = sym;
 }
 
-Instruction *find_instruction(const char *mnem) {
-    for (Instruction *i = instructions; i->mne[0] != '\0'; i++) {
-        printf("%s\t%s\n", mnem, i->mne);
-        if (streq(mnem, i->mne)) {
-            return i;
-        }
+static void parse_mnemonic(Line *line) {
+    switch(line->mnemonic[0]) {
+    case '.':
+        parse_pseudo_op(line);
+        break;
+    default:
+        configuration.arch->parse_instruction(line);
+        break;
     }
-    return NULL;
 }
