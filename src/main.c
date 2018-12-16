@@ -16,28 +16,34 @@ static void parse_line(Line *l, char *buffer);
 static void process_label(char *l);
 Instruction *find_instruction(const char *mnem);
 
-char *out_fname;
+struct {
+    char *out_fname;
+    char **in_fnames;
+    size_t in_fnamec;
+    Architecture *arch;
+} configuration;
+    
 FILE *in;
 FILE *out;
-Architecture *arch;
 size_t address;
 size_t line_num;
 SymTab *symtab;
 
 int main(int argc, char **argv) {
-    if ((out_fname = strdup("a.out")) == NULL) {
+    if ((configuration.out_fname = strdup("a.out")) == NULL) {
         die("Failed to duplicate string\n");
     }
     in = stdin;
     //out = stdout;
-    arch = architectures;
+    configuration.arch = architectures;
     address = 0;
     line_num = 1;
 
     configure(argc, argv);
 
     //out = fopen(out_fname, "w+");
-    free(out_fname);
+    free(configuration.out_fname);
+    configuration.out_fname = NULL;
     
     symtab = salloc(sizeof(SymTab));
     
@@ -91,15 +97,15 @@ static void configure(int argc, char *argv[]) {
     while ((c = getopt(argc, argv, "m:o:f:")) != -1) {
         switch (c) {
         case 'm':
-            arch = str_to_arch(optarg);
-            if (arch == NULL) {
-                free(out_fname);
+            configuration.arch = str_to_arch(optarg);
+            if (configuration.arch == NULL) {
+                free(configuration.out_fname);
                 die("Unsupported architecture: %s\n", optarg);
             }
             break;
         case 'o':
-            free(out_fname);
-            if ((out_fname = strdup(optarg)) == NULL) {
+            free(configuration.out_fname);
+            if ((configuration.out_fname = strdup(optarg)) == NULL) {
                 die("Failed to allocate new output file name");
             }
             break;
