@@ -145,7 +145,7 @@ static void parse_line(Line *l, char *buffer) {
     l->argv = salloc(sizeof(char *) * l->arg_buf_size);
     l->argc = 0;
     
-    char *c;
+    register char *c;
     for (c = buffer; *c != '\0'; c++) {
         switch (*c) {
         case '\n':
