@@ -30,6 +30,8 @@ size_t line_num;
 SymTab *symtab;
 SymTab *undefined_symtab;
 
+extern void smem_diagnostic();
+
 int main(int argc, char **argv) {
     if ((configuration.out_fname = strdup("a.out")) == NULL) {
         die("Failed to duplicate string\n");
@@ -37,6 +39,8 @@ int main(int argc, char **argv) {
     in = stdin;
     //out = stdout;
     configuration.arch = architectures;
+    configuration.in_fnames = NULL;
+    configuration.in_fnamec = 0;
     address = 0;
     line_num = 1;
 
@@ -47,42 +51,51 @@ int main(int argc, char **argv) {
     configuration.out_fname = NULL;
     
     symtab = salloc(sizeof(SymTab));
+    symtab->first = NULL;
+    symtab->last = NULL;
     
-    
+    Line *l = salloc(sizeof(Line));
     while (fgets(buffer, LINEBUFFERSIZE, in) != NULL) {        
         if (buffer[0] != '\0' || buffer[0] != '\n') {
-            Line *l = salloc(sizeof(Line));
+            l->line_state = 0;
+            l->arg_buf_size = 3;
+            l->argv = salloc(sizeof(char *) * l->arg_buf_size);
+            l->argc = 0;
+            
             parse_line(l, buffer);
             
             if (l->line_state & LABEL_STATE) {      // If current line has a label
                 add_label(l);
             }
-            if (l->line_state & MNEMONIC_STATE) {   // If current line has a mnemonic
-                str_to_upper(l->mnemonic);
-                /*Instruction *i = find_instruction(l->mnemonic);
-                if (i != NULL) {
-                    printf("%s, %X, %X\n", i->mne, i->base_opcode, i->regs);
-                }*/
-                parse_mnemonic(l);
-            }
+            //if (l->line_state & MNEMONIC_STATE) {   // If current line has a mnemonic
+                //str_to_upper(l->mnemonic);
+                ///*Instruction *i = find_instruction(l->mnemonic);
+                //if (i != NULL) {
+                    //printf("%s, %X, %X\n", i->mne, i->base_opcode, i->regs);
+                //}*/
+                //parse_mnemonic(l);
+            //}
             
-            //printf("address of l->argv is %p\n", l->argv);
             sfree(l->argv);
-            //printf("address of l is %p\n", l);
-            sfree(l);
         }
         line_num++;
     }
+    sfree(l);
     
     puts("symtab");
     Symbol *sym = symtab->first;
     while (sym != NULL) {
         printf("label: %s\t%ld\n", sym->label, sym->value);
+        
+        sfree(sym->label);
+        sym->label = NULL;
+        Symbol *tmp = sym;
         sym = sym->next;
+        sfree(tmp);
     }
-    
-    //printf("address of symtab is %p\n", symtab);
+    //sfree(symtab->first->label);
     sfree(symtab);
+    symtab = NULL;
     
     //fclose(out);
     
@@ -112,6 +125,11 @@ static void configure(int argc, char *argv[]) {
             break;
         }
     }
+    
+    printf("argcount = %d\n", argc - optind);
+    
+    configuration.in_fnames = argv + sizeof(char) * optind;
+    configuration.in_fnamec = argc - optind;
 }
 
 static Architecture *str_to_arch(const char arch_name[]) {
@@ -136,12 +154,7 @@ static Architecture *str_to_arch(const char arch_name[]) {
     return str;
 }
 
-static void parse_line(Line *l, char *buffer) {
-    l->line_state = 0;
-    l->arg_buf_size = 3;
-    l->argv = salloc(sizeof(char *) * l->arg_buf_size);
-    l->argc = 0;
-    
+static void parse_line(Line *l, char *buffer) {    
     register char *c;
     for (c = buffer; *c != '\0'; c++) {
         switch (*c) {
@@ -192,6 +205,7 @@ static void parse_line(Line *l, char *buffer) {
 
 static void add_label(Line *l) {
     Symbol *sym = salloc(sizeof(Symbol));
+    sym->next = NULL;
     if (l->label[0] == '.') {
         if (symtab->last == NULL) {
             die("Error on line %ld. local label cannot be defined before any non-local labels.", line_num);
@@ -239,13 +253,18 @@ static void add_label(Line *l) {
     symtab->last = sym;
 }
 
+
+void parse_6809_instruction(Line *l);
 static void parse_mnemonic(Line *line) {
     switch(line->mnemonic[0]) {
     case '.':
         parse_pseudo_op(line);
         break;
     default:
+        //printf("process_instruction is at %p\n", configuration.arch->parse_instruction);
         configuration.arch->parse_instruction(line);
+        printf("%p\n", &(configuration.arch->parse_instruction));
+        
         break;
     }
 }

@@ -8,7 +8,10 @@ struct alloced {
 static struct {
     struct alloced *first;
     struct alloced *last;
-} alloced_mem;
+} alloced_mem = {
+    .first = NULL,
+    .last = NULL
+};
 
 void release() {
     struct alloced *a = alloced_mem.first;
@@ -35,10 +38,10 @@ static struct alloced *find_memory(void *ptr) {
     return mem;
 }
 
-static void diagnostic() {
+void smem_diagnostic() {
     struct alloced *a = alloced_mem.first;
     while (a != NULL) {
-        printf("%p\t", a->address);
+        printf("%p\n", a->address);
         a = a->next;
     }
     puts("");
@@ -103,7 +106,7 @@ void sfree(void *ptr) {
         alloced_mem.last = prev;
     }
     else {
-        prev = a->next;
+        prev->next = a->next;
     }
     
     free(a->address);
