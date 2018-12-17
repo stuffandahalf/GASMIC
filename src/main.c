@@ -69,10 +69,6 @@ int main(int argc, char **argv) {
             }
             if (l->line_state & MNEMONIC_STATE) {   // If current line has a mnemonic
                 str_to_upper(l->mnemonic);
-                /*Instruction *i = find_instruction(l->mnemonic);
-                if (i != NULL) {
-                    printf("%s, %X, %X\n", i->mne, i->base_opcode, i->regs);
-                }*/
                 parse_mnemonic(l);
             }
             
