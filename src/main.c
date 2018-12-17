@@ -67,14 +67,14 @@ int main(int argc, char **argv) {
             if (l->line_state & LABEL_STATE) {      // If current line has a label
                 add_label(l);
             }
-            //if (l->line_state & MNEMONIC_STATE) {   // If current line has a mnemonic
-                //str_to_upper(l->mnemonic);
-                ///*Instruction *i = find_instruction(l->mnemonic);
-                //if (i != NULL) {
-                    //printf("%s, %X, %X\n", i->mne, i->base_opcode, i->regs);
-                //}*/
-                //parse_mnemonic(l);
-            //}
+            if (l->line_state & MNEMONIC_STATE) {   // If current line has a mnemonic
+                str_to_upper(l->mnemonic);
+                /*Instruction *i = find_instruction(l->mnemonic);
+                if (i != NULL) {
+                    printf("%s, %X, %X\n", i->mne, i->base_opcode, i->regs);
+                }*/
+                parse_mnemonic(l);
+            }
             
             sfree(l->argv);
         }
@@ -254,7 +254,6 @@ static void add_label(Line *l) {
 }
 
 
-void parse_6809_instruction(Line *l);
 static void parse_mnemonic(Line *line) {
     switch(line->mnemonic[0]) {
     case '.':
