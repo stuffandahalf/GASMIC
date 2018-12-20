@@ -14,6 +14,7 @@
  */
 
 static void pseudo_equ(Line *line);
+static void pseudo_include(Line *line);
 
 struct pseudo_instruction {
     char instruction[10];
@@ -23,6 +24,7 @@ struct pseudo_instruction {
 
 static struct pseudo_instruction pseudo_ops[] = {
     { ".EQU", &pseudo_equ, 1},
+    { ".INCLUDE", &pseudo_include, 1},
     { "", NULL, 0 }
 };
 
@@ -46,4 +48,8 @@ static void pseudo_equ(Line *line) {
     }
     
     //symtab->last->value = 
+}
+
+static void pseudo_include(Line *line) {
+    printf("%s\n", line->argv[0]);
 }

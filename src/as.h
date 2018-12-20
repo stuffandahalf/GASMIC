@@ -7,6 +7,8 @@
 #include <stdint.h>
 #include <smem.h>
 
+#define DEBUG
+
 #define streq(__s1, __s2) !strcmp((const char *)__s1, (const char *)__s2)
 
 #define MAXMNEMONICSIZE 10
@@ -22,6 +24,7 @@ typedef struct {
 
 #define LABEL_STATE (1)
 #define MNEMONIC_STATE (2)
+#define QUOTE_STATE (4)
 typedef struct {
     char *label;
     char *mnemonic;

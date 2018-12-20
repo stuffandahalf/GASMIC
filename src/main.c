@@ -9,6 +9,7 @@
 char buffer[LINEBUFFERSIZE];
 
 static void configure(int argc, char *argv[]);
+static void assemble(FILE *in, Line *l);
 static Architecture *str_to_arch(const char arch_name[]);
 static char *str_to_upper(char str[]);
 static void trim_str(char str[]);
@@ -23,7 +24,7 @@ struct {
     Architecture *arch;
 } configuration;
     
-FILE *in;
+//FILE *in;
 FILE *out;
 size_t address;
 size_t line_num;
@@ -36,7 +37,7 @@ int main(int argc, char **argv) {
     if ((configuration.out_fname = strdup("a.out")) == NULL) {
         die("Failed to duplicate string\n");
     }
-    in = stdin;
+    FILE *in;
     //out = stdout;
     configuration.arch = architectures;
     configuration.in_fnames = NULL;
@@ -55,26 +56,17 @@ int main(int argc, char **argv) {
     symtab->last = NULL;
     
     Line *l = salloc(sizeof(Line));
-    while (fgets(buffer, LINEBUFFERSIZE, in) != NULL) {        
-        if (buffer[0] != '\0' || buffer[0] != '\n') {
-            l->line_state = 0;
-            l->arg_buf_size = 3;
-            l->argv = salloc(sizeof(char *) * l->arg_buf_size);
-            l->argc = 0;
-            
-            parse_line(l, buffer);
-            
-            if (l->line_state & LABEL_STATE) {      // If current line has a label
-                add_label(l);
+    if (configuration.in_fnamec == 0) {
+        assemble(stdin, l);
+    }
+    else {
+        int i;
+        for (i = 0; i < configuration.in_fnamec; i++) {
+            if ((in = fopen(configuration.in_fnames[i], "r")) == NULL) {
+                die("Failed to open input file %s\n", configuration.in_fnames[i]);
             }
-            if (l->line_state & MNEMONIC_STATE) {   // If current line has a mnemonic
-                str_to_upper(l->mnemonic);
-                parse_mnemonic(l);
-            }
-            
-            sfree(l->argv);
+            assemble(in, l);
         }
-        line_num++;
     }
     sfree(l);
     
@@ -96,6 +88,48 @@ int main(int argc, char **argv) {
     //fclose(out);
     
 	return 0;
+}
+
+void assemble(FILE *in, Line *l) {
+    while (fgets(buffer, LINEBUFFERSIZE, in) != NULL) {        
+        if (buffer[0] != '\0' || buffer[0] != '\n') {
+            l->line_state = 0;
+            l->arg_buf_size = 3;
+            l->argv = salloc(sizeof(char *) * l->arg_buf_size);
+            l->argc = 0;
+            
+            parse_line(l, buffer);
+            
+            #ifdef DEBUG
+            //printf("%s\t%s", l->label, l->mnemonic);
+            if (l->line_state & LABEL_STATE) {
+                printf("%s", l->label);
+            }
+            if (l->line_state & MNEMONIC_STATE) {
+                if (l->line_state & LABEL_STATE) {
+                    puts("\t");
+                }
+                printf("%s", l->mnemonic);
+            }
+            int i;
+            for (i = 0; i < l->argc; i++) {
+                printf("\t%s", l->argv[i]);
+            }
+            puts("");
+            #endif
+            
+            if (l->line_state & LABEL_STATE) {      // If current line has a label
+                add_label(l);
+            }
+            if (l->line_state & MNEMONIC_STATE) {   // If current line has a mnemonic
+                str_to_upper(l->mnemonic);
+                parse_mnemonic(l);
+            }
+            
+            sfree(l->argv);
+        }
+        line_num++;
+    }
 }
 
 static void configure(int argc, char *argv[]) {
@@ -137,7 +171,7 @@ static Architecture *str_to_arch(const char arch_name[]) {
     return NULL;
 }
 
- char *str_to_upper(char str[]) {
+char *str_to_upper(char str[]) {
     register char *c;
     for (c = str; *c != '\0'; c++) {
         if (*c >= 'a' && *c <= 'z') {
@@ -154,30 +188,41 @@ static void parse_line(Line *l, char *buffer) {
     register char *c;
     for (c = buffer; *c != '\0'; c++) {
         switch (*c) {
+        case '"':
+            l->line_state ^= QUOTE_STATE;
+            if (l->line_state & QUOTE_STATE) {
+                buffer++;
+            }
+            else {
+                *c = '\0';
+            }
+            break;
         case '\n':
         case '\t':
         case ' ':
         case ',':
-            if (c != buffer) {
-                if (!(l->line_state & MNEMONIC_STATE)) { // if mnemonic is not set
-                    if (*c == ',') {
-                        die("Error on line %ld. Unexpected ',' character\n", line_num);
+            if (!(l->line_state & QUOTE_STATE)) {
+                if (c != buffer) {
+                    if (!(l->line_state & MNEMONIC_STATE)) { // if mnemonic is not set
+                        if (*c == ',') {
+                            die("Error on line %ld. Unexpected ',' character\n", line_num);
+                        }
+                        l->mnemonic = buffer;
+                        l->line_state |= MNEMONIC_STATE;
                     }
-                    l->mnemonic = buffer;
-                    l->line_state |= MNEMONIC_STATE;
-                }
-                else { // Argument
-                    if (l->argc == l->arg_buf_size) {
-                        l->arg_buf_size += 2;
-                        srealloc(l->argv, sizeof(char *) * l->arg_buf_size);
+                    else { // Argument
+                        if (l->argc == l->arg_buf_size) {
+                            l->arg_buf_size += 2;
+                            srealloc(l->argv, sizeof(char *) * l->arg_buf_size);
+                        }
+                        l->argv[l->argc++] = buffer;
                     }
-                    l->argv[l->argc++] = buffer;
+                    
+                    *c = '\0';
+                    buffer = c;
                 }
-                
-                *c = '\0';
-                buffer = c;
+                buffer++;
             }
-            buffer++;
             break;
         case ':':
             if (l->line_state & MNEMONIC_STATE) {
@@ -188,8 +233,9 @@ static void parse_line(Line *l, char *buffer) {
             buffer = c;
             buffer++;
             
-            //printf("parsed label = %s\n", l->label);
-            //label_set = 1;
+            #ifdef DEBUG
+            printf("parsed literal label = %s\n", l->label);
+            #endif
             l->line_state |= LABEL_STATE;
             break;
         case ';':
