@@ -66,6 +66,7 @@ int main(int argc, char **argv) {
                 die("Failed to open input file %s\n", configuration.in_fnames[i]);
             }
             assemble(in, l);
+            fclose(in);
         }
     }
     sfree(l);
