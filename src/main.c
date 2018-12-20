@@ -20,7 +20,7 @@ static void parse_mnemonic(Line *l);
 struct {
     char *out_fname;
     char **in_fnames;
-    size_t in_fnamec;
+    ssize_t in_fnamec;
     Architecture *arch;
 } configuration;
     
@@ -56,7 +56,11 @@ int main(int argc, char **argv) {
     symtab->last = NULL;
     
     Line *l = salloc(sizeof(Line));
-    if (configuration.in_fnamec == 0) {
+    
+    if (configuration.in_fnamec < 0) {
+        die("");
+    }
+    else if (configuration.in_fnamec == 0) {
         assemble(stdin, l);
     }
     else {
