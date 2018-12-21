@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <smem.h>
 
-#define DEBUG
+//#define DEBUG
 
 #define streq(__s1, __s2) !strcmp((const char *)__s1, (const char *)__s2)
 
@@ -50,6 +50,6 @@ extern SymTab *symtab;
 
 void assemble(FILE *in, Line *l);
 void parse_pseudo_op(Line *line);
-unsigned int string_to_int(const char *str);
+int string_to_int(const char *str);
 
 #endif

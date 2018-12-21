@@ -34,7 +34,7 @@ void parse_6309_instruction(Line *l) {
 Architecture architectures[] = {
     { "6809", &parse_6809_instruction, MC6809 },
     { "6309", &parse_6309_instruction, HD6309 },
-    { "", 0 }
+    { "", 0, 0 }
 };
 
 Register registers[] = {
@@ -55,7 +55,7 @@ Register registers[] = {
     { "DP", RDP, MC6809 | HD6309 },
     { "CC", RCC, MC6809 | HD6309 },
     { "MD", RMD, HD6309 },
-    { "", 0 }
+    { "", 0, 0 }
 };
 
 Instruction instructions[] = {

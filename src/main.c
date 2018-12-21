@@ -28,9 +28,11 @@ FILE *out;
 size_t address;
 size_t line_num;
 SymTab *symtab;
-SymTab *undefined_symtab;
+//SymTab *undefined_symtab;
 
+#ifdef DEBUG
 extern void smem_diagnostic();
+#endif
 
 int main(int argc, char **argv) {
     if ((configuration.out_fname = strdup("a.out")) == NULL) {
@@ -53,6 +55,7 @@ int main(int argc, char **argv) {
     symtab = salloc(sizeof(SymTab));
     symtab->first = NULL;
     symtab->last = NULL;
+    //symtab = NULL;
     
     Line *l = salloc(sizeof(Line));
     
@@ -252,22 +255,25 @@ static void parse_line(Line *l, char *buffer) {
     }
 }
 
-unsigned int string_to_int(const char *str) {
-    unsigned int result = 0;
+int string_to_int(const char *str) {
+    int result = 0;
     const char *c;
     for (c = str; *c != '\0'; c++) {
         printf("%c\n", *c);
         switch (*c) {
-        case 0:
-            break;
+        case '4':
+            goto escape;
         }
     }
     
+escape:
+
     return result;
 }
 
 static void add_label(Line *l) {
-    Symbol *sym = salloc(sizeof(Symbol));
+    Symbol *sym = salloc(sizeof(Symbol));    
+    
     sym->next = NULL;
     if (l->label[0] == '.') {
         if (symtab->last == NULL) {
@@ -299,7 +305,7 @@ static void add_label(Line *l) {
         l->label = sym->label;
     }
     else {
-        sym->label = salloc(strlen(l->label) + 1);
+        sym->label = salloc(strlen(l->label) + sizeof(char));
         strcpy(sym->label, l->label);
     }
     
@@ -308,6 +314,13 @@ static void add_label(Line *l) {
     #endif
     
     sym->value = address;
+    
+    Symbol *test_sym;
+    for (test_sym = symtab->first; test_sym != NULL; test_sym = test_sym->next) {
+        if (streq(test_sym->label, sym->label)) {
+            die("Error on line %ld. Symbol \"%s\" is already defined\n", line_num, test_sym->label);
+        }
+    }
     
     if (symtab->first == NULL) {
         symtab->first = sym;
