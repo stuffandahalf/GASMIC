@@ -48,6 +48,7 @@ typedef struct {
 extern size_t line_num;
 extern SymTab *symtab;
 
+void assemble(FILE *in, Line *l);
 void parse_pseudo_op(Line *line);
 
 #endif

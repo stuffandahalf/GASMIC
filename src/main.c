@@ -9,7 +9,6 @@
 char buffer[LINEBUFFERSIZE];
 
 static void configure(int argc, char *argv[]);
-static void assemble(FILE *in, Line *l);
 static Architecture *str_to_arch(const char arch_name[]);
 static char *str_to_upper(char str[]);
 static void trim_str(char str[]);
@@ -99,7 +98,7 @@ void assemble(FILE *in, Line *l) {
     while (fgets(buffer, LINEBUFFERSIZE, in) != NULL) {        
         if (buffer[0] != '\0' || buffer[0] != '\n') {
             l->line_state = 0;
-            l->arg_buf_size = 3;
+            l->arg_buf_size = 2;
             l->argv = salloc(sizeof(char *) * l->arg_buf_size);
             l->argc = 0;
             
@@ -307,10 +306,7 @@ static void parse_mnemonic(Line *line) {
         parse_pseudo_op(line);
         break;
     default:
-        //printf("process_instruction is at %p\n", configuration.arch->parse_instruction);
         configuration.arch->parse_instruction(line);
-        printf("%p\n", &(configuration.arch->parse_instruction));
-        
         break;
     }
 }

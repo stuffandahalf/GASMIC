@@ -51,5 +51,17 @@ static void pseudo_equ(Line *line) {
 }
 
 static void pseudo_include(Line *line) {
-    printf("%s\n", line->argv[0]);
+    FILE *included_file;
+    if ((included_file = fopen(line->argv[0], "r")) == NULL) {
+        die("Failed to open included file \"%s\"\n", line->argv[0]);
+    }
+    
+    //Line *new_line = salloc(sizeof(Line));
+    assemble(included_file, line);
+    fclose(included_file);
+    //sfree(new_line);
+    
+    // need to reassign argv because assemble frees it but we return back to assemble.
+    line->argc = 1;
+    line->argv = salloc(line->argc * sizeof(char *));
 }
