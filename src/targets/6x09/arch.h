@@ -3,8 +3,8 @@
 
 #include <as.h>
 
-#define MC6809 1
-#define HD6309 2
+#define MC6809 (1)
+#define HD6309 (2)
 
 typedef struct {
     char name[10];

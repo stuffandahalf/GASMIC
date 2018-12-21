@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
     Line *l = salloc(sizeof(Line));
     
     if (configuration.in_fnamec < 0) {
-        die("");
+        die("Invalid number of command line arguments.\n");
     }
     else if (configuration.in_fnamec == 0) {
         assemble(stdin, l);
@@ -271,7 +271,7 @@ static void add_label(Line *l) {
     sym->next = NULL;
     if (l->label[0] == '.') {
         if (symtab->last == NULL) {
-            die("Error on line %ld. local label cannot be defined before any non-local labels.", line_num);
+            die("Error on line %ld. local label cannot be defined before any non-local labels.\n", line_num);
         }
         // Count characters
         size_t characters = 0;
@@ -303,7 +303,9 @@ static void add_label(Line *l) {
         strcpy(sym->label, l->label);
     }
     
+    #ifdef DEBUG
     printf("Parsed label = %s\n", sym->label);
+    #endif
     
     sym->value = address;
     
