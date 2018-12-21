@@ -47,7 +47,7 @@ static void pseudo_equ(Line *line) {
         die("Error on line %ld: invalid number of arguments for pseudo instruction .EQU\n", line_num);
     }
     
-    //symtab->last->value = 
+    symtab->last->value = string_to_int(line->argv[0]);
 }
 
 static void pseudo_include(Line *line) {

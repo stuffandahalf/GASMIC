@@ -247,6 +247,23 @@ static void parse_line(Line *l, char *buffer) {
         }
         //buffer++;     // Why doesnt this work?
     }
+    if (l->line_state & QUOTE_STATE) {
+        die("Error on line %ld. Unmatched quote\n", line_num);
+    }
+}
+
+unsigned int string_to_int(const char *str) {
+    unsigned int result = 0;
+    const char *c;
+    for (c = str; *c != '\0'; c++) {
+        printf("%c\n", *c);
+        switch (*c) {
+        case 0:
+            break;
+        }
+    }
+    
+    return result;
 }
 
 static void add_label(Line *l) {

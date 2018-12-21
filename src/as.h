@@ -50,5 +50,6 @@ extern SymTab *symtab;
 
 void assemble(FILE *in, Line *l);
 void parse_pseudo_op(Line *line);
+unsigned int string_to_int(const char *str);
 
 #endif
