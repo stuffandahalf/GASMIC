@@ -255,22 +255,6 @@ static void parse_line(Line *l, char *buffer) {
     }
 }
 
-int string_to_int(const char *str) {
-    int result = 0;
-    const char *c;
-    for (c = str; *c != '\0'; c++) {
-        printf("%c\n", *c);
-        switch (*c) {
-        case '4':
-            goto escape;
-        }
-    }
-    
-escape:
-
-    return result;
-}
-
 static void add_label(Line *l) {
     Symbol *sym = salloc(sizeof(Symbol));    
     
