@@ -41,10 +41,10 @@ void parse_pseudo_op(Line *line) {
 
 static void pseudo_equ(Line *line) {
     if (!(line->line_state & LABEL_STATE)) {
-        die("Error on line %ld: pseudo instruction .EQU requires a label on the same line\n", line_num);
+        die("Error on line %ld. Pseudo instruction .EQU requires a label on the same line\n", line_num);
     }
     if (line->argc != 1) {
-        die("Error on line %ld: invalid number of arguments for pseudo instruction .EQU\n", line_num);
+        die("Error on line %ld. Invalid number of arguments for pseudo instruction .EQU\n", line_num);
     }
     
     char *num_end;
