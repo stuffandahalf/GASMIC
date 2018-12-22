@@ -9,7 +9,6 @@
 char buffer[LINEBUFFERSIZE];
 
 static void configure(int argc, char *argv[]);
-static void assemble(FILE *in, Line *l);
 static Architecture *str_to_arch(const char arch_name[]);
 static char *str_to_upper(char str[]);
 static void trim_str(char str[]);
@@ -29,9 +28,11 @@ FILE *out;
 size_t address;
 size_t line_num;
 SymTab *symtab;
-SymTab *undefined_symtab;
+//SymTab *undefined_symtab;
 
+#ifdef DEBUG
 extern void smem_diagnostic();
+#endif
 
 int main(int argc, char **argv) {
     if ((configuration.out_fname = strdup("a.out")) == NULL) {
@@ -54,11 +55,12 @@ int main(int argc, char **argv) {
     symtab = salloc(sizeof(SymTab));
     symtab->first = NULL;
     symtab->last = NULL;
+    //symtab = NULL;
     
     Line *l = salloc(sizeof(Line));
     
     if (configuration.in_fnamec < 0) {
-        die("");
+        die("Invalid number of command line arguments.\n");
     }
     else if (configuration.in_fnamec == 0) {
         assemble(stdin, l);
@@ -99,7 +101,7 @@ void assemble(FILE *in, Line *l) {
     while (fgets(buffer, LINEBUFFERSIZE, in) != NULL) {        
         if (buffer[0] != '\0' || buffer[0] != '\n') {
             l->line_state = 0;
-            l->arg_buf_size = 3;
+            l->arg_buf_size = 2;
             l->argv = salloc(sizeof(char *) * l->arg_buf_size);
             l->argc = 0;
             
@@ -248,14 +250,34 @@ static void parse_line(Line *l, char *buffer) {
         }
         //buffer++;     // Why doesnt this work?
     }
+    if (l->line_state & QUOTE_STATE) {
+        die("Error on line %ld. Unmatched quote\n", line_num);
+    }
+}
+
+int string_to_int(const char *str) {
+    int result = 0;
+    const char *c;
+    for (c = str; *c != '\0'; c++) {
+        printf("%c\n", *c);
+        switch (*c) {
+        case '4':
+            goto escape;
+        }
+    }
+    
+escape:
+
+    return result;
 }
 
 static void add_label(Line *l) {
-    Symbol *sym = salloc(sizeof(Symbol));
+    Symbol *sym = salloc(sizeof(Symbol));    
+    
     sym->next = NULL;
     if (l->label[0] == '.') {
         if (symtab->last == NULL) {
-            die("Error on line %ld. local label cannot be defined before any non-local labels.", line_num);
+            die("Error on line %ld. local label cannot be defined before any non-local labels.\n", line_num);
         }
         // Count characters
         size_t characters = 0;
@@ -283,13 +305,22 @@ static void add_label(Line *l) {
         l->label = sym->label;
     }
     else {
-        sym->label = salloc(strlen(l->label) + 1);
+        sym->label = salloc(strlen(l->label) + sizeof(char));
         strcpy(sym->label, l->label);
     }
     
+    #ifdef DEBUG
     printf("Parsed label = %s\n", sym->label);
+    #endif
     
     sym->value = address;
+    
+    Symbol *test_sym;
+    for (test_sym = symtab->first; test_sym != NULL; test_sym = test_sym->next) {
+        if (streq(test_sym->label, sym->label)) {
+            die("Error on line %ld. Symbol \"%s\" is already defined\n", line_num, test_sym->label);
+        }
+    }
     
     if (symtab->first == NULL) {
         symtab->first = sym;
@@ -307,10 +338,7 @@ static void parse_mnemonic(Line *line) {
         parse_pseudo_op(line);
         break;
     default:
-        //printf("process_instruction is at %p\n", configuration.arch->parse_instruction);
         configuration.arch->parse_instruction(line);
-        printf("%p\n", &(configuration.arch->parse_instruction));
-        
         break;
     }
 }

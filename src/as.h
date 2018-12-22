@@ -7,11 +7,11 @@
 #include <stdint.h>
 #include <smem.h>
 
-#define DEBUG
+//#define DEBUG
 
 #define streq(__s1, __s2) !strcmp((const char *)__s1, (const char *)__s2)
 
-#define MAXMNEMONICSIZE 10
+#define MAXMNEMONICSIZE (10)
 typedef struct {
     char mne[MAXMNEMONICSIZE];
     int arcs;
@@ -48,6 +48,8 @@ typedef struct {
 extern size_t line_num;
 extern SymTab *symtab;
 
+void assemble(FILE *in, Line *l);
 void parse_pseudo_op(Line *line);
+int string_to_int(const char *str);
 
 #endif
