@@ -49,7 +49,8 @@ static void pseudo_equ(Line *line) {
     
     char *num_end;
     symtab->last->value = strtol(line->argv[0], &num_end, 0);
-    if (line->argv[0] == num_end) {
+    //if (line->argv[0] == num_end) {
+    if (*num_end != '\0') {
         die("Error on line %ld. Failed to parse given value\n", line_num);
     }
 }
