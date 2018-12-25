@@ -77,10 +77,14 @@ int main(int argc, char **argv) {
     }
     sfree(l);
     
+    #ifdef DEBUG
     puts("symtab");
+    #endif
     Symbol *sym = symtab->first;
     while (sym != NULL) {
+        #ifdef DEBUG
         printf("label: %s\t%ld\n", sym->label, sym->value);
+        #endif
         
         sfree(sym->label);
         sym->label = NULL;
