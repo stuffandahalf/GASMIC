@@ -40,8 +40,6 @@ void parse_instruction(Line *l, int arch) {
     #endif
     
     validate_arg_count(l, i);
-    
-    
 }
 
 void parse_6809_instruction(Line *l) {    
