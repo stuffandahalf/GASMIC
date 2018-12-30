@@ -3,10 +3,10 @@
 extern Instruction instructions[];
 
 static Instruction *locate_instruction(char *mnemonic, int arch) {
-    for (Instruction *i = instructions; i->mne[0] != '\0'; i++) {
-        if ((i->arcs & arch) && /*(i->regs & ) &&*/ streq(i->mne, mnemonic)) {
+    for (Instruction *i = instructions; i->mnemonic[0] != '\0'; i++) {
+        //if ((i->arcs & arch) && /*(i->regs & ) &&*/ streq(i->mne, mnemonic)) {
             return i;
-        }
+        //}
     }
     return NULL;
 }
@@ -18,7 +18,7 @@ void parse_6809_instruction(Line *l) {
     }
 
     puts("6809 instruction");
-    printf("%s, %X, %X\n", i->mne, i->base_opcode, i->regs);
+    printf("%s, %X\n", i->mnemonic, i->base_opcode);
 }
 
 void parse_6309_instruction(Line *l) {
@@ -28,7 +28,7 @@ void parse_6309_instruction(Line *l) {
     }
     
     puts("6309 instruction");
-    printf("%s, %X, %X\n", i->mne, i->base_opcode, i->regs);
+    printf("%s, %X\n", i->mnemonic, i->base_opcode);
 }
 
 Architecture architectures[] = {
@@ -38,28 +38,29 @@ Architecture architectures[] = {
 };
 
 Register registers[] = {
-    { "A", RA, MC6809 | HD6309 },
-    { "B", RB, MC6809 | HD6309 },
-    { "D", RD, MC6809 | HD6309 },
-    { "X", RX, MC6809 | HD6309 },
-    { "Y", RY, MC6809 | HD6309 },
-    { "U", RU, MC6809 | HD6309 },
-    { "S", RS, MC6809 | HD6309 },
-    { "PC", RPC, MC6809 | HD6309 },
-    { "E", RE, HD6309 },
-    { "F", RF, HD6309 },
-    { "W", RW, HD6309 },
-    { "Q", RQ, HD6309 },
-    { "V", RV, HD6309 },
-    { "Z", RZ, HD6309 },
-    { "DP", RDP, MC6809 | HD6309 },
-    { "CC", RCC, MC6809 | HD6309 },
-    { "MD", RMD, HD6309 },
-    { "", 0, 0 }
+    { "A", MC6809 | HD6309 },
+    { "B", MC6809 | HD6309 },
+    { "D", MC6809 | HD6309 },
+    { "X", MC6809 | HD6309 },
+    { "Y", MC6809 | HD6309 },
+    { "U", MC6809 | HD6309 },
+    { "S", MC6809 | HD6309 },
+    { "PC", MC6809 | HD6309 },
+    { "E", HD6309 },
+    { "F", HD6309 },
+    { "W", HD6309 },
+    { "Q", HD6309 },
+    { "V", HD6309 },
+    { "Z", HD6309 },
+    { "DP", MC6809 | HD6309 },
+    { "CC", MC6809 | HD6309 },
+    { "MD", HD6309 },
+    { "", 0 }
 };
+int regc = sizeof(registers) / sizeof(Register) - 1;
 
 Instruction instructions[] = {
-    { "ABX", MC6809 | HD6309, INHERENT, NR, 0x3A, MODN },
-    { "ADC", MC6809 | HD6309, IMMEDIATE | DIRECT | INDEXED | EXTENDED, RA | RB, 0x89, MODA },
-    { "", 0, 0, 0, 0, 0 }
+    { "ABX", MC6809 | HD6309, 0x3A, ADDR_MODE_IMM | ADDR_MODE_DIR | ADDR_MODE_IND | ADDR_MODE_EXT, { &registers[REG_A], &registers[REG_B], NULL } },
+    //{ "ADC", MC6809 | HD6309, IMMEDIATE | DIRECT | INDEXED | EXTENDED,  },
+    { "", 0, 0, 0, {} }
 };
