@@ -10,7 +10,7 @@ char buffer[LINEBUFFERSIZE];
 
 static void configure(int argc, char *argv[]);
 static Architecture *str_to_arch(const char arch_name[]);
-static char *str_to_upper(char str[]);
+char *str_to_upper(char str[]);
 static void trim_str(char str[]);
 static void parse_line(Line *l, char *buffer);
 static void add_label(Line *l);
@@ -112,9 +112,9 @@ int main(int argc, char **argv) {
         switch (data->type) {
         case DATA_TYPE_LABEL:
             #ifdef DEBUG
-            printf("label\n%s\n", data->contents.label);
+            printf("label\n%s\n", data->contents.sym->label);
             #endif
-            free(data->contents.label);
+            free(data->contents.sym);
             break;
         case DATA_TYPE_BYTES:
             #ifdef DEBUG

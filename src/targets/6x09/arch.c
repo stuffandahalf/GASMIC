@@ -1,6 +1,7 @@
 #include <arch.h>
 
 extern Instruction instructions[];
+extern char *str_to_upper(char str[]);
 
 static Instruction *locate_instruction(char *mnemonic, int arch) {
     for (Instruction *i = instructions; i->mnemonic[0] != '\0'; i++) {
@@ -9,6 +10,43 @@ static Instruction *locate_instruction(char *mnemonic, int arch) {
         }
     }
     return NULL;
+}
+
+static void parse_argument(const char input[], Argument *arg) {
+    extern Register registers[];
+    
+    char *reg_name;
+    Register *r;
+    for (r = registers; r->name[0] != '\0'; r++) {
+        reg_name = strdup(input);
+        str_to_upper(reg_name);
+        if (streq(reg_name, r->name)) {
+            arg->type = ARG_TYPE_REG;
+            arg->arg.r = r;
+            #ifdef DEBUG
+            printf("Argument is register %s\n", r->name);
+            #endif
+            free(reg_name);
+            return;
+        }
+        free(reg_name);
+    }
+    
+    /*char *end;
+    size_t immediate = strtol(input, &end, 0);
+    if (*/
+    
+    Symbol *last_full;
+    Symbol *s;
+    for (s = symtab->first; s != NULL; s = s->next) {
+        char *c;
+        for (c = s->label; *c != '.' && *c != '\0'; c++);
+        switch (*c) {
+        case '.':
+            break;
+            
+        }
+    }
 }
 
 static void validate_arg_count(Line *l, Instruction *i) {
@@ -29,7 +67,7 @@ static void validate_arg_count(Line *l, Instruction *i) {
     }
 }
 
-void parse_instruction(Line *l, int arch) {
+static void parse_instruction(Line *l, int arch) {
     Instruction *i;
     if ((i = locate_instruction(l->mnemonic, MC6809)) == NULL) {
         die("Failed to locate instruction with mnemonic of %s on line %ld\n", l->mnemonic, line_num);
@@ -38,6 +76,15 @@ void parse_instruction(Line *l, int arch) {
     #ifdef DEBUG
     printf("%s, %X\n", i->mnemonic, i->base_opcode);
     #endif
+    
+    /*Argument *source = salloc(sizeof(Argument));
+    Argument *dest = salloc(sizeof(Argument));*/
+    Argument *args[l->argc];
+    int j;
+    for (j = 0; j < l->argc; j++) {
+        args[j] = salloc(sizeof(Argument));
+        parse_argument(l->argv[j], args[j]);
+    }
     
     validate_arg_count(l, i);
 }

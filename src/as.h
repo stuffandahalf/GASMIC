@@ -7,9 +7,12 @@
 #include <stdint.h>
 #include <smem.h>
 
-//#define DEBUG
+#define DEBUG
 
 #define streq(__s1, __s2) !strcmp((const char *)__s1, (const char *)__s2)
+
+#define ARCH_BIG_ENDIAN 1
+#define ARCH_LITTLE_ENDIAN 2
 
 #define LABEL_STATE (1)
 #define MNEMONIC_STATE (2)
@@ -39,7 +42,7 @@ typedef struct {
 typedef struct data_entry {
     uint8_t type;
     union {
-        char *label;
+        Symbol *sym;
         struct {
             uint8_t byte_count;
             uint8_t *bytes;
@@ -75,9 +78,19 @@ typedef struct {
     int value;
 } Architecture;
 
+#define ARG_TYPE_REG 1
+#define ARG_TYPE_SYM 2
+typedef struct {
+    uint8_t type;
+    union {
+        Register *r;
+        Symbol *s;
+    } arg;
+} Argument;
+
 extern size_t line_num;
 extern SymTab *symtab;
-extern 
+extern DataTab *dattab;
 
 void assemble(FILE *in, Line *l);
 void parse_pseudo_op(Line *line);
