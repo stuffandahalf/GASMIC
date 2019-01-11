@@ -14,18 +14,6 @@
 #define ARCH_BIG_ENDIAN 1
 #define ARCH_LITTLE_ENDIAN 2
 
-#define LABEL_STATE (1)
-#define MNEMONIC_STATE (2)
-#define QUOTE_STATE (4)
-typedef struct {
-    char *label;
-    char *mnemonic;
-    char **argv;
-    size_t argc;
-    uint8_t arg_buf_size;
-    uint8_t line_state;
-} Line;
-
 typedef struct symtab_entry {
     char *label;
     size_t value;
@@ -72,21 +60,37 @@ typedef struct {
     Register *registers[MAX_REGS];
 } Instruction;
 
+#define ARG_TYPE_NONE 0
+#define ARG_TYPE_REG  1
+#define ARG_TYPE_SYM  2
+
+typedef struct {
+    uint8_t type;
+    union {
+        char *str;
+        Register *reg;
+        Symbol *sym;
+    } val;
+} LineArg;
+
+#define LABEL_STATE (1)
+#define MNEMONIC_STATE (2)
+#define QUOTE_STATE (4)
+typedef struct {
+    char *label;
+    char *mnemonic;
+    LineArg *argv;
+    //char **argv;
+    size_t argc;
+    uint8_t arg_buf_size;
+    uint8_t line_state;
+} Line;
+
 typedef struct {
     char name[10];
     void (*parse_instruction)(Line *l);
     int value;
 } Architecture;
-
-#define ARG_TYPE_REG 1
-#define ARG_TYPE_SYM 2
-typedef struct {
-    uint8_t type;
-    union {
-        Register *r;
-        Symbol *s;
-    } arg;
-} Argument;
 
 extern size_t line_num;
 extern SymTab *symtab;

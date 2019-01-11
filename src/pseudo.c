@@ -11,6 +11,8 @@
  * .global
  * .ascii
  * .asciz
+ * .extern
+ * .global
  */
 
 static void pseudo_equ(Line *line);

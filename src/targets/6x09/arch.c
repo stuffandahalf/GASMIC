@@ -3,74 +3,33 @@
 extern Instruction instructions[];
 extern char *str_to_upper(char str[]);
 
-static Instruction *locate_instruction(char *mnemonic, int arch) {
-    for (Instruction *i = instructions; i->mnemonic[0] != '\0'; i++) {
-        if ((i->architectures & arch) && streq(i->mnemonic, mnemonic)) {
+static int test_instruction(Instruction *i, Line *l) {
+    switch (i->arg_order) {
+    case ARG_ORDER_NONE:
+        return l->argc == 0;
+    case ARG_ORDER_TO_REG:
+    case ARG_ORDER_FROM_REG:
+        return l->argc == 2;
+    default:
+        die("Instruction %s has invalid argument order\n", i->mnemonic);
+        return 0;
+    }
+}
+
+static Instruction *locate_instruction(Line *l, int arch) {
+    Instruction *i;
+    for (i = instructions; i->mnemonic[0] != '\0'; i++) {
+        if ((i->architectures & arch) && streq(i->mnemonic, l->mnemonic) && test_instruction(i, l)) {
             return i;
         }
     }
     return NULL;
 }
 
-static void parse_argument(const char input[], Argument *arg) {
-    extern Register registers[];
-    
-    char *reg_name;
-    Register *r;
-    for (r = registers; r->name[0] != '\0'; r++) {
-        reg_name = strdup(input);
-        str_to_upper(reg_name);
-        if (streq(reg_name, r->name)) {
-            arg->type = ARG_TYPE_REG;
-            arg->arg.r = r;
-            #ifdef DEBUG
-            printf("Argument is register %s\n", r->name);
-            #endif
-            free(reg_name);
-            return;
-        }
-        free(reg_name);
-    }
-    
-    /*char *end;
-    size_t immediate = strtol(input, &end, 0);
-    if (*/
-    
-    Symbol *last_full;
-    Symbol *s;
-    for (s = symtab->first; s != NULL; s = s->next) {
-        char *c;
-        for (c = s->label; *c != '.' && *c != '\0'; c++);
-        switch (*c) {
-        case '.':
-            break;
-            
-        }
-    }
-}
-
-static void validate_arg_count(Line *l, Instruction *i) {
-    const char *invalid_args_error = "Invalid number of arguments for instruction %s on line %ld\n";
-    switch (i->arg_order) {
-    case ARG_ORDER_NONE:
-        if (l->argc != 0) {
-            die(invalid_args_error, i->mnemonic, line_num);
-        }
-        break;
-    case ARG_ORDER_TO_REG:
-    case ARG_ORDER_FROM_REG:
-    case ARG_ORDER_INTERREG:
-        if (l->argc != 2) {
-            die(invalid_args_error, i->mnemonic, line_num);
-        }
-        break;
-    }
-}
-
 static void parse_instruction(Line *l, int arch) {
     Instruction *i;
-    if ((i = locate_instruction(l->mnemonic, MC6809)) == NULL) {
-        die("Failed to locate instruction with mnemonic of %s on line %ld\n", l->mnemonic, line_num);
+    if ((i = locate_instruction(l, MC6809)) == NULL) {
+        die("Failed to locate instruction with mnemonic of %s on line %ld.\nCheck argument order and types\n", l->mnemonic, line_num);
     }
     
     #ifdef DEBUG
@@ -79,17 +38,17 @@ static void parse_instruction(Line *l, int arch) {
     
     /*Argument *source = salloc(sizeof(Argument));
     Argument *dest = salloc(sizeof(Argument));*/
-    Argument *args[l->argc];
+    /*Argument *args[l->argc];
     int j;
     for (j = 0; j < l->argc; j++) {
         args[j] = salloc(sizeof(Argument));
         parse_argument(l->argv[j], args[j]);
     }
     
-    validate_arg_count(l, i);
+    validate_arg_count(l, i);*/
 }
 
-void parse_6809_instruction(Line *l) {    
+void parse_6809_instruction(Line *l) {
     parse_instruction(l, MC6809);
 }
 
