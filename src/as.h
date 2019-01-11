@@ -7,20 +7,12 @@
 #include <stdint.h>
 #include <smem.h>
 
-//#define DEBUG
+#define DEBUG
 
 #define streq(__s1, __s2) !strcmp((const char *)__s1, (const char *)__s2)
 
-#define MAXMNEMONICSIZE (10)
-typedef struct {
-    char mne[MAXMNEMONICSIZE];
-    int arcs;
-    int regs;
-    int addr_modes;
-    uint16_t base_opcode;
-    int op_shift;
-} Instruction;
-
+#define ARCH_BIG_ENDIAN 1
+#define ARCH_LITTLE_ENDIAN 2
 
 #define LABEL_STATE (1)
 #define MNEMONIC_STATE (2)
@@ -30,8 +22,8 @@ typedef struct {
     char *mnemonic;
     char **argv;
     size_t argc;
-    unsigned char arg_buf_size;
-    unsigned char line_state;
+    uint8_t arg_buf_size;
+    uint8_t line_state;
 } Line;
 
 typedef struct symtab_entry {
@@ -45,8 +37,60 @@ typedef struct {
     Symbol *last;
 } SymTab;
 
+#define DATA_TYPE_LABEL 1
+#define DATA_TYPE_BYTES 2
+typedef struct data_entry {
+    uint8_t type;
+    union {
+        Symbol *sym;
+        struct {
+            uint8_t byte_count;
+            uint8_t *bytes;
+        } bytes;
+    } contents;
+    struct data_entry *next;
+} Data;
+
+typedef struct {
+    Data *first;
+    Data *last;
+} DataTab;
+
+typedef struct {
+    char name[5];
+    int arcs;
+} Register;
+
+#define MAXMNEMONICSIZE (10)
+#define MAX_REGS (20)
+typedef struct {
+    char mnemonic[MAXMNEMONICSIZE];
+    uint8_t architectures;
+    uint16_t base_opcode;
+    uint8_t arg_order;
+    uint8_t address_modes;
+    Register *registers[MAX_REGS];
+} Instruction;
+
+typedef struct {
+    char name[10];
+    void (*parse_instruction)(Line *l);
+    int value;
+} Architecture;
+
+#define ARG_TYPE_REG 1
+#define ARG_TYPE_SYM 2
+typedef struct {
+    uint8_t type;
+    union {
+        Register *r;
+        Symbol *s;
+    } arg;
+} Argument;
+
 extern size_t line_num;
 extern SymTab *symtab;
+extern DataTab *dattab;
 
 void assemble(FILE *in, Line *l);
 void parse_pseudo_op(Line *line);

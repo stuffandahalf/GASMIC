@@ -3,56 +3,41 @@
 
 #include <as.h>
 
+#define ENDIANNESS BIG_ENDIAN
+
 #define MC6809 (1)
 #define HD6309 (2)
 
-typedef struct {
-    char name[10];
-    void (*parse_instruction)(Line *l);
-    int value;
-} Architecture;
+#define REG_A       (0)
+#define REG_B       (1)
+#define REG_D       (2)
+#define REG_X       (3)
+#define REG_Y       (4)
+#define REG_U       (5)
+#define REG_S       (6)
+#define REG_PC      (7)
+#define REG_E       (8)
+#define REG_F       (9)
+#define REG_W       (10)
+#define REG_Q       (11)
+#define REG_V       (12)
+#define REG_Z       (13)
+#define REG_DP      (14)
+#define REG_CC      (15)
+#define REG_MD      (16)
+#define REG_NONE    (17)
 
-enum register_values {
-    NR = 0,
-    RA = 1,
-    RB = 2,
-    RD = 4,
-    RX = 8,
-    RY = 16,
-    RU = 32,
-    RS = 64,
-    RPC = 128,
-    RE = 256,
-    RF = 512,
-    RW = 1024,
-    RQ = 2048,
-    RV = 4096,
-    RZ = 8192,
-    RDP = 16384,
-    RCC = 32768,
-    RMD = 65536
-};
+#define ADDR_MODE_INH   (0)
+#define ADDR_MODE_IMM   (1)
+#define ADDR_MODE_DIR   (2)
+#define ADDR_MODE_IND   (4)
+#define ADDR_MODE_EXT   (8)
+#define ADDR_MODE_INTER (16)
 
-typedef struct {
-    char name[5];
-    uint32_t value;
-    int arcs;
-} Register;
-
-typedef enum {
-    INHERENT = 1,
-    IMMEDIATE = 2,
-    DIRECT = 3,
-    INDEXED = 4,
-    EXTENDED = 5
-} address_modes;
-
-typedef enum {
-    MODN = 0,
-    MODA = 0x10,
-    MODB = 0x1000,
-    MODC = 0x1100
-} opcode_modifiers;
+#define ARG_ORDER_NONE      (0)
+#define ARG_ORDER_FROM_REG  (1)
+#define ARG_ORDER_TO_REG    (2)
+#define ARG_ORDER_INTERREG  (3)
 
 extern Architecture architectures[];
 extern Instruction instructions[];

@@ -10,7 +10,7 @@ char buffer[LINEBUFFERSIZE];
 
 static void configure(int argc, char *argv[]);
 static Architecture *str_to_arch(const char arch_name[]);
-static char *str_to_upper(char str[]);
+char *str_to_upper(char str[]);
 static void trim_str(char str[]);
 static void parse_line(Line *l, char *buffer);
 static void add_label(Line *l);
@@ -28,6 +28,7 @@ FILE *out;
 size_t address;
 size_t line_num;
 SymTab *symtab;
+DataTab *datatab;
 //SymTab *undefined_symtab;
 
 #ifdef DEBUG
@@ -55,7 +56,10 @@ int main(int argc, char **argv) {
     symtab = salloc(sizeof(SymTab));
     symtab->first = NULL;
     symtab->last = NULL;
-    //symtab = NULL;
+    
+    datatab = salloc(sizeof(DataTab));
+    datatab->first = NULL;
+    datatab->last = NULL;
     
     Line *l = salloc(sizeof(Line));
     
@@ -95,7 +99,44 @@ int main(int argc, char **argv) {
     //sfree(symtab->first->label);
     sfree(symtab);
     symtab = NULL;
+    sym = NULL;
     
+    #ifdef DEBUG
+    puts("datatab");
+    #endif
+    Data *data = datatab->first;
+    while (data != NULL) {
+        #ifdef DEBUG
+        printf("data: ");
+        #endif
+        switch (data->type) {
+        case DATA_TYPE_LABEL:
+            #ifdef DEBUG
+            printf("label\n%s\n", data->contents.sym->label);
+            #endif
+            free(data->contents.sym);
+            break;
+        case DATA_TYPE_BYTES:
+            #ifdef DEBUG
+            printf("bytes\n");
+            int i;
+            for (i = 0; i < data->contents.bytes.byte_count; i++) {
+                printf(", %X", data->contents.bytes.bytes[i]);
+            }
+            printf("\n");
+            #endif
+            sfree(data->contents.bytes.bytes);
+            break;
+        default:
+            #ifdef DEBUG
+            puts("Garbage data");
+            #endif
+            break;
+        }        
+    }
+    sfree(datatab);
+    datatab = NULL;
+    data = NULL;
     //fclose(out);
     
 	return 0;
@@ -174,7 +215,8 @@ static void configure(int argc, char *argv[]) {
 }
 
 static Architecture *str_to_arch(const char arch_name[]) {
-    for (Architecture *a = architectures; a->name[0] != '\0'; a++) {
+    Architecture *a;
+    for (a = architectures; a->name[0] != '\0'; a++) {
         if (streq(arch_name, a->name)) {
             return a;
         }
