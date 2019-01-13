@@ -165,7 +165,7 @@ void assemble(FILE *in, Line *l) {
             }
             int i;
             for (i = 0; i < l->argc; i++) {
-                printf("\t%s", l->argv[i]);
+                printf("\t%s", l->argv[i].val.str);
             }
             puts("");
             #endif

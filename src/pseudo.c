@@ -50,7 +50,7 @@ static void pseudo_equ(Line *line) {
     }
     
     char *num_end;
-    symtab->last->value = strtol(line->argv[0], &num_end, 0);
+    symtab->last->value = strtol(line->argv[0].val.str, &num_end, 0);
     //if (line->argv[0] == num_end) {
     if (*num_end != '\0') {
         die("Error on line %ld. Failed to parse given value\n", line_num);
@@ -59,8 +59,8 @@ static void pseudo_equ(Line *line) {
 
 static void pseudo_include(Line *line) {
     FILE *included_file;
-    if ((included_file = fopen(line->argv[0], "r")) == NULL) {
-        die("Failed to open included file \"%s\"\n", line->argv[0]);
+    if ((included_file = fopen(line->argv[0].val.str, "r")) == NULL) {
+        die("Failed to open included file \"%s\"\n", line->argv[0].val.str);
     }
     
     //Line *new_line = salloc(sizeof(Line));
