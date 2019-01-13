@@ -5,7 +5,7 @@
 #include <as.h>
 #include <arch.h>
 
-#define LINEBUFFERSIZE 256
+#define LINEBUFFERSIZE (256)
 char buffer[LINEBUFFERSIZE];
 
 static void configure(int argc, char *argv[]);
@@ -147,7 +147,8 @@ void assemble(FILE *in, Line *l) {
         if (buffer[0] != '\0' || buffer[0] != '\n') {
             l->line_state = 0;
             l->arg_buf_size = 2;
-            l->argv = salloc(sizeof(char *) * l->arg_buf_size);
+            //l->argv = salloc(sizeof(char *) * l->arg_buf_size);
+            l->argv = salloc(sizeof(LineArg) * l->arg_buf_size);
             l->argc = 0;
             
             parse_line(l, buffer);
