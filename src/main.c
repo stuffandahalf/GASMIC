@@ -313,34 +313,25 @@ static void add_label(Line *l) {
         if (symtab->last == NULL) {
             die("Error on line %ld. local label cannot be defined before any non-local labels.\n", line_num);
         }
-        // Count characters
-        size_t characters = 0;
+        
+        sym->label = salloc(sizeof(char) * (strlen(symtab->last_parent->label) + strlen(l->label) + 1));
+        
+        register char *label = sym->label;
         register char *c;
-        for (c = symtab->last->label; *c != '.' && *c != '\0'; c++) {
-            characters++;
+        for (c = symtab->last_parent->label; *c != '\0'; c++) {
+            *(label++) = *c;
         }
         for (c = l->label; *c != '\0'; c++) {
-            characters++;
+            *(label++) = *c;
         }
-        characters++;
+        *label = '\0';
         
-        // Allocate that many bytes for the label
-        sym->label = salloc(sizeof(char) * characters);
-        
-        // Save the complete label
-        characters = 0;
-        for (c = symtab->last->label; *c != '.' && *c != '\0'; c++) {
-            sym->label[characters++] = *c;
-        }
-        for (c = l->label; *c != '\0'; c++) {
-            sym->label[characters++] = *c;
-        }
-        sym->label[characters] = '\0';
         l->label = sym->label;
     }
     else {
         sym->label = salloc(strlen(l->label) + sizeof(char));
         strcpy(sym->label, l->label);
+        symtab->last_parent = sym;
     }
     
     #ifdef DEBUG

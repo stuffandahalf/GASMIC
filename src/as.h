@@ -23,6 +23,7 @@ typedef struct symtab_entry {
 typedef struct {
     Symbol *first;
     Symbol *last;
+    Symbol *last_parent;
 } SymTab;
 
 #define DATA_TYPE_LABEL 1
@@ -94,9 +95,10 @@ typedef struct {
 
 extern size_t line_num;
 extern SymTab *symtab;
-extern DataTab *dattab;
+extern DataTab *datatab;
 
 void assemble(FILE *in, Line *l);
+void parse_arguments(Line *l);
 void parse_pseudo_op(Line *line);
 
 #endif

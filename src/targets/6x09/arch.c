@@ -27,8 +27,9 @@ static Instruction *locate_instruction(Line *l, int arch) {
 }
 
 static void parse_instruction(Line *l, int arch) {
+    //parse_arguments(l);
     Instruction *i;
-    if ((i = locate_instruction(l, MC6809)) == NULL) {
+    if ((i = locate_instruction(l, arch)) == NULL) {
         die("Failed to locate instruction with mnemonic of %s on line %ld.\nCheck argument order and types\n", l->mnemonic, line_num);
     }
     
