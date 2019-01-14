@@ -11,7 +11,7 @@ static int test_instruction(Instruction *i, Line *l) {
     case ARG_ORDER_FROM_REG:
         return l->argc == 2;
     default:
-        die("Instruction %s has invalid argument order\n", i->mnemonic);
+        die("Error on line %ld. Instruction %s has invalid argument order\n", line_num, i->mnemonic);
         return 0;
     }
 }
@@ -105,6 +105,6 @@ int regc = sizeof(registers) / sizeof(Register) - 1;
 Instruction instructions[] = {
     { "ABX", MC6809 | HD6309, 0x3A, ARG_ORDER_NONE, ADDR_MODE_INH, { NULL } },
     { "ADC", MC6809 | HD6309, 0x89, ARG_ORDER_TO_REG, ADDR_MODE_IMM | ADDR_MODE_DIR | ADDR_MODE_IND | ADDR_MODE_EXT, { &registers[REG_A], &registers[REG_B], NULL } },
-    { "LD", MC6809 | HD6309, 0x86, ARG_ORDER_TO_REG, ADDR_MODE_IMM | ADDR_MODE_DIR | ADDR_MODE_IND | ADDR_MODE_EXT, { &registers[REG_A], &registers[REG_B] }
+    { "LD", MC6809 | HD6309, 0x86, ARG_ORDER_TO_REG, ADDR_MODE_IMM | ADDR_MODE_DIR | ADDR_MODE_IND | ADDR_MODE_EXT, { &registers[REG_A], &registers[REG_B], NULL } },
     { "", 0, 0, 0, 0, {} }
 };
