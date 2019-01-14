@@ -251,11 +251,18 @@ static void parse_line(Line *l, char *buffer) {
                 *c = '\0';
             }
             break;
+        case ']':
+            if (!(l->line_state & BRACKET_STATE)) {
+                die("Error on line %ld\n. ']' requires '[' first.", line_num);
+            }
+        case '[':
+            l->line_state ^= BRACKET_STATE;
+            break;
         case '\n':
         case '\t':
         case ' ':
         case ',':
-            if (!(l->line_state & QUOTE_STATE)) {
+            if (!(l->line_state & QUOTE_STATE) && !(l->line_state & BRACKET_STATE)) {
                 if (c != buffer) {
                     if (!(l->line_state & MNEMONIC_STATE)) { // if mnemonic is not set
                         if (*c == ',') {
@@ -302,6 +309,9 @@ static void parse_line(Line *l, char *buffer) {
     }
     if (l->line_state & QUOTE_STATE) {
         die("Error on line %ld. Unmatched quote\n", line_num);
+    }
+    if (l->line_state & BRACKET_STATE) {
+        die("Error on line %ld. Unmatched bracket\n", line_num);
     }
 }
 

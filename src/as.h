@@ -78,6 +78,7 @@ typedef struct {
 #define LABEL_STATE (1)
 #define MNEMONIC_STATE (2)
 #define QUOTE_STATE (4)
+#define BRACKET_STATE (8)
 typedef struct {
     char *label;
     char *mnemonic;
@@ -99,7 +100,7 @@ extern SymTab *symtab;
 extern DataTab *datatab;
 
 void assemble(FILE *in, Line *l);
-void parse_arguments(Line *l);
+//void parse_arguments(Line *l);
 void parse_pseudo_op(Line *line);
 
 #endif
