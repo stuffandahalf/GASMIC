@@ -26,8 +26,23 @@ static Instruction *locate_instruction(Line *l, int arch) {
     return NULL;
 }
 
+static void parse_arguments(Line *l) {
+    size_t i;
+    for (i = 0; i < l->argc; i++) {
+        LineArg *la = &(l->argv[i]);
+        char *c;
+        for (c = la->val.str; *c != '\0'; c++) {
+            switch (*c) {
+            case '[':
+                
+                break;
+            }
+        }
+    }
+}
+
 static void parse_instruction(Line *l, int arch) {
-    //parse_arguments(l);
+    parse_arguments(l);
     Instruction *i;
     if ((i = locate_instruction(l, arch)) == NULL) {
         die("Failed to locate instruction with mnemonic of %s on line %ld.\nCheck argument order and types\n", l->mnemonic, line_num);

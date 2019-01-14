@@ -67,6 +67,7 @@ typedef struct {
 
 typedef struct {
     uint8_t type;
+    uint8_t addr_mode;
     union {
         char *str;
         Register *reg;
