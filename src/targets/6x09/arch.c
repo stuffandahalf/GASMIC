@@ -88,6 +88,9 @@ static void parse_instruction(Line *l, int arch) {
             die("Intel syntax is not yet implemented\n");
             //goto instruction_found;
             break;
+        case ATT_SYNTAX:
+            die("AT&T syntax is not yet implemented");
+            break;
         }
         
 next_instruction:

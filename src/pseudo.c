@@ -27,6 +27,7 @@ static struct pseudo_instruction pseudo_ops[] = {
     { ".EQU", &pseudo_equ, 1 },
     { ".INCLUDE", &pseudo_include, 1 },
     { ".ORG", &pseudo_org, 1 },
+    //{ ".SYNTAX", &pseudo_syntax, 1 },
     { "", NULL, 0 }
 };
 
