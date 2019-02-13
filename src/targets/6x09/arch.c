@@ -41,10 +41,13 @@ static Instruction *locate_instruction(Line *l, int arch) {
     }
 }*/
 
+static void process_instruction_arguments(Line *line, Instruction *instr, Register *reg, Data *assembled_code) {
+    
+}
+
 static void parse_instruction(Line *l, int arch) {
     char *mnem;
     char *line;
-    char *reg_name;
     Register *reg;
     
     Instruction *i;
@@ -104,6 +107,9 @@ instruction_found:
     printf("%s\n", reg->name);
     #endif
 
+    Data *assembled_code = salloc(sizeof(Data));
+    
+    process_instruction_arguments(l, i, reg, assembled_code);
 }
 
 static void parse_6809_instruction(Line *l) {
