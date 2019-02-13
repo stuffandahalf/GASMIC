@@ -5,6 +5,8 @@
 
 #define ENDIANNESS BIG_ENDIAN
 
+#define DEFAULT_SYNTAX MOTOROLA_SYNTAX
+
 #define MC6809 (1)
 #define HD6309 (2)
 
@@ -39,7 +41,11 @@
 #define ARG_ORDER_TO_REG    (2)
 #define ARG_ORDER_INTERREG  (3)
 
+typedef uint16_t addr_t;
+
+extern addr_t address;
 extern Architecture architectures[];
+extern Register registers[];
 extern Instruction instructions[];
 
 #endif

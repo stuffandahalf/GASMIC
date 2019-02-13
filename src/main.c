@@ -9,23 +9,17 @@
 char buffer[LINEBUFFERSIZE];
 
 static void configure(int argc, char *argv[]);
-static Architecture *str_to_arch(const char arch_name[]);
 char *str_to_upper(char str[]);
 static void trim_str(char str[]);
 static void parse_line(Line *l, char *buffer);
 static void add_label(Line *l);
 static void parse_mnemonic(Line *l);
 
-struct {
-    char *out_fname;
-    char **in_fnames;
-    ssize_t in_fnamec;
-    Architecture *arch;
-} configuration;
+Config configuration;
     
 //FILE *in;
 FILE *out;
-size_t address;
+addr_t address;
 size_t line_num;
 SymTab *symtab;
 DataTab *datatab;
@@ -44,6 +38,7 @@ int main(int argc, char **argv) {
     configuration.arch = architectures;
     configuration.in_fnames = NULL;
     configuration.in_fnamec = 0;
+    configuration.syntax = DEFAULT_SYNTAX;
     address = 0;
     line_num = 1;
 
@@ -120,7 +115,7 @@ int main(int argc, char **argv) {
             #ifdef DEBUG
             printf("bytes\n");
             int i;
-            for (i = 0; i < data->contents.bytes.byte_count; i++) {
+            for (i = 0; i < data->contents.bytes.count; i++) {
                 printf(", %X", data->contents.bytes.bytes[i]);
             }
             printf("\n");
@@ -215,7 +210,7 @@ static void configure(int argc, char *argv[]) {
     configuration.in_fnamec = argc - optind;
 }
 
-static Architecture *str_to_arch(const char arch_name[]) {
+Architecture *str_to_arch(const char arch_name[]) {
     Architecture *a;
     for (a = architectures; a->name[0] != '\0'; a++) {
         if (streq(arch_name, a->name)) {
@@ -368,12 +363,19 @@ static void add_label(Line *l) {
 
 
 static void parse_mnemonic(Line *line) {
+    struct pseudo_instruction *pseudo_op;
+    
     switch(line->mnemonic[0]) {
     case '.':
         parse_pseudo_op(line);
         break;
     default:
-        configuration.arch->parse_instruction(line);
+        if ((pseudo_op = get_pseudo_op(line)) != NULL) {
+            pseudo_op->process(line);
+        }
+        else {
+            configuration.arch->parse_instruction(line);
+        }
         break;
     }
 }
