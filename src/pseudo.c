@@ -92,14 +92,16 @@ static void pseudo_include(Line *line) {
         die("Failed to open included file \"%s\" on line %ld\n", line->argv[0].val.str, line_num);
     }
     
-    //Line *new_line = salloc(sizeof(Line));
-    assemble(included_file, line);
+    Line *inc_line = salloc(sizeof(Line));
+    
+    //assemble(included_file, line);
+    assemble(included_file, inc_line);
     fclose(included_file);
     //sfree(new_line);
     
     // need to reassign argv because assemble frees it but we return back to assemble.
-    line->argc = 1;
-    line->argv = salloc(line->argc * sizeof(char *));
+    //line->argc = 1;
+    //line->argv = salloc(line->argc * sizeof(char *));
 }
 
 static void pseudo_org(Line *line) {
