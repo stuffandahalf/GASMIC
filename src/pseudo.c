@@ -34,7 +34,7 @@ static struct pseudo_instruction pseudo_ops[] = {
 struct pseudo_instruction *get_pseudo_op(Line *line) {
     struct pseudo_instruction *pseudo_op;
     for (pseudo_op = pseudo_ops; *pseudo_op->instruction != '\0'; pseudo_op++) {
-        if (streq(line->mnemonic, (*line->mnemonic == '.' ? pseudo_op->instruction : &pseudo_op->instruction[1]))) {
+        if (pseudo_op->args == line->argc && streq(line->mnemonic, (*line->mnemonic == '.' ? pseudo_op->instruction : &pseudo_op->instruction[1]))) {
             return pseudo_op;
         }
     }
