@@ -51,7 +51,8 @@ void parse_pseudo_op(Line *line) {
     }*/
     struct pseudo_instruction *pseudo_inst = get_pseudo_op(line);
     if (pseudo_inst == NULL) {
-        die("Error on line %ld: unable to find pseudo instruction %s\n", line_num, line->mnemonic);
+        //die("Error on line %ld: unable to find pseudo instruction %s\n", line_num, line->mnemonic);
+        fail("Unable to find pseudo instruction %s.\n", line->mnemonic);
     }
     pseudo_inst->process(line);
 }
@@ -60,36 +61,42 @@ static void pseudo_arch(Line *line) {
     if (datatab->first == NULL) {
         Architecture *arch = str_to_arch(line->argv[0].val.str);
         if (arch == NULL) {
-            die("Failed to locate architecture %s\n", line->argv[0].val.str);
+            //die("Failed to locate architecture %s\n", line->argv[0].val.str);
+            fail("Failed to locate architecture %s.\n", line->argv[0].val.str);
         }
         configuration.arch = arch;
         printf("%s\n", configuration.arch->name);
     }
     else {
-        die("Cannot switch architecture after code\n")
+        //die("Cannot switch architecture after code\n");
+        fail("Cannot switch architecture after code.\n");
     }
 }
 
 static void pseudo_equ(Line *line) {
     if (!(line->line_state & LABEL_STATE)) {
-        die("Error on line %ld. Pseudo instruction .EQU requires a label on the same line\n", line_num);
+        //die("Error on line %ld. Pseudo instruction .EQU requires a label on the same line\n", line_num);
+        fail("Pseudo instruction .EQU requires a label on the same line.\n");
     }
     if (line->argc != 1) {
-        die("Error on line %ld. Invalid number of arguments for pseudo instruction .EQU\n", line_num);
+        //die("Error on line %ld. Invalid number of arguments for pseudo instruction .EQU\n", line_num);
+        fail("Invalid number of arguments for pseudo instruction .EQU.\n");
     }
     
     char *num_end;
     symtab->last->value = strtol(line->argv[0].val.str, &num_end, 0);
     //if (line->argv[0] == num_end) {
     if (*num_end != '\0') {
-        die("Error on line %ld. Failed to parse given value\n", line_num);
+        //die("Error on line %ld. Failed to parse given value\n", line_num);
+        fail("Failed to parse given value.\n");
     }
 }
 
 static void pseudo_include(Line *line) {
     FILE *included_file;
     if ((included_file = fopen(line->argv[0].val.str, "r")) == NULL) {
-        die("Failed to open included file \"%s\" on line %ld\n", line->argv[0].val.str, line_num);
+        //die("Failed to open included file \"%s\" on line %ld\n", line->argv[0].val.str, line_num);
+        fail("Failed to open included file \"%s\".\n", line->argv[0].val.str);
     }
     
     Line *inc_line = salloc(sizeof(Line));
@@ -108,6 +115,7 @@ static void pseudo_org(Line *line) {
     char *lend;
     address = strtol(line->argv[0].val.str, &lend, 0);
     if (lend == line->argv[0].val.str || *lend != '\0') {
-        die("value is not a number on line %ld\n", line_num);
+        //die("value is not a number on line %ld\n", line_num);
+        fail("Value is not a number.\n");
     }
 }

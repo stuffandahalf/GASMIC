@@ -119,6 +119,8 @@ extern SymTab *symtab;
 extern DataTab *datatab;
 extern Config configuration;
 
+#define fail(msg, ...) die("\033[0;31mERROR \033[0m%ld: " msg, line_num,  ##__VA_ARGS__)
+
 void assemble(FILE *in, Line *l);
 Architecture *str_to_arch(const char arch_name[]);
 struct pseudo_instruction *get_pseudo_op(Line *line);

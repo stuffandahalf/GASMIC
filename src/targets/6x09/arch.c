@@ -11,7 +11,8 @@ static int test_instruction(Instruction *i, Line *l) {
     case ARG_ORDER_FROM_REG:
         return l->argc == 2;
     default:
-        die("Error on line %ld. Instruction %s has invalid argument order\n", line_num, i->mnemonic);
+        //die("Error on line %ld. Instruction %s has invalid argument order\n", line_num, i->mnemonic);
+        fail("Instruction %s has invalid argument order.\n", i->mnemonic);
         return 0;
     }
 }
@@ -88,18 +89,21 @@ static void parse_instruction(Line *l, int arch) {
             //Register *get_register(line->arg
             break;
         case INTEL_SYNTAX:
-            die("Intel syntax is not yet implemented\n");
+            //die("Intel syntax is not yet implemented\n");
+            fail("Intel syntax is not yet implemented.\n");
             //goto instruction_found;
             break;
         case ATT_SYNTAX:
-            die("AT&T syntax is not yet implemented");
+            //die("AT&T syntax is not yet implemented");
+            fail("AT&T syntax is not yet implemented.\n");
             break;
         }
         
 next_instruction:
         continue;
     }
-    die("Invalid instruction on line %ld\n", line_num);
+    //die("Invalid instruction on line %ld\n", line_num);
+    fail("Invalid instruction.\n");
     
 instruction_found:
     #ifdef DEBUG
@@ -107,6 +111,9 @@ instruction_found:
     printf("%s\n", reg->name);
     #endif
 
+#ifndef DEBUG
+    while(0);   //wtf
+#endif
     Data *assembled_code = salloc(sizeof(Data));
     
     process_instruction_arguments(l, i, reg, assembled_code);
