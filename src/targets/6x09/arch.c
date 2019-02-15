@@ -1,7 +1,7 @@
 #include <arch.h>
 
-extern Instruction instructions[];
-extern char *str_to_upper(char str[]);
+//extern Instruction instructions[];
+//extern char *str_to_upper(char str[]);
 
 static int test_instruction(Instruction *i, Line *l) {
     switch (i->arg_order) {
@@ -11,7 +11,8 @@ static int test_instruction(Instruction *i, Line *l) {
     case ARG_ORDER_FROM_REG:
         return l->argc == 2;
     default:
-        die("Instruction %s has invalid argument order\n", i->mnemonic);
+        //die("Error on line %ld. Instruction %s has invalid argument order\n", line_num, i->mnemonic);
+        fail("Instruction %s has invalid argument order.\n", i->mnemonic);
         return 0;
     }
 }
@@ -26,34 +27,103 @@ static Instruction *locate_instruction(Line *l, int arch) {
     return NULL;
 }
 
-static void parse_instruction(Line *l, int arch) {
-    //parse_arguments(l);
-    Instruction *i;
-    if ((i = locate_instruction(l, arch)) == NULL) {
-        die("Failed to locate instruction with mnemonic of %s on line %ld.\nCheck argument order and types\n", l->mnemonic, line_num);
+/*static void parse_arguments(Line *l) {
+    size_t i;
+    for (i = 0; i < l->argc; i++) {
+        LineArg *la = &(l->argv[i]);
+        char *c;
+        for (c = la->val.str; *c != '\0'; c++) {
+            switch (*c) {
+            case '[':
+                
+                break;
+            }
+        }
     }
+}*/
+
+static void process_instruction_arguments(Line *line, Instruction *instr, Register *reg, Data *assembled_code) {
     
-    #ifdef DEBUG
-    printf("%s, %X\n", i->mnemonic, i->base_opcode);
-    #endif
-    
-    /*Argument *source = salloc(sizeof(Argument));
-    Argument *dest = salloc(sizeof(Argument));*/
-    /*Argument *args[l->argc];
-    int j;
-    for (j = 0; j < l->argc; j++) {
-        args[j] = salloc(sizeof(Argument));
-        parse_argument(l->argv[j], args[j]);
-    }
-    
-    validate_arg_count(l, i);*/
 }
 
-void parse_6809_instruction(Line *l) {
+static void parse_instruction(Line *l, int arch) {
+    char *mnem;
+    char *line;
+    Register *reg;
+    
+    Instruction *i;
+    for (i = instructions; *i->mnemonic != '\0'; i++) {
+        if (!(i->architectures & arch)) {
+            goto next_instruction;
+        }
+        
+        switch (configuration.syntax) {
+        case MOTOROLA_SYNTAX:
+            mnem = i->mnemonic;
+            line = l->mnemonic;
+            while (*mnem != '\0' && *line != '\0') {
+                if (*mnem++ != *line++) {
+                    goto next_instruction;
+                }
+            }
+            
+            switch (i->arg_order) {
+            case ARG_ORDER_NONE:
+            case ARG_ORDER_INTERREG:
+                if (*line != '\0') {
+                    goto next_instruction;
+                }
+                goto instruction_found;
+            case ARG_ORDER_FROM_REG:
+            case ARG_ORDER_TO_REG:
+                for (reg = registers; *reg->name != '\0'; reg++) {
+                    if (streq(line, reg->name)) {
+                        goto instruction_found;
+                    }
+                }
+            }
+            
+            //printf("not fail\n");
+            //goto instruction_found;
+            //if (argc - 1 == 
+            //Register *get_register(line->arg
+            break;
+        case INTEL_SYNTAX:
+            //die("Intel syntax is not yet implemented\n");
+            fail("Intel syntax is not yet implemented.\n");
+            //goto instruction_found;
+            break;
+        case ATT_SYNTAX:
+            //die("AT&T syntax is not yet implemented");
+            fail("AT&T syntax is not yet implemented.\n");
+            break;
+        }
+        
+next_instruction:
+        continue;
+    }
+    //die("Invalid instruction on line %ld\n", line_num);
+    fail("Invalid instruction.\n");
+    
+instruction_found:
+    #ifdef DEBUG
+    printf("%s\t%X\n", i->mnemonic, i->base_opcode);
+    printf("%s\n", reg->name);
+    #endif
+
+#ifndef DEBUG
+    while(0);   //wtf
+#endif
+    Data *assembled_code = salloc(sizeof(Data));
+    
+    process_instruction_arguments(l, i, reg, assembled_code);
+}
+
+static void parse_6809_instruction(Line *l) {
     parse_instruction(l, MC6809);
 }
 
-void parse_6309_instruction(Line *l) {
+static void parse_6309_instruction(Line *l) {
     parse_instruction(l, HD6309);
 }
 
@@ -90,5 +160,6 @@ int regc = sizeof(registers) / sizeof(Register) - 1;
 Instruction instructions[] = {
     { "ABX", MC6809 | HD6309, 0x3A, ARG_ORDER_NONE, ADDR_MODE_INH, { NULL } },
     { "ADC", MC6809 | HD6309, 0x89, ARG_ORDER_TO_REG, ADDR_MODE_IMM | ADDR_MODE_DIR | ADDR_MODE_IND | ADDR_MODE_EXT, { &registers[REG_A], &registers[REG_B], NULL } },
+    { "LD", MC6809 | HD6309, 0x86, ARG_ORDER_TO_REG, ADDR_MODE_IMM | ADDR_MODE_DIR | ADDR_MODE_IND | ADDR_MODE_EXT, { &registers[REG_A], &registers[REG_B], NULL } },
     { "", 0, 0, 0, 0, {} }
 };

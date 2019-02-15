@@ -14,6 +14,11 @@
 #define ARCH_BIG_ENDIAN 1
 #define ARCH_LITTLE_ENDIAN 2
 
+#define UNKNOWN_SYNTAX  (0)
+#define MOTOROLA_SYNTAX (1)
+#define INTEL_SYNTAX    (2)
+#define ATT_SYNTAX      (3)
+
 typedef struct symtab_entry {
     char *label;
     size_t value;
@@ -33,7 +38,7 @@ typedef struct data_entry {
     union {
         Symbol *sym;
         struct {
-            uint8_t byte_count;
+            uint8_t count;
             uint8_t *bytes;
         } bytes;
     } contents;
@@ -67,6 +72,7 @@ typedef struct {
 
 typedef struct {
     uint8_t type;
+    uint8_t addr_mode;
     union {
         char *str;
         Register *reg;
@@ -77,6 +83,7 @@ typedef struct {
 #define LABEL_STATE (1)
 #define MNEMONIC_STATE (2)
 #define QUOTE_STATE (4)
+#define BRACKET_STATE (8)
 typedef struct {
     char *label;
     char *mnemonic;
@@ -93,12 +100,30 @@ typedef struct {
     int value;
 } Architecture;
 
+struct pseudo_instruction {
+    char instruction[10];
+    void (*process)(Line *line);
+    size_t args;
+};
+
+typedef struct {
+    char *out_fname;
+    char **in_fnames;
+    ssize_t in_fnamec;
+    uint8_t syntax;
+    Architecture *arch;
+} Config;
+
 extern size_t line_num;
 extern SymTab *symtab;
 extern DataTab *datatab;
+extern Config configuration;
+
+#define fail(msg, ...) die("\033[0;31mERROR \033[0m%ld: " msg, line_num,  ##__VA_ARGS__)
 
 void assemble(FILE *in, Line *l);
-void parse_arguments(Line *l);
+Architecture *str_to_arch(const char arch_name[]);
+struct pseudo_instruction *get_pseudo_op(Line *line);
 void parse_pseudo_op(Line *line);
 
 #endif
