@@ -18,12 +18,20 @@
  */
 
 static void pseudo_arch(Line *line);
+static void pseudo_set_byte(Line *line);
+static void pseudo_set_word(Line *line);
+static void pseudo_set_double(Line *line);
+static void pseudo_set_quad(Line *line);
 static void pseudo_equ(Line *line);
 static void pseudo_include(Line *line);
 static void pseudo_org(Line *line);
 
 static struct pseudo_instruction pseudo_ops[] = {
     { ".ARCH", &pseudo_arch, 1 },
+    { ".DB", &pseudo_set_byte, -1 },
+    /*{ ".DW", &pseudo_set_word, -1 },
+    { ".DD", &pseudo_set_double, -1 },
+    { ".DQ", &pseudo_set_quad, -1 },*/
     { ".EQU", &pseudo_equ, 1 },
     { ".INCLUDE", &pseudo_include, 1 },
     { ".ORG", &pseudo_org, 1 },
@@ -34,7 +42,8 @@ static struct pseudo_instruction pseudo_ops[] = {
 struct pseudo_instruction *get_pseudo_op(Line *line) {
     struct pseudo_instruction *pseudo_op;
     for (pseudo_op = pseudo_ops; *pseudo_op->instruction != '\0'; pseudo_op++) {
-        if (pseudo_op->args == line->argc && streq(line->mnemonic, (*line->mnemonic == '.' ? pseudo_op->instruction : &pseudo_op->instruction[1]))) {
+        if ((pseudo_op->args == -1 || pseudo_ops->args == line->argc)
+                && streq(line->mnemonic, (*line->mnemonic == '.' ? pseudo_op->instruction : &pseudo_op->instruction[1]))) {
             return pseudo_op;
         }
     }
@@ -71,6 +80,39 @@ static void pseudo_arch(Line *line) {
         //die("Cannot switch architecture after code\n");
         fail("Cannot switch architecture after code.\n");
     }
+}
+
+static void pseudo_set_byte(Line *line) {
+    char *send;
+    long unsigned int byte;
+    unsigned int i;
+    for (i = 0; i < line->argc; i++) {
+        byte = strtol(line->argv[i].val.str, &send, 0);
+        if (send == line->argv[i].val.str) {
+            //fail("
+            char *j;
+            for (j = line->argv[i].val.str; *j != '\0'; j++) {
+                byte = (*j) & 0xFF;
+                #ifdef DEBUG
+                printf("%lu\t", byte);
+                #endif
+                // add byte to datatab
+            }
+        }
+        else if (*send != '\0') {
+            fail("Cannot allocate bytes for %s\n", line->argv[i].val.str);
+        }
+        else {
+            byte &= 0xFF;
+            #ifdef DEBUG
+            printf("%lu\t", byte);
+            #endif
+            // add byte to datatab
+        }
+    }
+    #ifdef DEBUG
+    printf("\n");
+    #endif
 }
 
 static void pseudo_equ(Line *line) {

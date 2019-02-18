@@ -106,12 +106,10 @@ next_instruction:
     fail("Invalid instruction.\n");
     
 instruction_found:
-    #ifdef DEBUG
+#ifdef DEBUG
     printf("%s\t%X\n", i->mnemonic, i->base_opcode);
     printf("%s\n", reg->name);
-    #endif
-
-#ifndef DEBUG
+#else
     while(0);   //wtf
 #endif
     Data *assembled_code = salloc(sizeof(Data));

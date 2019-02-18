@@ -256,12 +256,13 @@ static void parse_line(Line *l, char *buffer) {
         case '\n':
         case '\t':
         case ' ':
-        case ',':
+        case ',':   // Might be worth making this seperate
             if (!(l->line_state & QUOTE_STATE) && !(l->line_state & BRACKET_STATE)) {
                 if (c != buffer) {
                     if (!(l->line_state & MNEMONIC_STATE)) { // if mnemonic is not set
                         if (*c == ',') {
-                            die("Error on line %ld. Unexpected ',' character\n", line_num);
+                            //die("Error on line %ld. Unexpected ',' character\n", line_num);
+                            fail("Unexpected ',' character.\n");
                         }
                         l->mnemonic = buffer;
                         l->line_state |= MNEMONIC_STATE;
