@@ -29,13 +29,14 @@ static struct alloced *find_memory(void *ptr) {
     struct alloced *mem;
     for (mem = alloced_mem.first; mem != NULL; mem = mem->next) {
         if (mem->address == ptr) {
-            break;
+            //break;
+            return mem;
         }
     }
-    if (mem == NULL) {
-        die("Failed to locate provided address, are you sure you salloced it?\n");
-    }
-    return mem;
+    //if (mem == NULL) {
+    die("Failed to locate provided address, are you sure you salloced it?\n");
+    //}
+    //return mem;
 }
 
 void smem_diagnostic() {
@@ -50,7 +51,7 @@ void smem_diagnostic() {
 void *salloc(size_t size) {
     struct alloced *a;
     if ((a = malloc(sizeof(struct alloced))) == NULL) {
-        die("failed to allocate storage for alloced memory\n");
+        die("Failed to allocate storage for alloced memory\n");
     }
     
     if ((a->address = malloc(size)) == NULL) {

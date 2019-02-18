@@ -271,7 +271,7 @@ static void parse_line(Line *l, char *buffer) {
                         if (l->argc == l->arg_buf_size) {
                             l->arg_buf_size += 2;
                             //srealloc(l->argv, sizeof(char *) * l->arg_buf_size);
-                            srealloc(l->argv, sizeof(LineArg) * l->arg_buf_size);
+                            l->argv = srealloc(l->argv, sizeof(LineArg) * l->arg_buf_size);
                         }
                         LineArg *la = &(l->argv[l->argc++]);
                         la->type = ARG_TYPE_NONE;

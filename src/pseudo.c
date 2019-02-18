@@ -84,17 +84,17 @@ static void pseudo_arch(Line *line) {
 
 static void pseudo_set_byte(Line *line) {
     char *send;
-    long unsigned int byte;
+    uint8_t byte;
     unsigned int i;
     for (i = 0; i < line->argc; i++) {
-        byte = strtol(line->argv[i].val.str, &send, 0);
+        byte = strtol(line->argv[i].val.str, &send, 0) & 0xFF;
         if (send == line->argv[i].val.str) {
             //fail("
             char *j;
             for (j = line->argv[i].val.str; *j != '\0'; j++) {
                 byte = (*j) & 0xFF;
                 #ifdef DEBUG
-                printf("%lu\t", byte);
+                printf("%u\t", byte);
                 #endif
                 // add byte to datatab
             }
@@ -103,9 +103,9 @@ static void pseudo_set_byte(Line *line) {
             fail("Cannot allocate bytes for %s\n", line->argv[i].val.str);
         }
         else {
-            byte &= 0xFF;
+            //byte &= 0xFF;
             #ifdef DEBUG
-            printf("%lu\t", byte);
+            printf("%u\t", byte);
             #endif
             // add byte to datatab
         }
@@ -113,6 +113,10 @@ static void pseudo_set_byte(Line *line) {
     #ifdef DEBUG
     printf("\n");
     #endif
+}
+
+static void pseudo_set_double(Line *line) {
+    
 }
 
 static void pseudo_equ(Line *line) {
