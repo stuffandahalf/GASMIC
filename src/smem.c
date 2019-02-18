@@ -1,3 +1,6 @@
+// Wrapper for memory allocation functions
+// Useful for clearing all allocated memory in the event of a failure
+
 #include <smem.h>
 
 struct alloced {
