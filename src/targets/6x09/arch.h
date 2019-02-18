@@ -3,7 +3,7 @@
 
 #include <as.h>
 
-#define ENDIANNESS BIG_ENDIAN
+#define ENDIANNESS ARCH_BIG_ENDIAN
 
 #define DEFAULT_SYNTAX MOTOROLA_SYNTAX
 

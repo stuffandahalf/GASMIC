@@ -29,9 +29,9 @@ static void pseudo_org(Line *line);
 static struct pseudo_instruction pseudo_ops[] = {
     { ".ARCH", &pseudo_arch, 1 },
     { ".DB", &pseudo_set_byte, -1 },
-    /*{ ".DW", &pseudo_set_word, -1 },
+    { ".DW", &pseudo_set_word, -1 },
     { ".DD", &pseudo_set_double, -1 },
-    { ".DQ", &pseudo_set_quad, -1 },*/
+    { ".DQ", &pseudo_set_quad, -1 },
     { ".EQU", &pseudo_equ, 1 },
     { ".INCLUDE", &pseudo_include, 1 },
     { ".ORG", &pseudo_org, 1 },
@@ -82,8 +82,50 @@ static void pseudo_arch(Line *line) {
     }
 }
 
+#define pseudo_set_data(T, line) { \
+    char *send; \
+    T number; \
+    Data *data; \
+    int i; \
+    int j; \
+    for (i = 0; i < line->argc; i++) { \
+        number = (T)strtol(line->argv[i].val.str, &send, 0); \
+        data = salloc(sizeof(Data)); \
+        data->type = DATA_TYPE_BYTES; \
+        data->next = NULL; \
+        if (send == line->argv[i].val.str) { \
+            /*data->contents.bytes.count = */\
+        } \
+        else if (*send != '\0') { \
+            fail("Cannot allocate bytes for %s\n", line->argv[i].val.str); \
+        } \
+        else { \
+            data->contents.bytes.count = sizeof(T); \
+            data->contents.bytes.array = salloc(sizeof(T)); \
+            if (ENDIANNESS == ARCH_BIG_ENDIAN) { \
+                puts("big"); \
+                for (j = sizeof(T) - 1; j >= 0; j--) { \
+                    data->contents.bytes.array[j] = number & 0xFF; \
+                    printf("%X\t", (uint8_t)(number & 0xFF)); \
+                    number >>= 8; \
+                } \
+            } \
+            else if (ENDIANNESS == ARCH_LITTLE_ENDIAN) { \
+                puts("little"); \
+                for (j = 0; j < sizeof(T); j++) { \
+                    data->contents.bytes.array[j] = number & 0xFF; \
+                    printf("%X\t", (uint8_t)(number & 0xFF)); \
+                    number >>= 8; \
+                } \
+            } \
+            printf("\n"); \
+        } \
+        add_data(data); \
+    } \
+}
+
 static void pseudo_set_byte(Line *line) {
-    char *send;
+    /*char *send;
     uint8_t byte;
     Data *data;
     unsigned int i;
@@ -113,7 +155,7 @@ static void pseudo_set_byte(Line *line) {
             #ifdef DEBUG
             printf("%u\t", byte);
             #endif
-            data->contents.bytes.count = 1;
+            data->contents.bytes.count = sizeof(uint8_t);
             data->contents.bytes.array = salloc(sizeof(uint8_t));
             data->contents.bytes.array[0] = byte;
         }
@@ -121,11 +163,20 @@ static void pseudo_set_byte(Line *line) {
     }
     #ifdef DEBUG
     printf("\n");
-    #endif
+    #endif*/
+    pseudo_set_data(uint8_t, line);
+}
+
+static void pseudo_set_word(Line *line) {
+    pseudo_set_data(uint16_t, line);
 }
 
 static void pseudo_set_double(Line *line) {
-    
+    pseudo_set_data(uint32_t, line);
+}
+
+static void pseudo_set_quad(Line *line) {
+    pseudo_set_data(uint64_t, line);
 }
 
 static void pseudo_equ(Line *line) {

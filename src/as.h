@@ -11,8 +11,8 @@
 
 #define streq(__s1, __s2) !strcmp((const char *)__s1, (const char *)__s2)
 
-#define ARCH_BIG_ENDIAN 1
-#define ARCH_LITTLE_ENDIAN 2
+#define ARCH_BIG_ENDIAN (1)
+#define ARCH_LITTLE_ENDIAN (2)
 
 #define UNKNOWN_SYNTAX  (0)
 #define MOTOROLA_SYNTAX (1)
