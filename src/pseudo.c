@@ -85,11 +85,17 @@ static void pseudo_arch(Line *line) {
 static void pseudo_set_byte(Line *line) {
     char *send;
     uint8_t byte;
+    Data *data;
     unsigned int i;
     for (i = 0; i < line->argc; i++) {
         byte = strtol(line->argv[i].val.str, &send, 0) & 0xFF;
+        data = salloc(sizeof(Data));
+        data->type = DATA_TYPE_BYTES;
+        data->next = NULL;
         if (send == line->argv[i].val.str) {
-            //fail("
+            data->contents.bytes.count = strlen(line->argv[i].val.str);
+            data->contents.bytes.array = salloc(sizeof(uint8_t) * data->contents.bytes.count);
+            uint8_t *current_byte = data->contents.bytes.array;
             char *j;
             for (j = line->argv[i].val.str; *j != '\0'; j++) {
                 byte = (*j) & 0xFF;
@@ -97,6 +103,10 @@ static void pseudo_set_byte(Line *line) {
                 printf("%u\t", byte);
                 #endif
                 // add byte to datatab
+                //data->contents.bytes.count = 1;
+                //data->contents.bytes.array = salloc(sizeof(uint8_t) * data->contents.bytes.count);
+                //data->contents.bytes.array[0] = byte;
+                *current_byte++ = byte;
             }
         }
         else if (*send != '\0') {
@@ -108,7 +118,11 @@ static void pseudo_set_byte(Line *line) {
             printf("%u\t", byte);
             #endif
             // add byte to datatab
+            data->contents.bytes.count = 1;
+            data->contents.bytes.array = salloc(sizeof(uint8_t));
+            data->contents.bytes.array[0] = byte;
         }
+        add_data(data);
     }
     #ifdef DEBUG
     printf("\n");

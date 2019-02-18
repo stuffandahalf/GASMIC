@@ -1,8 +1,5 @@
 #include <arch.h>
 
-//extern Instruction instructions[];
-//extern char *str_to_upper(char str[]);
-
 static int test_instruction(Instruction *i, Line *l) {
     switch (i->arg_order) {
     case ARG_ORDER_NONE:

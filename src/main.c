@@ -113,21 +113,24 @@ int main(int argc, char **argv) {
             break;
         case DATA_TYPE_BYTES:
             #ifdef DEBUG
-            printf("bytes\n");
+            printf("%d bytes ", data->contents.bytes.count);
             int i;
             for (i = 0; i < data->contents.bytes.count; i++) {
-                printf(", %X", data->contents.bytes.bytes[i]);
+                printf("%X ", data->contents.bytes.array[i]);
             }
             printf("\n");
             #endif
-            sfree(data->contents.bytes.bytes);
+            sfree(data->contents.bytes.array);
             break;
         default:
             #ifdef DEBUG
             puts("Garbage data");
             #endif
             break;
-        }        
+        }
+        Data *tmp = data;
+        data = data->next;
+        sfree(tmp);
     }
     sfree(datatab);
     datatab = NULL;
@@ -367,6 +370,15 @@ static void add_label(Line *l) {
     symtab->last = sym;
 }
 
+void add_data(Data *data) {
+    if (datatab->first == NULL) {
+        datatab->first = data;
+    }
+    else {
+        datatab->last->next = data;
+    }
+    datatab->last = data;
+}
 
 static void parse_mnemonic(Line *line) {
     struct pseudo_instruction *pseudo_op;

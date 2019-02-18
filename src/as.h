@@ -39,7 +39,7 @@ typedef struct data_entry {
         Symbol *sym;
         struct {
             uint8_t count;
-            uint8_t *bytes;
+            uint8_t *array;
         } bytes;
     } contents;
     struct data_entry *next;
@@ -125,5 +125,6 @@ void assemble(FILE *in, Line *l);
 Architecture *str_to_arch(const char arch_name[]);
 struct pseudo_instruction *get_pseudo_op(Line *line);
 void parse_pseudo_op(Line *line);
+void add_data(Data *data);
 
 #endif
