@@ -102,10 +102,6 @@ static void pseudo_set_byte(Line *line) {
                 #ifdef DEBUG
                 printf("%u\t", byte);
                 #endif
-                // add byte to datatab
-                //data->contents.bytes.count = 1;
-                //data->contents.bytes.array = salloc(sizeof(uint8_t) * data->contents.bytes.count);
-                //data->contents.bytes.array[0] = byte;
                 *current_byte++ = byte;
             }
         }
@@ -117,7 +113,6 @@ static void pseudo_set_byte(Line *line) {
             #ifdef DEBUG
             printf("%u\t", byte);
             #endif
-            // add byte to datatab
             data->contents.bytes.count = 1;
             data->contents.bytes.array = salloc(sizeof(uint8_t));
             data->contents.bytes.array[0] = byte;
