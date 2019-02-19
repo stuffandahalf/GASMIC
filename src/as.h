@@ -35,6 +35,7 @@ typedef struct {
 #define DATA_TYPE_BYTES 2
 typedef struct data_entry {
     uint8_t type;
+    uint64_t address;
     union {
         Symbol *sym;
         struct {
@@ -52,6 +53,7 @@ typedef struct {
 
 typedef struct {
     char name[5];
+    int width;
     int arcs;
 } Register;
 

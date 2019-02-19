@@ -89,6 +89,7 @@ static void pseudo_arch(Line *line) {
         data = salloc(sizeof(Data)); \
         data->type = DATA_TYPE_BYTES; \
         data->next = NULL; \
+        data->address = (addr_t)address; \
         if (line->argv[i].val.str[0] == '"' || line->argv[i].val.str[0] == '\'') { \
             data->contents.bytes.count = strlen(line->argv[i].val.str) - 1; \
             data->contents.bytes.array = salloc(sizeof(uint8_t) * data->contents.bytes.count); \
@@ -98,6 +99,7 @@ static void pseudo_arch(Line *line) {
                 number = (*j) & 0xFF; \
                 *current_byte++ = number; \
             } \
+            address += data->contents.bytes.count; \
         } \
         else { \
             number = (T)strtol(line->argv[i].val.str, &send, 0); \
@@ -120,6 +122,7 @@ static void pseudo_arch(Line *line) {
                     number >>= 8; \
                 } \
             } \
+            address += sizeof(T); \
         } \
         add_data(data); \
     } \
