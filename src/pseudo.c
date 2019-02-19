@@ -60,7 +60,6 @@ void parse_pseudo_op(Line *line) {
     }*/
     struct pseudo_instruction *pseudo_inst = get_pseudo_op(line);
     if (pseudo_inst == NULL) {
-        //die("Error on line %ld: unable to find pseudo instruction %s\n", line_num, line->mnemonic);
         fail("Unable to find pseudo instruction %s.\n", line->mnemonic);
     }
     pseudo_inst->process(line);
@@ -70,14 +69,12 @@ static void pseudo_arch(Line *line) {
     if (datatab->first == NULL) {
         Architecture *arch = str_to_arch(line->argv[0].val.str);
         if (arch == NULL) {
-            //die("Failed to locate architecture %s\n", line->argv[0].val.str);
             fail("Failed to locate architecture %s.\n", line->argv[0].val.str);
         }
         configuration.arch = arch;
         printf("%s\n", configuration.arch->name);
     }
     else {
-        //die("Cannot switch architecture after code\n");
         fail("Cannot switch architecture after code.\n");
     }
 }
@@ -89,81 +86,46 @@ static void pseudo_arch(Line *line) {
     int i; \
     int j; \
     for (i = 0; i < line->argc; i++) { \
-        number = (T)strtol(line->argv[i].val.str, &send, 0); \
         data = salloc(sizeof(Data)); \
         data->type = DATA_TYPE_BYTES; \
         data->next = NULL; \
-        if (send == line->argv[i].val.str) { \
-            /*data->contents.bytes.count = */\
-        } \
-        else if (*send != '\0') { \
-            fail("Cannot allocate bytes for %s\n", line->argv[i].val.str); \
+        if (line->argv[i].val.str[0] == '"' || line->argv[i].val.str[0] == '\'') { \
+            data->contents.bytes.count = strlen(line->argv[i].val.str) - 1; \
+            data->contents.bytes.array = salloc(sizeof(uint8_t) * data->contents.bytes.count); \
+            uint8_t *current_byte = data->contents.bytes.array; \
+            char *j; \
+            for (j = &line->argv[i].val.str[1]; *j != '\0'; j++) { \
+                number = (*j) & 0xFF; \
+                *current_byte++ = number; \
+            } \
         } \
         else { \
+            number = (T)strtol(line->argv[i].val.str, &send, 0); \
+            if (*send != '\0') { \
+                fail("Unrecognized data %s\n.", line->argv[i].val.str); \
+            } \
             data->contents.bytes.count = sizeof(T); \
             data->contents.bytes.array = salloc(sizeof(T)); \
             if (ENDIANNESS == ARCH_BIG_ENDIAN) { \
-                puts("big"); \
+                puts("big endian"); \
                 for (j = sizeof(T) - 1; j >= 0; j--) { \
                     data->contents.bytes.array[j] = number & 0xFF; \
-                    printf("%X\t", (uint8_t)(number & 0xFF)); \
                     number >>= 8; \
                 } \
             } \
             else if (ENDIANNESS == ARCH_LITTLE_ENDIAN) { \
-                puts("little"); \
+                puts("little endian"); \
                 for (j = 0; j < sizeof(T); j++) { \
                     data->contents.bytes.array[j] = number & 0xFF; \
-                    printf("%X\t", (uint8_t)(number & 0xFF)); \
                     number >>= 8; \
                 } \
             } \
-            printf("\n"); \
         } \
         add_data(data); \
     } \
 }
 
 static void pseudo_set_byte(Line *line) {
-    /*char *send;
-    uint8_t byte;
-    Data *data;
-    unsigned int i;
-    for (i = 0; i < line->argc; i++) {
-        byte = strtol(line->argv[i].val.str, &send, 0) & 0xFF;
-        data = salloc(sizeof(Data));
-        data->type = DATA_TYPE_BYTES;
-        data->next = NULL;
-        if (send == line->argv[i].val.str) {
-            data->contents.bytes.count = strlen(line->argv[i].val.str);
-            data->contents.bytes.array = salloc(sizeof(uint8_t) * data->contents.bytes.count);
-            uint8_t *current_byte = data->contents.bytes.array;
-            char *j;
-            for (j = line->argv[i].val.str; *j != '\0'; j++) {
-                byte = (*j) & 0xFF;
-                #ifdef DEBUG
-                printf("%u\t", byte);
-                #endif
-                *current_byte++ = byte;
-            }
-        }
-        else if (*send != '\0') {
-            fail("Cannot allocate bytes for %s\n", line->argv[i].val.str);
-        }
-        else {
-            //byte &= 0xFF;
-            #ifdef DEBUG
-            printf("%u\t", byte);
-            #endif
-            data->contents.bytes.count = sizeof(uint8_t);
-            data->contents.bytes.array = salloc(sizeof(uint8_t));
-            data->contents.bytes.array[0] = byte;
-        }
-        add_data(data);
-    }
-    #ifdef DEBUG
-    printf("\n");
-    #endif*/
     pseudo_set_data(uint8_t, line);
 }
 
@@ -181,11 +143,9 @@ static void pseudo_set_quad(Line *line) {
 
 static void pseudo_equ(Line *line) {
     if (!(line->line_state & LABEL_STATE)) {
-        //die("Error on line %ld. Pseudo instruction .EQU requires a label on the same line\n", line_num);
         fail("Pseudo instruction .EQU requires a label on the same line.\n");
     }
     if (line->argc != 1) {
-        //die("Error on line %ld. Invalid number of arguments for pseudo instruction .EQU\n", line_num);
         fail("Invalid number of arguments for pseudo instruction .EQU.\n");
     }
     
@@ -193,7 +153,6 @@ static void pseudo_equ(Line *line) {
     symtab->last->value = strtol(line->argv[0].val.str, &num_end, 0);
     //if (line->argv[0] == num_end) {
     if (*num_end != '\0') {
-        //die("Error on line %ld. Failed to parse given value\n", line_num);
         fail("Failed to parse given value.\n");
     }
 }
@@ -201,7 +160,6 @@ static void pseudo_equ(Line *line) {
 static void pseudo_include(Line *line) {
     FILE *included_file;
     if ((included_file = fopen(line->argv[0].val.str, "r")) == NULL) {
-        //die("Failed to open included file \"%s\" on line %ld\n", line->argv[0].val.str, line_num);
         fail("Failed to open included file \"%s\".\n", line->argv[0].val.str);
     }
     
@@ -221,7 +179,6 @@ static void pseudo_org(Line *line) {
     char *lend;
     address = strtol(line->argv[0].val.str, &lend, 0);
     if (lend == line->argv[0].val.str || *lend != '\0') {
-        //die("value is not a number on line %ld\n", line_num);
         fail("Value is not a number.\n");
     }
 }

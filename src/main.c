@@ -241,9 +241,10 @@ static void parse_line(Line *l, char *buffer) {
     for (c = buffer; *c != '\0'; c++) {
         switch (*c) {
         case '"':
+        case '\'':
             l->line_state ^= QUOTE_STATE;
             if (l->line_state & QUOTE_STATE) {
-                buffer++;
+                //buffer++;
             }
             else {
                 *c = '\0';
@@ -251,7 +252,7 @@ static void parse_line(Line *l, char *buffer) {
             break;
         case ']':
             if (!(l->line_state & BRACKET_STATE)) {
-                die("Error on line %ld\n. ']' requires '[' first.", line_num);
+                fail("']' requires '[' first.");
             }
         case '[':
             l->line_state ^= BRACKET_STATE;
@@ -264,7 +265,6 @@ static void parse_line(Line *l, char *buffer) {
                 if (c != buffer) {
                     if (!(l->line_state & MNEMONIC_STATE)) { // if mnemonic is not set
                         if (*c == ',') {
-                            //die("Error on line %ld. Unexpected ',' character\n", line_num);
                             fail("Unexpected ',' character.\n");
                         }
                         l->mnemonic = buffer;
@@ -289,7 +289,6 @@ static void parse_line(Line *l, char *buffer) {
             break;
         case ':':
             if (l->line_state & MNEMONIC_STATE) {
-                //die("Error on line %ld. Label must occur at the beginning of a line.\n", line_num);
                 fail("Label must occur at the beginning of a line.\n");
             }
             l->label = buffer;
@@ -308,12 +307,11 @@ static void parse_line(Line *l, char *buffer) {
         //buffer++;     // Why doesnt this work?
     }
     if (l->line_state & QUOTE_STATE) {
-        //die("Error on line %ld. Unmatched quote\n", line_num);
         fail("Unmatched quote.\n");
     }
     if (l->line_state & BRACKET_STATE) {
         //die("Error on line %ld. Unmatched bracket\n", line_num);
-        fail("unmatched bracket.\n");
+        fail("Unmatched bracket.\n");
     }
 }
 
@@ -323,7 +321,6 @@ static void add_label(Line *l) {
     sym->next = NULL;
     if (l->label[0] == '.') {
         if (symtab->last == NULL) {
-            //die("Error on line %ld. local label cannot be defined before any non-local labels.\n", line_num);
             fail("Local label cannot be defined before any non-local labels.\n");
         }
         
@@ -356,7 +353,6 @@ static void add_label(Line *l) {
     Symbol *test_sym;
     for (test_sym = symtab->first; test_sym != NULL; test_sym = test_sym->next) {
         if (streq(test_sym->label, sym->label)) {
-            //die("Error on line %ld. Symbol \"%s\" is already defined\n", line_num, test_sym->label);
             fail("Symbol \"%s\" is already defined.\n", test_sym->label);
         }
     }
