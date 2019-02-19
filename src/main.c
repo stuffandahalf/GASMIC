@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
     Data *data = datatab->first;
     while (data != NULL) {
         #ifdef DEBUG
-        printf("data address: %ld,  ", data->address);
+        printf("data address: %lX,  ", data->address);
         #endif
         switch (data->type) {
         case DATA_TYPE_LABEL:

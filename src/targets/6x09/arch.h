@@ -48,4 +48,6 @@ extern Architecture architectures[];
 extern Register registers[];
 extern Instruction instructions[];
 
+#define REGISTER(reg) &registers[reg]
+
 #endif
