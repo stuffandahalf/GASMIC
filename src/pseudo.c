@@ -91,34 +91,34 @@ static void pseudo_arch(Line *line) {
         data->next = NULL; \
         data->address = (addr_t)address; \
         if (line->argv[i].val.str[0] == '"' || line->argv[i].val.str[0] == '\'') { \
-            data->contents.bytes.count = strlen(line->argv[i].val.str) - 1; \
-            data->contents.bytes.array = salloc(sizeof(uint8_t) * data->contents.bytes.count); \
-            uint8_t *current_byte = data->contents.bytes.array; \
+            data->bytec = strlen(line->argv[i].val.str) - 1; \
+            data->contents.bytes = salloc(sizeof(uint8_t) * data->bytec); \
+            uint8_t *current_byte = data->contents.bytes; \
             char *j; \
             for (j = &line->argv[i].val.str[1]; *j != '\0'; j++) { \
                 number = (*j) & 0xFF; \
                 *current_byte++ = number; \
             } \
-            address += data->contents.bytes.count; \
+            address += data->bytec; \
         } \
         else { \
             number = (T)strtol(line->argv[i].val.str, &send, 0); \
             if (*send != '\0') { \
                 fail("Unrecognized data %s\n.", line->argv[i].val.str); \
             } \
-            data->contents.bytes.count = sizeof(T); \
-            data->contents.bytes.array = salloc(sizeof(T)); \
+            data->bytec = sizeof(T); \
+            data->contents.bytes = salloc(sizeof(T)); \
             if (ENDIANNESS == ARCH_BIG_ENDIAN) { \
                 puts("big endian"); \
                 for (j = sizeof(T) - 1; j >= 0; j--) { \
-                    data->contents.bytes.array[j] = number & 0xFF; \
+                    data->contents.bytes[j] = number & 0xFF; \
                     number >>= 8; \
                 } \
             } \
             else if (ENDIANNESS == ARCH_LITTLE_ENDIAN) { \
                 puts("little endian"); \
                 for (j = 0; j < sizeof(T); j++) { \
-                    data->contents.bytes.array[j] = number & 0xFF; \
+                    data->contents.bytes[j] = number & 0xFF; \
                     number >>= 8; \
                 } \
             } \

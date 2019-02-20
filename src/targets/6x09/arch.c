@@ -24,8 +24,10 @@ static Instruction *locate_instruction(Line *l, int arch) {
 }
 
 static void process_instruction(Line *line, Instruction *instr, Register *reg, Data *data) {
+    data->type = DATA_TYPE_BYTES;
+    data->address = address;
     if (configuration.syntax == MOTOROLA_SYNTAX) {
-        switch (instr->arg_order) {
+        /*switch (instr->arg_order) {
         case ARG_ORDER_NONE:
             if (line->argc != 0) {
                 fail("Too many arguments.\n");
@@ -47,52 +49,129 @@ static void process_instruction(Line *line, Instruction *instr, Register *reg, D
             else if (line->argc > 1) {
                 fail("Too many arguments.\n");
             }
-        }
+        }*/
         
         if (instr->address_modes == ADDR_MODE_INH) {
             if (reg != NULL) {
                 fail("Instruction %s does not require a register.\n", instr->mnemonic);
             }
             data->type = DATA_TYPE_BYTES;
-            data->contents.bytes.count = instr->base_opcode & 0xFF00 ? 2 : 1;
-            data->contents.bytes.array = salloc(sizeof(uint8_t) * data->contents.bytes.count);
+            data->bytec = instr->base_opcode & 0xFF00 ? 2 : 1;
+            data->contents.bytes = salloc(sizeof(uint8_t) * data->bytec);
             uint16_t opcode = instr->base_opcode;
             int i;
-            for (i = data->contents.bytes.count - 1; i >= 0; i--) {
-                data->contents.bytes.array[i] = opcode & 0xFF;
+            for (i = data->bytec - 1; i >= 0; i--) {
+                data->contents.bytes[i] = opcode & 0xFF;
                 opcode >>= 8;
             }
-            address += data->contents.bytes.count;
+            address += data->bytec;
             add_data(data);
             return;
         }
         
         uint16_t base_opcode = instr->base_opcode;
+        uint8_t mode_count = 0;
         Register **r;
         for (r = instr->registers; *r != NULL && *r != reg; r++) {
-            base_opcode += 0x40;
+            //base_opcode += 0x40;
+            uint8_t modes = instr->address_modes;
+            while (modes != 0) {
+                if (modes & 1) {
+                    mode_count++;
+                    base_opcode += 0x10;
+                }
+                modes >>= 1;
+            }
         }
-        printf("base opcode = %X\n", base_opcode);
+        printf("base opcode = 0x%X\n", base_opcode);
         
-        
-        
-        /*uint8_t mode_count = 0;
-        uint8_t instr->address_modes;
-        while (instr != 0) {
-            mode_count++;
-            instr >>= 1;
-        }
-        
+        int i;
+        char *c;
+        char *endl;
+        long l;
+        uint8_t arg_state = 0;
+        uint8_t addr_mode = 0;
         switch (instr->arg_order) {
         case ARG_ORDER_FROM_REG:
-            
-            return;
         case ARG_ORDER_TO_REG:
-            return;
-        case ARG_ORDER_INTERREG:
-            return;
-        }*/
+            c = line->argv[0].val.str;
+            switch (*c) {
+            case '#':
+                if (!(instr->address_modes & ADDR_MODE_IMM)) {
+                    fail("Instruction does not support immediate addressing.\n");
+                }
+                addr_mode = ADDR_MODE_IMM;
+                c++;
+                //data->type = DATA_TYPE_BYTES;
+                l = strtol(c, &endl, 0);
+                data->bytec = ((0xFF00 & base_opcode) ? 2 : 1);
+                address += data->bytec;
+                if (endl == c) {
+                    data->contents.bytes = salloc(sizeof(uint8_t) * data->bytec);
+                    for (i = data->bytec - 1; i >= 0; i--) {
+                        data->contents.bytes[i] = base_opcode & 0xFF;
+                        base_opcode >>= 8;
+                    }
+                    data->next = salloc(sizeof(Data));
+                    
+                    Data *next = data->next;
+                    next->bytec = reg->width;
+                    next->address = address;
+                    next->type = DATA_TYPE_LABEL;
+                    if (*c == '.') {
+                        next->contents.symbol = malloc(sizeof(char) * (strlen(symtab->last_parent->label) + strlen(c) + 1));
+                        if (next->contents.symbol == NULL) {
+                            fail("Failed to allocate label buffer.\n");
+                        }
+                        strcpy(next->contents.symbol, symtab->last_parent->label);
+                        char *label = next->contents.symbol;
+                        while (*label != '\0') label++;
+                        strcpy(label, c);
+                    }
+                    else {
+                        next->contents.symbol = strdup(c);
+                    }
+                    next->next = NULL;
+                    address += reg->width;
+                }
+                else if (endl != c && *endl != '\0') {
+                    fail("Unrecognized argument.\n");
+                }
+                else {
+                    data->bytec += reg->width;
+                    data->contents.bytes = salloc(sizeof(uint8_t) * data->bytec);
+                }
+                printf("%d\n", data->bytec);
+                
+                puts("Immediate argument");
+                break;
+            case '[':
+                
+                addr_mode = ADDR_MODE_IND;
+                puts("Indexed instruction");
+                break;
+            //default:
+                
+            }
+            /*for (c = line->argv[0].val.str; *c != '\0'; c++) {
+                switch (*c) {
+                case '$':
+                    if (c == line->argv[0].val.str) {
+                        addr_mode = ADDR_MODE_IMM;
+                        printf("
+                    }
+                    else {
+                        fail("Invalid character '$'.\n");
+                    }
+                    break;
+                }
+            }*/
+            
+            break;
+        }
     }
+    
+    add_data(data);
 }
 
 static void parse_instruction(Line *l, int arch) {

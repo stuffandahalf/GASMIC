@@ -107,20 +107,20 @@ int main(int argc, char **argv) {
         switch (data->type) {
         case DATA_TYPE_LABEL:
             #ifdef DEBUG
-            printf("label\n%s\n", data->contents.sym->label);
+            printf("%d bytes label \"%s\"\n", data->bytec, data->contents.symbol);
             #endif
-            free(data->contents.sym);
+            free(data->contents.symbol);
             break;
         case DATA_TYPE_BYTES:
             #ifdef DEBUG
-            printf("%d bytes ", data->contents.bytes.count);
+            printf("%d bytes ", data->bytec);
             int i;
-            for (i = 0; i < data->contents.bytes.count; i++) {
-                printf("%X ", data->contents.bytes.array[i]);
+            for (i = 0; i < data->bytec; i++) {
+                printf("%X ", data->contents.bytes[i]);
             }
             printf("\n");
             #endif
-            sfree(data->contents.bytes.array);
+            sfree(data->contents.bytes);
             break;
         default:
             #ifdef DEBUG
@@ -374,6 +374,11 @@ void add_data(Data *data) {
         datatab->last->next = data;
     }
     datatab->last = data;
+    Data *next = datatab->last->next;
+    while (next != NULL) {
+        datatab->last = next;
+        next = next->next;
+    }
 }
 
 static void parse_mnemonic(Line *line) {

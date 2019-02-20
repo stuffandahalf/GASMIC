@@ -36,12 +36,10 @@ typedef struct {
 typedef struct data_entry {
     uint8_t type;
     uint64_t address;
+    uint8_t bytec;
     union {
-        Symbol *sym;
-        struct {
-            uint8_t count;
-            uint8_t *array;
-        } bytes;
+        char *symbol;
+        uint8_t *bytes;
     } contents;
     struct data_entry *next;
 } Data;
@@ -71,6 +69,7 @@ typedef struct {
 #define ARG_TYPE_NONE 0
 #define ARG_TYPE_REG  1
 #define ARG_TYPE_SYM  2
+#define ARG_STATE_BRACKET 1
 
 typedef struct {
     uint8_t type;
