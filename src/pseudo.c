@@ -181,7 +181,7 @@ static void pseudo_include(Line *line) {
 static void pseudo_org(Line *line) {
     char *lend;
     address = strtol(line->argv[0].val.str, &lend, 0);
-    if (lend != line->argv[0].val.str || *lend != '\0') {
+    if (lend == line->argv[0].val.str || *lend != '\0') {
         fail("Value is not a number.\n");
     }
     else if (lend == line->argv[0].val.str) {
