@@ -16,7 +16,7 @@ static struct {
     .last = NULL
 };
 
-void release() {
+void release(void) {
     struct alloced *a = alloced_mem.first;
     while (a != NULL) {
         struct alloced *tmp = a;
@@ -42,7 +42,7 @@ static struct alloced *find_memory(void *ptr) {
     //return mem;
 }
 
-void smem_diagnostic() {
+void smem_diagnostic(void) {
     struct alloced *a = alloced_mem.first;
     while (a != NULL) {
         printf("%p\n", a->address);

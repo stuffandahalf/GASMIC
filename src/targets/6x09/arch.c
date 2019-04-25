@@ -286,7 +286,7 @@ int regc = sizeof(registers) / sizeof(Register) - 1;
 #endif
 
 Instruction instructions[] = {
-/*  mnemonic     architectures     opcode   argument order                   addressing modes                                   allowed registers */
+/*  mnemonic     architectures     opcode   argument order      addressing modes                                                allowed registers */
     { "ABX",    MC6809 | HD6309,    0x3A,   ARG_ORDER_NONE,     ADDR_MODE_INH,                                                  { NULL } },
     { "ADC",    MC6809 | HD6309,    0x89,   ARG_ORDER_TO_REG,   ADDR_MODE_IMM | ADDR_MODE_DIR | ADDR_MODE_IND | ADDR_MODE_EXT,  { REGISTER(REG_A), REGISTER(REG_B), NULL } },
     { "ADC",    HD6309,             0x1089, ARG_ORDER_TO_REG,   ADDR_MODE_IMM | ADDR_MODE_DIR | ADDR_MODE_IND | ADDR_MODE_EXT,  { REGISTER(REG_D), NULL } },
@@ -373,12 +373,12 @@ Instruction instructions[] = {
     { "SWI2",   MC6809 | HD6309,    0x103F, ARG_ORDER_NONE,     ADDR_MODE_INH,                                                  { NULL } },
     { "SWI3",   MC6809 | HD6309,    0x113F, ARG_ORDER_NONE,     ADDR_MODE_INH,                                                  { NULL } },
     
-    { "TSTA",   MC6809 | HD6309,    0x4D,   ARG_ORDER_NONE,     ADDR_MODE_INH, { NULL } },
-    { "TSTB",   MC6809 | HD6309,    0x5D,   ARG_ORDER_NONE,     ADDR_MODE_INH, { NULL } },
-    { "TSTD",   HD6309,             0x104D, ARG_ORDER_NONE,     ADDR_MODE_INH, { NULL } },
-    { "TSTE",   HD6309,             0x114D, ARG_ORDER_NONE,     ADDR_MODE_INH, { NULL } },
-    { "TSTF",   HD6309,             0x115D, ARG_ORDER_NONE,     ADDR_MODE_INH, { NULL } },
-    { "TSTW",   HD6309,             0x105D, ARG_ORDER_NONE,     ADDR_MODE_INH, { NULL } },
+    { "TSTA",   MC6809 | HD6309,    0x4D,   ARG_ORDER_NONE,     ADDR_MODE_INH,                                                  { NULL } },
+    { "TSTB",   MC6809 | HD6309,    0x5D,   ARG_ORDER_NONE,     ADDR_MODE_INH,                                                  { NULL } },
+    { "TSTD",   HD6309,             0x104D, ARG_ORDER_NONE,     ADDR_MODE_INH,                                                  { NULL } },
+    { "TSTE",   HD6309,             0x114D, ARG_ORDER_NONE,     ADDR_MODE_INH,                                                  { NULL } },
+    { "TSTF",   HD6309,             0x115D, ARG_ORDER_NONE,     ADDR_MODE_INH,                                                  { NULL } },
+    { "TSTW",   HD6309,             0x105D, ARG_ORDER_NONE,     ADDR_MODE_INH,                                                  { NULL } },
     
     { "LD",     MC6809 | HD6309,    0x86,   ARG_ORDER_TO_REG,   ADDR_MODE_IMM | ADDR_MODE_DIR | ADDR_MODE_IND | ADDR_MODE_EXT,  { REGISTER(REG_A), REGISTER(REG_B), NULL } },
     { "LD",     HD6309,             0x1186, ARG_ORDER_TO_REG,   ADDR_MODE_IMM | ADDR_MODE_DIR | ADDR_MODE_IND | ADDR_MODE_EXT,  { REGISTER(REG_E), REGISTER(REG_F), NULL } },

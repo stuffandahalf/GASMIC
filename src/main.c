@@ -26,7 +26,7 @@ DataTab *datatab;
 //SymTab *undefined_symtab;
 
 #ifdef DEBUG
-extern void smem_diagnostic();
+extern void smem_diagnostic(void);
 #endif
 
 int main(int argc, char **argv) {

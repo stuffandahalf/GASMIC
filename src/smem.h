@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void release();
+void release(void);
 void *salloc(size_t size);
 void *srealloc(void *ptr, size_t size);
 void sfree(void *ptr);
