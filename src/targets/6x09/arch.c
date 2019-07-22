@@ -55,6 +55,10 @@ static void process_instruction(Line *line, Instruction *instr, Register *reg, D
             if (reg != NULL) {
                 fail("Instruction %s does not require a register.\n", instr->mnemonic);
             }
+            printdf("argument type is %s\n", line->argv->val.str);
+            if (line->argv->type != ARG_TYPE_NONE) {
+                fail("Instruction %s does not require an argument.\n", instr->mnemonic);
+            }
             data->type = DATA_TYPE_BYTES;
             data->bytec = instr->base_opcode & 0xFF00 ? 2 : 1;
             data->contents.bytes = salloc(sizeof(uint8_t) * data->bytec);
@@ -232,9 +236,9 @@ next_instruction:
     
 instruction_found:
 #ifdef DEBUG
-    printf("%s\t%X\n", i->mnemonic, i->base_opcode);
+    printdf("%s\t%X\n", i->mnemonic, i->base_opcode);
     if (reg != NULL) {
-        printf("%s\n", (*reg)->name);
+        printdf("%s\n", (*reg)->name);
     }
 #else
     while(0);   //wtf
@@ -282,7 +286,7 @@ Register registers[] = {
     { "", 0, 0 }
 };
 #ifdef DEBUG
-int regc = sizeof(registers) / sizeof(Register) - 1;
+const int regc = sizeof(registers) / sizeof(Register) - 1;
 #endif
 
 Instruction instructions[] = {

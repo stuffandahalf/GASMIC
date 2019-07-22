@@ -11,6 +11,12 @@
 
 #define streq(__s1, __s2) !strcmp((const char *)__s1, (const char *)__s2)
 
+#ifdef DEBUG
+#define printdf(fmt, ...) printf("[%s:%d] >> " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#else
+#define printdf(fmt, ...)
+#endif
+
 #define ARCH_BIG_ENDIAN (1)
 #define ARCH_LITTLE_ENDIAN (2)
 
@@ -69,11 +75,12 @@ typedef struct {
 #define ARG_TYPE_NONE 0
 #define ARG_TYPE_REG  1
 #define ARG_TYPE_SYM  2
+#define ARG_TYPE_STR  3
 #define ARG_STATE_BRACKET 1
 
 typedef struct {
     uint8_t type;
-    uint8_t addr_mode;
+    //uint8_t addr_mode;
     union {
         char *str;
         Register *reg;

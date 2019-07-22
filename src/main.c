@@ -106,9 +106,7 @@ int main(int argc, char **argv) {
         #endif
         switch (data->type) {
         case DATA_TYPE_LABEL:
-            #ifdef DEBUG
-            printf("%d bytes label \"%s\"\n", data->bytec, data->contents.symbol);
-            #endif
+            printdf("%d bytes label \"%s\"\n", data->bytec, data->contents.symbol);
             free(data->contents.symbol);
             break;
         case DATA_TYPE_BYTES:
@@ -123,9 +121,7 @@ int main(int argc, char **argv) {
             sfree(data->contents.bytes);
             break;
         default:
-            #ifdef DEBUG
-            puts("Garbage data");
-            #endif
+            printdf("Garbage data.\n");
             break;
         }
         Data *tmp = data;
@@ -160,7 +156,7 @@ void assemble(FILE *in, Line *l) {
                 if (l->line_state & LABEL_STATE) {
                     puts("\t");
                 }
-                printf("%s", l->mnemonic);
+                printdf("%s", l->mnemonic);
             }
             int i;
             for (i = 0; i < l->argc; i++) {
@@ -277,7 +273,7 @@ static void parse_line(Line *l, char *buffer) {
                             l->argv = srealloc(l->argv, sizeof(LineArg) * l->arg_buf_size);
                         }
                         LineArg *la = &(l->argv[l->argc++]);
-                        la->type = ARG_TYPE_NONE;
+                        la->type = ARG_TYPE_STR;
                         la->val.str = buffer;
                     }
                     
@@ -296,9 +292,7 @@ static void parse_line(Line *l, char *buffer) {
             buffer = c;
             buffer++;
             
-            #ifdef DEBUG
-            printf("parsed literal label = %s\n", l->label);
-            #endif
+            printdf("parsed literal label = %s\n", l->label);
             l->line_state |= LABEL_STATE;
             break;
         case ';':
@@ -344,9 +338,7 @@ static void add_label(Line *l) {
         symtab->last_parent = sym;
     }
     
-    #ifdef DEBUG
-    printf("Parsed label = %s\n", sym->label);
-    #endif
+    printdf("Parsed label = %s\n", sym->label);
     
     sym->value = address;
     
