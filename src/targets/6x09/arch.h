@@ -50,4 +50,6 @@ extern Instruction instructions[];
 
 #define REGISTER(reg) &registers[reg]
 
+void init_target(void);
+
 #endif

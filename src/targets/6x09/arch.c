@@ -1,5 +1,9 @@
 #include <arch.h>
 
+void init_target(void) {
+    
+}
+
 static int test_instruction(Instruction *i, Line *l) {
     switch (i->arg_order) {
     case ARG_ORDER_NONE:
@@ -23,156 +27,148 @@ static Instruction *locate_instruction(Line *l, int arch) {
     return NULL;
 }
 
-static void process_instruction(Line *line, Instruction *instr, Register *reg, Data *data) {
-    data->type = DATA_TYPE_BYTES;
-    data->address = address;
-    if (configuration.syntax == MOTOROLA_SYNTAX) {
-        /*switch (instr->arg_order) {
-        case ARG_ORDER_NONE:
-            if (line->argc != 0) {
-                fail("Too many arguments.\n");
+static void process_instruction_motorola(Line *line, Instruction *instr, Register *reg, Data *data) {
+    if (instr->address_modes == ADDR_MODE_INH) {
+        if (reg != NULL) {
+            fail("Instruction %s does not require a register.\n", instr->mnemonic);
+        }
+        printdf("argument type is %s\n", line->argv->val.str);
+        if (line->argv->type != ARG_TYPE_NONE) {
+            fail("Instruction %s does not require an argument.\n", instr->mnemonic);
+        }
+        data->type = DATA_TYPE_BYTES;
+        data->bytec = instr->base_opcode & 0xFF00 ? 2 : 1;
+        data->contents.bytes = salloc(sizeof(uint8_t) * data->bytec);
+        uint16_t opcode = instr->base_opcode;
+        int i;
+        for (i = data->bytec - 1; i >= 0; i--) {
+            data->contents.bytes[i] = opcode & 0xFF;
+            opcode >>= 8;
+        }
+        address += data->bytec;
+        add_data(data);
+        return;
+    }
+    
+    uint16_t base_opcode = instr->base_opcode;
+    uint8_t mode_count = 0;
+    Register **r;
+    for (r = instr->registers; *r != NULL && *r != reg; r++) {
+        //base_opcode += 0x40;
+        uint8_t modes = instr->address_modes;
+        while (modes != 0) {
+            if (modes & 1) {
+                mode_count++;
+                base_opcode += 0x10;
             }
+            modes >>= 1;
+        }
+    }
+    printf("base opcode = 0x%X\n", base_opcode);
+    
+    int i;
+    char *c;
+    char *endl;
+    long l;
+    uint8_t arg_state = 0;
+    uint8_t addr_mode = 0;
+    switch (instr->arg_order) {
+    case ARG_ORDER_FROM_REG:
+    case ARG_ORDER_TO_REG:
+        c = line->argv[0].val.str;
+        switch (*c) {
+        case '#':
+            if (!(instr->address_modes & ADDR_MODE_IMM)) {
+                fail("Instruction does not support immediate addressing.\n");
+            }
+            addr_mode = ADDR_MODE_IMM;
+            c++;
+            //data->type = DATA_TYPE_BYTES;
+            l = strtol(c, &endl, 0);
+            data->bytec = ((0xFF00 & base_opcode) ? 2 : 1);
+            address += data->bytec;
+            if (endl == c) {
+                data->contents.bytes = salloc(sizeof(uint8_t) * data->bytec);
+                for (i = data->bytec - 1; i >= 0; i--) {
+                    data->contents.bytes[i] = base_opcode & 0xFF;
+                    base_opcode >>= 8;
+                }
+                data->next = salloc(sizeof(Data));
+                
+                Data *next = data->next;
+                next->bytec = reg->width;
+                next->address = address;
+                next->type = DATA_TYPE_LABEL;
+                if (*c == '.') {
+                    next->contents.symbol = malloc(sizeof(char) * (strlen(symtab->last_parent->label) + strlen(c) + 1));
+                    if (next->contents.symbol == NULL) {
+                        fail("Failed to allocate label buffer.\n");
+                    }
+                    strcpy(next->contents.symbol, symtab->last_parent->label);
+                    char *label = next->contents.symbol;
+                    while (*label != '\0') label++;
+                    strcpy(label, c);
+                }
+                else {
+                    next->contents.symbol = strdup(c);
+                }
+                next->next = NULL;
+                address += reg->width;
+            }
+            else if (endl != c && *endl != '\0') {
+                fail("Unrecognized argument.\n");
+            }
+            else {
+                data->bytec += reg->width;
+                data->contents.bytes = salloc(sizeof(uint8_t) * data->bytec);
+            }
+            printf("%d\n", data->bytec);
+            
+            puts("Immediate argument");
             break;
-        case ARG_ORDER_INTERREG:
-            if (line->argc < 2) {
-                fail("Insufficient arguments.\n");
-            }
-            else if (line->argc > 2) {
-                fail("Too many arguments.\n");
-            }
+        case '[':
+            
+            addr_mode = ADDR_MODE_IND;
+            puts("Indexed instruction");
             break;
-        case ARG_ORDER_FROM_REG:
-        case ARG_ORDER_TO_REG:
-            if (line->argc < 1) {
-                fail("Insufficient arguments.\n");
-            }
-            else if (line->argc > 1) {
-                fail("Too many arguments.\n");
+        //default:
+            
+        }
+        /*for (c = line->argv[0].val.str; *c != '\0'; c++) {
+            switch (*c) {
+            case '$':
+                if (c == line->argv[0].val.str) {
+                    addr_mode = ADDR_MODE_IMM;
+                    printf("
+                }
+                else {
+                    fail("Invalid character '$'.\n");
+                }
+                break;
             }
         }*/
         
-        if (instr->address_modes == ADDR_MODE_INH) {
-            if (reg != NULL) {
-                fail("Instruction %s does not require a register.\n", instr->mnemonic);
-            }
-            printdf("argument type is %s\n", line->argv->val.str);
-            if (line->argv->type != ARG_TYPE_NONE) {
-                fail("Instruction %s does not require an argument.\n", instr->mnemonic);
-            }
-            data->type = DATA_TYPE_BYTES;
-            data->bytec = instr->base_opcode & 0xFF00 ? 2 : 1;
-            data->contents.bytes = salloc(sizeof(uint8_t) * data->bytec);
-            uint16_t opcode = instr->base_opcode;
-            int i;
-            for (i = data->bytec - 1; i >= 0; i--) {
-                data->contents.bytes[i] = opcode & 0xFF;
-                opcode >>= 8;
-            }
-            address += data->bytec;
-            add_data(data);
-            return;
-        }
-        
-        uint16_t base_opcode = instr->base_opcode;
-        uint8_t mode_count = 0;
-        Register **r;
-        for (r = instr->registers; *r != NULL && *r != reg; r++) {
-            //base_opcode += 0x40;
-            uint8_t modes = instr->address_modes;
-            while (modes != 0) {
-                if (modes & 1) {
-                    mode_count++;
-                    base_opcode += 0x10;
-                }
-                modes >>= 1;
-            }
-        }
-        printf("base opcode = 0x%X\n", base_opcode);
-        
-        int i;
-        char *c;
-        char *endl;
-        long l;
-        uint8_t arg_state = 0;
-        uint8_t addr_mode = 0;
-        switch (instr->arg_order) {
-        case ARG_ORDER_FROM_REG:
-        case ARG_ORDER_TO_REG:
-            c = line->argv[0].val.str;
-            switch (*c) {
-            case '#':
-                if (!(instr->address_modes & ADDR_MODE_IMM)) {
-                    fail("Instruction does not support immediate addressing.\n");
-                }
-                addr_mode = ADDR_MODE_IMM;
-                c++;
-                //data->type = DATA_TYPE_BYTES;
-                l = strtol(c, &endl, 0);
-                data->bytec = ((0xFF00 & base_opcode) ? 2 : 1);
-                address += data->bytec;
-                if (endl == c) {
-                    data->contents.bytes = salloc(sizeof(uint8_t) * data->bytec);
-                    for (i = data->bytec - 1; i >= 0; i--) {
-                        data->contents.bytes[i] = base_opcode & 0xFF;
-                        base_opcode >>= 8;
-                    }
-                    data->next = salloc(sizeof(Data));
-                    
-                    Data *next = data->next;
-                    next->bytec = reg->width;
-                    next->address = address;
-                    next->type = DATA_TYPE_LABEL;
-                    if (*c == '.') {
-                        next->contents.symbol = malloc(sizeof(char) * (strlen(symtab->last_parent->label) + strlen(c) + 1));
-                        if (next->contents.symbol == NULL) {
-                            fail("Failed to allocate label buffer.\n");
-                        }
-                        strcpy(next->contents.symbol, symtab->last_parent->label);
-                        char *label = next->contents.symbol;
-                        while (*label != '\0') label++;
-                        strcpy(label, c);
-                    }
-                    else {
-                        next->contents.symbol = strdup(c);
-                    }
-                    next->next = NULL;
-                    address += reg->width;
-                }
-                else if (endl != c && *endl != '\0') {
-                    fail("Unrecognized argument.\n");
-                }
-                else {
-                    data->bytec += reg->width;
-                    data->contents.bytes = salloc(sizeof(uint8_t) * data->bytec);
-                }
-                printf("%d\n", data->bytec);
-                
-                puts("Immediate argument");
-                break;
-            case '[':
-                
-                addr_mode = ADDR_MODE_IND;
-                puts("Indexed instruction");
-                break;
-            //default:
-                
-            }
-            /*for (c = line->argv[0].val.str; *c != '\0'; c++) {
-                switch (*c) {
-                case '$':
-                    if (c == line->argv[0].val.str) {
-                        addr_mode = ADDR_MODE_IMM;
-                        printf("
-                    }
-                    else {
-                        fail("Invalid character '$'.\n");
-                    }
-                    break;
-                }
-            }*/
-            
-            break;
-        }
+        break;
+    }
+}
+
+static void process_instruction(Line *line, Instruction *instr, Register *reg, Data *data) {
+    data->type = DATA_TYPE_BYTES;
+    data->address = address;
+    switch (configuration.syntax) {
+    case SYNTAX_MOTOROLA:
+        process_instruction_motorola(line, instr, reg, data);
+        break;
+    case SYNTAX_ATT:
+        printdf("AT&T syntax not yet implemented.\n");
+        break;
+    case SYNTAX_INTEL:
+        printdf("INTEL syntax not yet implemented.\n");
+        break;
+    case SYNTAX_UNKNOWN:
+    default:
+        printdf("Invalid instruction syntax.\n");
+        break;
     }
     
     add_data(data);
@@ -190,7 +186,7 @@ static void parse_instruction(Line *l, int arch) {
         }
         
         switch (configuration.syntax) {
-        case MOTOROLA_SYNTAX:
+        case SYNTAX_MOTOROLA:
             mnem = i->mnemonic;
             line = l->mnemonic;
             while (*mnem != '\0' && *line != '\0') {
@@ -220,11 +216,11 @@ static void parse_instruction(Line *l, int arch) {
             //if (argc - 1 == 
             //Register *get_register(line->arg
             break;
-        case INTEL_SYNTAX:
+        case SYNTAX_INTEL:
             fail("Intel syntax is not yet implemented.\n");
             //goto instruction_found;
             break;
-        case ATT_SYNTAX:
+        case SYNTAX_ATT:
             fail("AT&T syntax is not yet implemented.\n");
             break;
         }

@@ -20,10 +20,10 @@
 #define ARCH_BIG_ENDIAN (1)
 #define ARCH_LITTLE_ENDIAN (2)
 
-#define UNKNOWN_SYNTAX  (0)
-#define MOTOROLA_SYNTAX (1)
-#define INTEL_SYNTAX    (2)
-#define ATT_SYNTAX      (3)
+#define SYNTAX_UNKNOWN  (0)
+#define SYNTAX_MOTOROLA (1)
+#define SYNTAX_INTEL    (2)
+#define SYNTAX_ATT      (3)
 
 typedef struct symtab_entry {
     char *label;
