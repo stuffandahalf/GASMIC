@@ -238,8 +238,8 @@ static void parse_line(Line *l, char *buffer) {
         switch (*c) {
         case '"':
         case '\'':
-            l->line_state ^= QUOTE_STATE;
-            if (l->line_state & QUOTE_STATE) {
+            l->line_state ^= LINE_STATE_QUOTE;
+            if (l->line_state & LINE_STATE_QUOTE) {
                 //buffer++;
             }
             else {
@@ -247,24 +247,24 @@ static void parse_line(Line *l, char *buffer) {
             }
             break;
         case ']':
-            if (!(l->line_state & BRACKET_STATE)) {
+            if (!(l->line_state & LINE_STATE_BRACKET)) {
                 fail("']' requires '[' first.");
             }
         case '[':
-            l->line_state ^= BRACKET_STATE;
+            l->line_state ^= LINE_STATE_BRACKET;
             break;
         case '\n':
         case '\t':
         case ' ':
         case ',':   // Might be worth making this seperate
-            if (!(l->line_state & QUOTE_STATE) && !(l->line_state & BRACKET_STATE)) {
+            if (!(l->line_state & LINE_STATE_QUOTE) && !(l->line_state & LINE_STATE_BRACKET)) {
                 if (c != buffer) {
-                    if (!(l->line_state & MNEMONIC_STATE)) { // if mnemonic is not set
+                    if (!(l->line_state & LINE_STATE_MNEMONIC)) { // if mnemonic is not set
                         if (*c == ',') {
                             fail("Unexpected ',' character.\n");
                         }
                         l->mnemonic = buffer;
-                        l->line_state |= MNEMONIC_STATE;
+                        l->line_state |= LINE_STATE_MNEMONIC;
                     }
                     else { // Argument
                         if (l->argc == l->arg_buf_size) {
@@ -284,7 +284,7 @@ static void parse_line(Line *l, char *buffer) {
             }
             break;
         case ':':
-            if (l->line_state & MNEMONIC_STATE) {
+            if (l->line_state & LINE_STATE_MNEMONIC) {
                 fail("Label must occur at the beginning of a line.\n");
             }
             l->label = buffer;
@@ -293,17 +293,17 @@ static void parse_line(Line *l, char *buffer) {
             buffer++;
             
             printdf("parsed literal label = %s\n", l->label);
-            l->line_state |= LABEL_STATE;
+            l->line_state |= LINE_STATE_LABEL;
             break;
         case ';':
             return;
         }
         //buffer++;     // Why doesnt this work?
     }
-    if (l->line_state & QUOTE_STATE) {
+    if (l->line_state & LINE_STATE_QUOTE) {
         fail("Unmatched quote.\n");
     }
-    if (l->line_state & BRACKET_STATE) {
+    if (l->line_state & LINE_STATE_BRACKET) {
         //die("Error on line %ld. Unmatched bracket\n", line_num);
         fail("Unmatched bracket.\n");
     }

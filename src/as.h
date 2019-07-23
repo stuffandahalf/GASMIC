@@ -88,10 +88,10 @@ typedef struct {
     } val;
 } LineArg;
 
-#define LABEL_STATE (1)
-#define MNEMONIC_STATE (2)
-#define QUOTE_STATE (4)
-#define BRACKET_STATE (8)
+#define LINE_STATE_LABEL (1)
+#define LINE_STATE_MNEMONIC (2)
+#define LINE_STATE_QUOTE (4)
+#define LINE_STATE_BRACKET (8)
 typedef struct {
     char *label;
     char *mnemonic;
