@@ -7,11 +7,11 @@
 #include <stdint.h>
 #include <smem.h>
 
-#define DEBUG
+//#define DEBUG
 
 #define streq(__s1, __s2) !strcmp((const char *)__s1, (const char *)__s2)
 
-#ifdef DEBUG
+#ifndef NDEBUG
 #define printdf(fmt, ...) printf("[%s:%d] >> " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
 #else
 #define printdf(fmt, ...)
@@ -117,7 +117,7 @@ struct pseudo_instruction {
 typedef struct {
     char *out_fname;
     char **in_fnames;
-    ssize_t in_fnamec;
+    size_t in_fnamec;
     uint8_t syntax;
     Architecture *arch;
 } Config;

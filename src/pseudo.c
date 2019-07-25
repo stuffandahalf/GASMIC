@@ -36,7 +36,7 @@ static struct pseudo_instruction pseudo_ops[] = {
     { ".INCLUDE", &pseudo_include, 1 },
     { ".ORG", &pseudo_org, 1 },
     //{ ".SYNTAX", &pseudo_syntax, 1 },
-    { "", NULL, 0 }
+    { 0, 0, 0 }
 };
 
 struct pseudo_instruction *get_pseudo_op(Line *line) {
