@@ -54,3 +54,5 @@ dkms.conf
 build
 dist
 *.bin
+
+.vs
