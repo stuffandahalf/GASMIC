@@ -7,6 +7,7 @@
 void release(void);
 void *salloc(size_t size);
 void *srealloc(void *ptr, size_t size);
+void saquire(void *ptr);
 void sfree(void *ptr);
 
 #define die(fmt, ...) { \

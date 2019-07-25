@@ -3,11 +3,13 @@
 #include <stdint.h>
 #ifdef _WIN32
 #include <getopt.h>
+#define strdup _strdup
 #else
 #include <unistd.h>
 #endif
 #include <as.h>
 #include <targets/6x09/arch.h>
+
 
 #define LINEBUFFERSIZE (256)
 char buffer[LINEBUFFERSIZE];
@@ -29,12 +31,12 @@ SymTab *symtab;
 DataTab *datatab;
 //SymTab *undefined_symtab;
 
-#ifdef DEBUG
+#ifndef NDEBUG
 extern void smem_diagnostic(void);
 #endif
 
 int main(int argc, char **argv) {
-    if ((configuration.out_fname = strdup("a.out")) == NULL) {
+	if ((configuration.out_fname = strdup("a.out")) == NULL) {
         die("Failed to duplicate string\n");
     }
     FILE *in;
@@ -158,7 +160,7 @@ void assemble(FILE *in, Line *l) {
                 }
                 printf("%s", l->mnemonic);
             }
-            int i;
+            unsigned int i;
             for (i = 0; i < l->argc; i++) {
                 printf("\t%s", l->argv[i].val.str);
             }
@@ -204,7 +206,7 @@ static void configure(int argc, char *argv[]) {
         }
     }
     
-    printf("argcount = %d\n", argc - optind);
+    printdf("argcount = %d\n", argc - optind);
     
     configuration.in_fnames = argv + sizeof(char) * optind;
     configuration.in_fnamec = argc - optind;
