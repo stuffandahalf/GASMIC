@@ -145,7 +145,7 @@ static void pseudo_set_quad(Line *line) {
 }
 
 static void pseudo_equ(Line *line) {
-    if (!(line->line_state & LABEL_STATE)) {
+    if (!(line->line_state & LINE_STATE_LABEL)) {
         fail("Pseudo instruction .EQU requires a label on the same line.\n");
     }
     if (line->argc != 1) {
