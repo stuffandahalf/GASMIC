@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdint.h>
 #ifdef _WIN32
-
+#include <getopt.h>
 #else
 #include <unistd.h>
 #endif
@@ -14,7 +14,7 @@ char buffer[LINEBUFFERSIZE];
 
 static void configure(int argc, char *argv[]);
 char *str_to_upper(char str[]);
-static void trim_str(char str[]);
+//static void trim_str(char str[]);
 static void parse_line(Line *l, char *buffer);
 static void add_label(Line *l);
 static void parse_mnemonic(Line *l);
@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
         assemble(stdin, l);
     }
     else {
-        int i;
+        unsigned int i;
         for (i = 0; i < configuration.in_fnamec; i++) {
             if ((in = fopen(configuration.in_fnames[i], "r")) == NULL) {
                 die("Failed to open input file %s\n", configuration.in_fnames[i]);
@@ -80,14 +80,10 @@ int main(int argc, char **argv) {
     }
     sfree(l);
     
-    #ifdef DEBUG
-    puts("symtab");
-    #endif
+	printdf("SYMBOLS\n");
     Symbol *sym = symtab->first;
     while (sym != NULL) {
-        #ifdef DEBUG
-        printf("label: %s\t%ld\n", sym->label, sym->value);
-        #endif
+        printdf("label: %s\t%ld\n", sym->label, sym->value);
         
         sfree(sym->label);
         sym->label = NULL;
@@ -100,28 +96,24 @@ int main(int argc, char **argv) {
     symtab = NULL;
     sym = NULL;
     
-    #ifdef DEBUG
-    puts("datatab");
-    #endif
+    printdf("DATATAB\n");
     Data *data = datatab->first;
     while (data != NULL) {
-        #ifdef DEBUG
-        printf("data address: %lX,  ", data->address);
-        #endif
+        printdf("data address: %lX,  ", data->address);
         switch (data->type) {
         case DATA_TYPE_LABEL:
             printdf("%d bytes label \"%s\"\n", data->bytec, data->contents.symbol);
             free(data->contents.symbol);
             break;
         case DATA_TYPE_BYTES:
-            #ifdef DEBUG
+#ifndef NDEBUG
             printf("%d bytes ", data->bytec);
             int i;
             for (i = 0; i < data->bytec; i++) {
                 printf("%X ", data->contents.bytes[i]);
             }
             printf("\n");
-            #endif
+#endif
             sfree(data->contents.bytes);
             break;
         default:
@@ -137,6 +129,10 @@ int main(int argc, char **argv) {
     data = NULL;
     //fclose(out);
     
+#ifdef _WIN32
+	getc(stdin);
+#endif
+
 	return 0;
 }
 
@@ -151,7 +147,7 @@ void assemble(FILE *in, Line *l) {
             
             parse_line(l, buffer);
             
-            #ifdef DEBUG
+#ifndef NDEBUG
             //printf("%s\t%s", l->label, l->mnemonic);
             if (l->line_state & LINE_STATE_LABEL) {
                 printf("%s", l->label);
@@ -160,14 +156,14 @@ void assemble(FILE *in, Line *l) {
                 if (l->line_state & LINE_STATE_LABEL) {
                     puts("\t");
                 }
-                printdf("%s", l->mnemonic);
+                printf("%s", l->mnemonic);
             }
             int i;
             for (i = 0; i < l->argc; i++) {
                 printf("\t%s", l->argv[i].val.str);
             }
             puts("");
-            #endif
+#endif
             
             if (l->line_state & LINE_STATE_LABEL) {      // If current line has a label
                 add_label(l);
@@ -185,6 +181,7 @@ void assemble(FILE *in, Line *l) {
 
 static void configure(int argc, char *argv[]) {
     int c;
+
     while ((c = getopt(argc, argv, "m:o:f:")) != -1) {
         switch (c) {
         case 'm':

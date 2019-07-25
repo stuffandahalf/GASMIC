@@ -1,15 +1,15 @@
-#include <arch.h>
+#include <targets/z80/arch.h>
 
 static void parse_z80_instruction(Line *l) {
     
 }
 
-Architecture architectures[] = {
+Architecture z80_architectures[] = {
     { "Z80", &parse_z80_instruction, Z80 },
     { "", NULL, 0 }
 };
 
-Register registers[] = {
+Register z80_registers[] = {
     { "A", 1, Z80 },
     { "F", 1, Z80 },
     { "AF", 2, Z80 },
@@ -30,10 +30,10 @@ Register registers[] = {
     { "PC", 2, Z80 },
     { "", 0, 0 }
 };
-#ifndef DEBUG
-int regc = sizeof(registers) / sizeof(Register) - 1
+#ifndef NDEBUG
+//int regc = sizeof(registers) / sizeof(Register) - 1;
 #endif
 
-Instruction instructions[] = {
-    { "", 0, 0, 0, 0, {} }
+Instruction z80_instructions[] = {
+    { "", 0, 0, 0, 0, 0 }
 };

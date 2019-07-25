@@ -1,4 +1,4 @@
-#include <arch.h>
+#include <targets/6x09/arch.h>
 
 void init_target(void) {
     
@@ -382,5 +382,5 @@ Instruction instructions[] = {
     
     { "LD",     MC6809 | HD6309,    0x86,   ARG_ORDER_TO_REG,   ADDR_MODE_IMM | ADDR_MODE_DIR | ADDR_MODE_IND | ADDR_MODE_EXT,  { REGISTER(REG_A), REGISTER(REG_B), NULL } },
     { "LD",     HD6309,             0x1186, ARG_ORDER_TO_REG,   ADDR_MODE_IMM | ADDR_MODE_DIR | ADDR_MODE_IND | ADDR_MODE_EXT,  { REGISTER(REG_E), REGISTER(REG_F), NULL } },
-    { "", 0, 0, 0, 0, {} }
+    { "", 0, 0, 0, 0, 0 }
 };

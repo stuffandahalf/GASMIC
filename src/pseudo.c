@@ -1,5 +1,5 @@
 #include <as.h>
-#include <arch.h>
+#include <targets/6x09/arch.h>
 
 /*
  * struc?
