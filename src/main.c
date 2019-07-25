@@ -149,11 +149,11 @@ void assemble(FILE *in, Line *l) {
             
             #ifdef DEBUG
             //printf("%s\t%s", l->label, l->mnemonic);
-            if (l->line_state & LABEL_STATE) {
+            if (l->line_state & LINE_STATE_LABEL) {
                 printf("%s", l->label);
             }
-            if (l->line_state & MNEMONIC_STATE) {
-                if (l->line_state & LABEL_STATE) {
+            if (l->line_state & LINE_STATE_MNEMONIC) {
+                if (l->line_state & LINE_STATE_LABEL) {
                     puts("\t");
                 }
                 printdf("%s", l->mnemonic);
@@ -165,10 +165,10 @@ void assemble(FILE *in, Line *l) {
             puts("");
             #endif
             
-            if (l->line_state & LABEL_STATE) {      // If current line has a label
+            if (l->line_state & LINE_STATE_LABEL) {      // If current line has a label
                 add_label(l);
             }
-            if (l->line_state & MNEMONIC_STATE) {   // If current line has a mnemonic
+            if (l->line_state & LINE_STATE_MNEMONIC) {   // If current line has a mnemonic
                 str_to_upper(l->mnemonic);
                 parse_mnemonic(l);
             }
