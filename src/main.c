@@ -180,11 +180,10 @@ void assemble(FILE *in, Line *l) {
             }
             puts("");
 #endif
-            printdf("HERE?\n");
-            printdf("%p\n", l);
             if (l->line_state & LINE_STATE_LABEL) {      // If current line has a label
                 add_label(l);
             }
+            printdf("HERE?\n");
             if (l->line_state & LINE_STATE_MNEMONIC) {   // If current line has a mnemonic
                 str_to_upper(l->mnemonic);
                 parse_mnemonic(l);
