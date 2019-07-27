@@ -10,7 +10,7 @@ int getopt(int argc, char *const *argv, const char *arglist) {
 		return -1;
 	}
 	
-	char *arg = NULL;
+	const char *arg = NULL;
 	char *c = argv[optind];
 	size_t arglen = strlen(c);
 	if (arglen == 2) {

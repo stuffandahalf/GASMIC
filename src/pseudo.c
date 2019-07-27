@@ -1,5 +1,5 @@
 #include <as.h>
-#include <targets/6x09/arch.h>
+//#include <targets/6x09/arch.h>
 
 /*
  * struc?
@@ -89,7 +89,7 @@ static void pseudo_arch(Line *line) {
         data = salloc(sizeof(Data)); \
         data->type = DATA_TYPE_BYTES; \
         data->next = NULL; \
-        data->address = (addr_t)address; \
+        data->address = address & address_mask; \
         if (line->argv[i].val.str[0] == '"' || line->argv[i].val.str[0] == '\'') { \
             data->bytec = strlen(line->argv[i].val.str) - 1; \
             data->contents.bytes = salloc(sizeof(uint8_t) * data->bytec); \
@@ -108,15 +108,15 @@ static void pseudo_arch(Line *line) {
             } \
             data->bytec = sizeof(T); \
             data->contents.bytes = salloc(sizeof(T)); \
-            if (ENDIANNESS == ARCH_BIG_ENDIAN) { \
-                puts("big endian"); \
+            if (configuration.arch->endianness == ARCH_BIG_ENDIAN) { \
+                printdf("big endian"); \
                 for (j = sizeof(T) - 1; j >= 0; j--) { \
                     data->contents.bytes[j] = number & 0xFF; \
                     number >>= 8; \
                 } \
             } \
-            else if (ENDIANNESS == ARCH_LITTLE_ENDIAN) { \
-                puts("little endian"); \
+            else if (configuration.arch->endianness == ARCH_LITTLE_ENDIAN) { \
+                printdf("little endian"); \
                 for (j = 0; j < sizeof(T); j++) { \
                     data->contents.bytes[j] = number & 0xFF; \
                     number >>= 8; \

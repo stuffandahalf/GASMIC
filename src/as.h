@@ -25,6 +25,11 @@
 #define SYNTAX_INTEL    (2)
 #define SYNTAX_ATT      (3)
 
+#define ARG_ORDER_NONE      (0)
+#define ARG_ORDER_FROM_REG  (1)
+#define ARG_ORDER_TO_REG    (2)
+#define ARG_ORDER_INTERREG  (3)
+
 typedef struct symtab_entry {
     char *label;
     size_t value;
@@ -102,10 +107,19 @@ typedef struct {
     uint8_t line_state;
 } Line;
 
+typedef void (*parse_line_t)(Line *l);
+
 typedef struct {
     char name[10];
     void (*parse_instruction)(Line *l);
     int value;
+    uint8_t byte_size;  // bits per byte
+    uint8_t bytes_per_address;
+    uint8_t endianness;
+    uint8_t default_syntax;
+    parse_line_t parse_function;
+    //Register *registers;
+    //Instruction *instructions;
 } Architecture;
 
 struct pseudo_instruction {
@@ -123,6 +137,8 @@ typedef struct {
 } Config;
 
 extern size_t line_num;
+extern size_t address;
+extern size_t address_mask;
 extern SymTab *symtab;
 extern DataTab *datatab;
 extern Config configuration;

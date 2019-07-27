@@ -1,5 +1,18 @@
 #include <targets/z80/arch.h>
 
+Architecture *ARCH_Z80;
+
+void Z80_init(void) {
+    ARCH_Z80 = salloc(sizeof(Architecture));
+    //ARCH_Z80->name = "z80";
+    ARCH_Z80->value = Z80;
+    strcpy(ARCH_Z80->name, "z80");
+    ARCH_Z80->byte_size = 8;
+    ARCH_Z80->bytes_per_address = 2;
+    ARCH_Z80->endianness = ARCH_LITTLE_ENDIAN;
+    ARCH_Z80->default_syntax = SYNTAX_INTEL;
+}
+
 static void parse_z80_instruction(Line *l) {
     
 }

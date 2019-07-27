@@ -8,8 +8,7 @@
 #include <unistd.h>
 #endif
 #include <as.h>
-#include <targets/6x09/arch.h>
-
+#include <targets.h>
 
 #define LINEBUFFERSIZE (256)
 char buffer[LINEBUFFERSIZE];
@@ -25,26 +24,31 @@ Config configuration;
     
 //FILE *in;
 FILE *out;
-addr_t address;
+size_t address;
+size_t address_mask;    // bits to mask the address to;
 size_t line_num;
 SymTab *symtab;
 DataTab *datatab;
 //SymTab *undefined_symtab;
+
+Architecture **architectures[] = { TARGETS };
 
 #ifndef NDEBUG
 extern void smem_diagnostic(void);
 #endif
 
 int main(int argc, char **argv) {
+    INIT_TARGETS();
+    
 	if ((configuration.out_fname = strdup("a.out")) == NULL) {
         die("Failed to duplicate string\n");
     }
     FILE *in;
     //out = stdout;
-    configuration.arch = architectures;
+    configuration.arch = *architectures[0];
     configuration.in_fnames = NULL;
     configuration.in_fnamec = 0;
-    configuration.syntax = DEFAULT_SYNTAX;
+    configuration.syntax = configuration.arch->default_syntax;
     address = 0;
     line_num = 1;
 
@@ -53,6 +57,16 @@ int main(int argc, char **argv) {
     //out = fopen(out_fname, "w+");
     free(configuration.out_fname);
     configuration.out_fname = NULL;
+    
+    address_mask = 0;
+    int i;
+    for (i = 0; i < configuration.arch->bytes_per_address * configuration.arch->byte_size; i++) {
+        if (!i) {
+            address_mask <<= 1;
+        }
+        address_mask |= 1;
+    }
+    printdf("Address mask: %lX\n", address_mask); 
     
     symtab = salloc(sizeof(SymTab));
     symtab->first = NULL;
@@ -139,7 +153,7 @@ int main(int argc, char **argv) {
 }
 
 void assemble(FILE *in, Line *l) {
-    while (fgets(buffer, LINEBUFFERSIZE, in) != NULL) {        
+    while (fgets(buffer, LINEBUFFERSIZE, in) != NULL) {
         if (buffer[0] != '\0' || buffer[0] != '\n') {
             l->line_state = 0;
             l->arg_buf_size = 2;
@@ -166,7 +180,8 @@ void assemble(FILE *in, Line *l) {
             }
             puts("");
 #endif
-            
+            printdf("HERE?\n");
+            printdf("%p\n", l);
             if (l->line_state & LINE_STATE_LABEL) {      // If current line has a label
                 add_label(l);
             }
@@ -213,10 +228,10 @@ static void configure(int argc, char *argv[]) {
 }
 
 Architecture *str_to_arch(const char arch_name[]) {
-    Architecture *a;
-    for (a = architectures; a->name[0] != '\0'; a++) {
-        if (streq(arch_name, a->name)) {
-            return a;
+    Architecture ***a;
+    for (a = architectures; *a != NULL; a++) {
+        if (streq(arch_name, (**a)->name)) {
+            return **a;
         }
     }
     return NULL;
@@ -313,7 +328,7 @@ static void parse_line(Line *l, char *buffer) {
 }
 
 static void add_label(Line *l) {
-    Symbol *sym = salloc(sizeof(Symbol));    
+    Symbol *sym = salloc(sizeof(Symbol));
     
     sym->next = NULL;
     if (l->label[0] == '.') {
