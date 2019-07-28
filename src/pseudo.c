@@ -108,14 +108,14 @@ static void pseudo_arch(Line *line) {
             } \
             data->bytec = sizeof(T); \
             data->contents.bytes = salloc(sizeof(T)); \
-            if (configuration.arch->endianness == ARCH_BIG_ENDIAN) { \
+            if (configuration.arch->endianness == ARCH_ENDIAN_BIG) { \
                 printdf("big endian"); \
                 for (j = sizeof(T) - 1; j >= 0; j--) { \
                     data->contents.bytes[j] = number & 0xFF; \
                     number >>= 8; \
                 } \
             } \
-            else if (configuration.arch->endianness == ARCH_LITTLE_ENDIAN) { \
+            else if (configuration.arch->endianness == ARCH_ENDIAN_LITTLE) { \
                 printdf("little endian"); \
                 for (j = 0; j < sizeof(T); j++) { \
                     data->contents.bytes[j] = number & 0xFF; \
