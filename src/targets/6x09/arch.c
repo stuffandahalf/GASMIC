@@ -56,7 +56,7 @@ static void process_instruction_motorola(Line *line, Instruction *instr, Registe
         if (reg != NULL) {
             fail("Instruction %s does not require a register.\n", instr->mnemonic);
         }
-        printdf("argument type is %d\n", line->argv->type);
+        printdf("argument type is %" PRIu8 "\n", line->argv->type);
         if (line->argv->type != ARG_TYPE_NONE) {
             fail("Instruction %s does not require an argument.\n", instr->mnemonic);
         }
@@ -88,7 +88,7 @@ static void process_instruction_motorola(Line *line, Instruction *instr, Registe
             modes >>= 1;
         }
     }
-    printf("base opcode = 0x%X\n", base_opcode);
+    printf("base opcode = 0x%" PRIX16 "\n", base_opcode);
     
     int i;
     char *c;
@@ -108,7 +108,13 @@ static void process_instruction_motorola(Line *line, Instruction *instr, Registe
             addr_mode = MC6809_ADDR_MODE_IMM;
             c++;
             //data->type = DATA_TYPE_BYTES;
-            l = strtol(c, &endl, 0);
+            if (*c == '$') {
+                c++;
+                l = strtol(c, &endl, 16);
+            }
+            else {
+                l = strtol(c, &endl, 0);
+            }
             data->bytec = ((0xFF00 & base_opcode) ? 2 : 1);
             address += data->bytec;
             if (endl == c) {
@@ -146,7 +152,7 @@ static void process_instruction_motorola(Line *line, Instruction *instr, Registe
                 data->bytec += reg->width;
                 data->contents.bytes = salloc(sizeof(uint8_t) * data->bytec);
             }
-            printf("%d\n", data->bytec);
+            printf("%" PRId8 "\n", data->bytec);
             
             puts("Immediate argument");
             break;
@@ -254,8 +260,8 @@ next_instruction:
     fail("Invalid instruction.\n");
     
 instruction_found:
-#ifdef DEBUG
-    printdf("%s\t%X\n", i->mnemonic, i->base_opcode);
+#ifndef NDEBUG
+    printdf("%s\t%" PRIX16 "\n", i->mnemonic, i->base_opcode);
     if (reg != NULL) {
         printdf("%s\n", reg->name);
     }
@@ -302,7 +308,7 @@ static Register registers[] = {
     { "DP", 1, MC6809 | HD6309 },
     { "CC", 1, MC6809 | HD6309 },
     { "MD", 1, HD6309 },
-    { "", 0, 0 }
+    { 0, 0, 0 }
 };
 #ifdef DEBUG
 const int regc = sizeof(registers) / sizeof(Register) - 1;

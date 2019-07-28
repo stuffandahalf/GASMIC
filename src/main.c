@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <string.h>
-#include <stdint.h>
 #ifdef _WIN32
 #include <getopt.h>
 #define strdup _strdup
@@ -118,15 +117,15 @@ int main(int argc, char **argv) {
         printdf("data address: %lX,  ", data->address);
         switch (data->type) {
         case DATA_TYPE_LABEL:
-            printdf("%d bytes label \"%s\"\n", data->bytec, data->contents.symbol);
+            printdf("%" PRIu8 " bytes label \"%s\"\n", data->bytec, data->contents.symbol);
             free(data->contents.symbol);
             break;
         case DATA_TYPE_BYTES:
 #ifndef NDEBUG
-            printf("%d bytes ", data->bytec);
+            printf("%" PRIu8 " bytes ", data->bytec);
             int i;
             for (i = 0; i < data->bytec; i++) {
-                printf("%X ", data->contents.bytes[i]);
+                printf("%" PRIX8, data->contents.bytes[i]);
             }
             printf("\n");
 #endif
@@ -214,7 +213,9 @@ static void configure(int argc, char *argv[]) {
             break;
         case 'f':
             break;
-        case 0:
+        case '?':
+        default:
+            die("Usage: %s [-m arch] [-o outfile]\n", argv[0]);
             break;
         }
     }

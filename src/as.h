@@ -5,12 +5,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#ifdef __cplusplus
+#define __STDC_FORMAT_MACROS
+#endif
+#include <inttypes.h>
 #include <smem.h>
 
-//#define DEBUG
-
 #define streq(__s1, __s2) !strcmp((const char *)__s1, (const char *)__s2)
+#define fail(msg, ...) die("\033[0;31mERROR \033[0m%ld: " msg, line_num,  ##__VA_ARGS__)
 
+#define printef(fmt, ...) fprintf(stderr, fmt, ##__VA_ARGS__)
 #ifndef NDEBUG
 #define printdf(fmt, ...) printf("[%s:%d] >> " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
 #else
@@ -137,8 +141,6 @@ extern size_t address_mask;
 extern SymTab *symtab;
 extern DataTab *datatab;
 extern Config configuration;
-
-#define fail(msg, ...) die("\033[0;31mERROR \033[0m%ld: " msg, line_num,  ##__VA_ARGS__)
 
 void assemble(FILE *in, Line *l);
 Architecture *str_to_arch(const char arch_name[]);

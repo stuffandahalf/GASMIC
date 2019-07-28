@@ -9,6 +9,9 @@ void *salloc(size_t size);
 void *srealloc(void *ptr, size_t size);
 void *saquire(void *ptr);
 void sfree(void *ptr);
+#ifndef NDEBUG
+void smem_diagnostic(void);
+#endif
 
 #define die(fmt, ...) { \
     fprintf(stderr, fmt, ##__VA_ARGS__); \
