@@ -11,7 +11,7 @@ void Z80_init(void) {
     strcpy(ARCH_Z80->name, "z80");
     ARCH_Z80->byte_size = 8;
     ARCH_Z80->bytes_per_address = 2;
-    ARCH_Z80->endianness = ARCH_LITTLE_ENDIAN;
+    ARCH_Z80->endianness = ARCH_ENDIAN_LITTLE;
     ARCH_Z80->default_syntax = SYNTAX_INTEL;
     ARCH_Z80->parse_instruction = &parse_z80_instruction;
 }

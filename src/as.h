@@ -14,15 +14,19 @@
 #define streq(__s1, __s2) !strcmp((const char *)__s1, (const char *)__s2)
 #define fail(msg, ...) die("\033[0;31mERROR \033[0m%ld: " msg, line_num,  ##__VA_ARGS__)
 
+// print to stderr
 #define printef(fmt, ...) fprintf(stderr, fmt, ##__VA_ARGS__)
+
+// print if debug build
 #ifndef NDEBUG
 #define printdf(fmt, ...) printf("[%s:%d] >> " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
 #else
 #define printdf(fmt, ...)
 #endif
 
-#define ARCH_BIG_ENDIAN (1)
-#define ARCH_LITTLE_ENDIAN (2)
+#define ARCH_ENDIAN_BIG     (1)
+#define ARCH_ENDIAN_LITTLE  (2)
+#define ARCH_ENDIAN_MIXED   (3)
 
 #define SYNTAX_UNKNOWN  (0)
 #define SYNTAX_MOTOROLA (1)

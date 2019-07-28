@@ -14,7 +14,7 @@ Architecture *ARCH_HD6309;
     strcpy(ARCH_##arch_var->name, arch_name); \
     ARCH_##arch_var->byte_size = 8; \
     ARCH_##arch_var->bytes_per_address = 2; \
-    ARCH_##arch_var->endianness = ARCH_BIG_ENDIAN; \
+    ARCH_##arch_var->endianness = ARCH_ENDIAN_BIG; \
     ARCH_##arch_var->default_syntax = SYNTAX_MOTOROLA; \
 }
 
