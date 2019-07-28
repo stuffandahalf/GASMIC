@@ -2,6 +2,8 @@
 
 Architecture *ARCH_Z80;
 
+static void parse_z80_instruction(Line *l);
+
 void Z80_init(void) {
     ARCH_Z80 = salloc(sizeof(Architecture));
     //ARCH_Z80->name = "z80";
@@ -11,6 +13,7 @@ void Z80_init(void) {
     ARCH_Z80->bytes_per_address = 2;
     ARCH_Z80->endianness = ARCH_LITTLE_ENDIAN;
     ARCH_Z80->default_syntax = SYNTAX_INTEL;
+    ARCH_Z80->parse_instruction = &parse_z80_instruction;
 }
 
 static void parse_z80_instruction(Line *l) {

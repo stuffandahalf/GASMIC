@@ -107,8 +107,6 @@ typedef struct {
     uint8_t line_state;
 } Line;
 
-typedef void (*parse_line_t)(Line *l);
-
 typedef struct {
     char name[10];
     void (*parse_instruction)(Line *l);
@@ -117,9 +115,6 @@ typedef struct {
     uint8_t bytes_per_address;
     uint8_t endianness;
     uint8_t default_syntax;
-    parse_line_t parse_function;
-    //Register *registers;
-    //Instruction *instructions;
 } Architecture;
 
 struct pseudo_instruction {

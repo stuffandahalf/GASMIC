@@ -2,7 +2,8 @@
 
 static void parse_6809_instruction(Line *l);
 static void parse_6309_instruction(Line *l);
-extern Instruction instructions[];
+static Instruction instructions[];
+static Register registers[];
 
 Architecture *ARCH_MC6809;
 Architecture *ARCH_HD6309;
@@ -19,12 +20,12 @@ Architecture *ARCH_HD6309;
 
 void MC6809_init(void) {
     ARCH_INIT(MC6809, "6809");
-    ARCH_MC6809->parse_function = &parse_6809_instruction;
+    ARCH_MC6809->parse_instruction = &parse_6809_instruction;
 }
 
 void HD6309_init(void) {
     ARCH_INIT(HD6309, "6309");
-    ARCH_HD6309->parse_function = &parse_6309_instruction;
+    ARCH_HD6309->parse_instruction = &parse_6309_instruction;
 }
 
 static int test_instruction(Instruction *i, Line *l) {
@@ -55,7 +56,7 @@ static void process_instruction_motorola(Line *line, Instruction *instr, Registe
         if (reg != NULL) {
             fail("Instruction %s does not require a register.\n", instr->mnemonic);
         }
-        printdf("argument type is %s\n", line->argv->val.str);
+        printdf("argument type is %d\n", line->argv->type);
         if (line->argv->type != ARG_TYPE_NONE) {
             fail("Instruction %s does not require an argument.\n", instr->mnemonic);
         }
@@ -200,10 +201,10 @@ static void process_instruction(Line *line, Instruction *instr, Register *reg, D
 static void parse_instruction(Line *l, int arch) {
     char *mnem = NULL;
     char *line = NULL;
-    Register **reg = NULL;
+    Register *reg = NULL;
     
     Instruction *i = NULL;
-    for (i = instructions; *i->mnemonic != '\0'; i++) {
+    for (i = instructions; *i->mnemonic != 0; i++) {
         if (!(i->architectures & arch)) {
             goto next_instruction;
         }
@@ -217,7 +218,6 @@ static void parse_instruction(Line *l, int arch) {
                     goto next_instruction;
                 }
             }
-            
             switch (i->arg_order) {
             case ARG_ORDER_NONE:
             case ARG_ORDER_INTERREG:
@@ -227,8 +227,8 @@ static void parse_instruction(Line *l, int arch) {
                 goto instruction_found;
             case ARG_ORDER_FROM_REG:
             case ARG_ORDER_TO_REG:
-                for (reg = i->registers; *reg != NULL; reg++) {
-                    if (streq(line, (*reg)->name) && ((*reg)->arcs & configuration.arch->value)) {
+                for (reg = registers; reg != NULL; reg++) {
+                    if (streq(line, reg->name) && (reg->arcs & configuration.arch->value)) {
                         goto instruction_found;
                     }
                 }
@@ -257,7 +257,7 @@ instruction_found:
 #ifdef DEBUG
     printdf("%s\t%X\n", i->mnemonic, i->base_opcode);
     if (reg != NULL) {
-        printdf("%s\n", (*reg)->name);
+        printdf("%s\n", reg->name);
     }
 #else
     while(0);   //wtf
@@ -267,7 +267,7 @@ instruction_found:
     assembled->next = NULL;
     assembled->address = address;
     
-    process_instruction(l, i, (reg == NULL) ? NULL : *reg, assembled);
+    process_instruction(l, i, (reg == NULL) ? NULL : reg, assembled);
 }
 
 static void parse_6809_instruction(Line *l) {
@@ -311,7 +311,7 @@ const int regc = sizeof(registers) / sizeof(Register) - 1;
 #define MC6809_REGISTER(reg) (reg > 0 && reg < HD6309_REG_E) ? &(registers[reg]) : NULL
 #define HD6309_REGISTER(reg) (reg > 0 && reg <= HD6309_REG_MD) ? &(registers[reg]) : NULL
 
-Instruction instructions[] = {
+static Instruction instructions[] = {
 /*  mnemonic     architectures     opcode   argument order      addressing modes                                                allowed registers */
     { "ABX",    MC6809 | HD6309,    0x3A,   ARG_ORDER_NONE,     MC6809_ADDR_MODE_INH,                                                                       { NULL } },
     { "ADC",    MC6809 | HD6309,    0x89,   ARG_ORDER_TO_REG,   MC6809_ADDR_MODE_IMM | MC6809_ADDR_MODE_DIR | MC6809_ADDR_MODE_IND | MC6809_ADDR_MODE_EXT,  { MC6809_REGISTER(MC6809_REG_A), MC6809_REGISTER(MC6809_REG_B), NULL } },
@@ -408,5 +408,5 @@ Instruction instructions[] = {
     
     { "LD",     MC6809 | HD6309,    0x86,   ARG_ORDER_TO_REG,   MC6809_ADDR_MODE_IMM | MC6809_ADDR_MODE_DIR | MC6809_ADDR_MODE_IND | MC6809_ADDR_MODE_EXT,  { MC6809_REGISTER(MC6809_REG_A), MC6809_REGISTER(MC6809_REG_B), NULL } },
     { "LD",     HD6309,             0x1186, ARG_ORDER_TO_REG,   MC6809_ADDR_MODE_IMM | MC6809_ADDR_MODE_DIR | MC6809_ADDR_MODE_IND | MC6809_ADDR_MODE_EXT,  { HD6309_REGISTER(HD6309_REG_E), HD6309_REGISTER(HD6309_REG_F), NULL } },
-    { "", 0, 0, 0, 0, 0 }
+    { 0, 0, 0, 0, 0, 0 }
 };

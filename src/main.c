@@ -61,7 +61,7 @@ int main(int argc, char **argv) {
     address_mask = 0;
     int i;
     for (i = 0; i < configuration.arch->bytes_per_address * configuration.arch->byte_size; i++) {
-        if (!i) {
+        if (i) {
             address_mask <<= 1;
         }
         address_mask |= 1;
@@ -183,7 +183,6 @@ void assemble(FILE *in, Line *l) {
             if (l->line_state & LINE_STATE_LABEL) {      // If current line has a label
                 add_label(l);
             }
-            printdf("HERE?\n");
             if (l->line_state & LINE_STATE_MNEMONIC) {   // If current line has a mnemonic
                 str_to_upper(l->mnemonic);
                 parse_mnemonic(l);
