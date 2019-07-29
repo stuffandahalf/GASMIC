@@ -393,17 +393,13 @@ void add_data(Data *data) {
 static void parse_mnemonic(Line *line) {
     struct pseudo_instruction *pseudo_op;
     
-    switch(line->mnemonic[0]) {
-    case '.':
+    if (line->mnemonic[0]) {
         parse_pseudo_op(line);
-        break;
-    default:
-        if ((pseudo_op = get_pseudo_op(line)) != NULL) {
-            pseudo_op->process(line);
-        }
-        else {
-            configuration.arch->parse_instruction(line);
-        }
-        break;
+    }
+    else if ((pseudo_op = get_pseudo_op(line)) != NULL) {
+        pseudo_op->process(line);
+    }
+    else {
+        configuration.arch->parse_instruction(line);
     }
 }
