@@ -180,11 +180,12 @@ static void pseudo_include(Line *line) {
 
 static void pseudo_org(Line *line) {
     char *lend;
-    address = strtol(line->argv[0].val.str, &lend, 0);
+    size_t new_address = strtol(line->argv[0].val.str, &lend, 0) & address_mask;
     if (lend == line->argv[0].val.str || *lend != '\0') {
         fail("Value is not a number.\n");
     }
     else if (lend == line->argv[0].val.str) {
         // Set address to symbol value
+        address = new_address;
     }
 }

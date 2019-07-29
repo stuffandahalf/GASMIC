@@ -34,7 +34,7 @@ static struct alloced *find_memory(void *ptr) {
 	if (ptr == alloced_mem.last->address) {
 		return alloced_mem.last;
 	}
-    for (mem = alloced_mem.first; mem != alloced_mem.last; mem = mem->next) {
+    for (mem = alloced_mem.first; mem != NULL && mem != alloced_mem.last; mem = mem->next) {
         if (mem->address == ptr) {
             //break;
             return mem;
@@ -133,8 +133,12 @@ void sfree(void *ptr) {
 	struct alloced *prev = a->prev;
 	struct alloced *next = a->next;
 
-	prev->next = next;
-	next->prev = prev;
+    if (prev != NULL) {
+	    prev->next = next;
+    }
+    if (next != NULL) {
+	    next->prev = prev;
+    }
     
     free(a->address);
     free(a);

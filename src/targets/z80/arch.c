@@ -50,6 +50,6 @@ Register z80_registers[] = {
 //int regc = sizeof(registers) / sizeof(Register) - 1;
 #endif
 
-Instruction z80_instructions[] = {
+Z80_Instruction z80_instructions[] = {
     { "", 0, 0, 0, 0, 0 }
 };

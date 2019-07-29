@@ -54,7 +54,7 @@ typedef struct {
 #define DATA_TYPE_BYTES 2
 typedef struct data_entry {
     uint8_t type;
-    uint64_t address;
+    size_t address;
     uint8_t bytec;
     union {
         char *symbol;
@@ -76,14 +76,36 @@ typedef struct {
 
 #define MAXMNEMONICSIZE (10)
 #define MAX_REGS (20)
-typedef struct {
+
+#define ARCH_INSTRUCTION(arch, Topcode, reg_count, mode_count) \
+    struct { \
+        char mnemonic[MAXMNEMONICSIZE]; \
+        uint8_t architectures; \
+        uint8_t arg_order; \
+        struct arch##_instruction_register { \
+            Register *reg; \
+            struct { \
+                uint8_t mode; \
+                Topcode opcode; \
+            } addressing_modes[mode_count]; \
+        } registers[reg_count]; \
+    }
+
+/*typedef struct {
     char mnemonic[MAXMNEMONICSIZE];
     uint8_t architectures;
     uint16_t base_opcode;
     uint8_t arg_order;
     uint8_t address_modes;
-    Register *registers[MAX_REGS];
-} Instruction;
+    //Register *registers[MAX_REGS];
+    struct {
+        Register *reg;
+        struct {
+            uint8_t mode;
+            uint16_t opcode;
+        } addressing_modes[10];
+    } opcodes[];
+} Instruction;*/
 
 #define ARG_TYPE_NONE 0
 #define ARG_TYPE_REG  1
