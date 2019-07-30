@@ -50,8 +50,9 @@ typedef struct {
     Symbol *last_parent;
 } SymTab;
 
-#define DATA_TYPE_LABEL 1
-#define DATA_TYPE_BYTES 2
+#define DATA_TYPE_NONE  (0)
+#define DATA_TYPE_LABEL (1)
+#define DATA_TYPE_BYTES (2)
 typedef struct data_entry {
     uint8_t type;
     size_t address;

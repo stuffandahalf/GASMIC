@@ -32,14 +32,10 @@ DataTab *datatab;
 
 Architecture **architectures[] = { TARGETS };
 
-#ifndef NDEBUG
-extern void smem_diagnostic(void);
-#endif
-
 int main(int argc, char **argv) {
     INIT_TARGETS();
-    
-	if ((configuration.out_fname = strdup("a.out")) == NULL) {
+
+    if ((configuration.out_fname = strdup("a.out")) == NULL) {
         die("Failed to duplicate string\n");
     }
     FILE *in;
@@ -56,7 +52,7 @@ int main(int argc, char **argv) {
     //out = fopen(out_fname, "w+");
     free(configuration.out_fname);
     configuration.out_fname = NULL;
-    
+
     address_mask = 0;
     int i;
     for (i = 0; i < configuration.arch->bytes_per_address * configuration.arch->byte_size; i++) {
@@ -65,18 +61,18 @@ int main(int argc, char **argv) {
         }
         address_mask |= 1;
     }
-    printdf("Address mask: %lX\n", address_mask); 
-    
+    printdf("Address mask: %lX\n", address_mask);
+
     symtab = salloc(sizeof(SymTab));
     symtab->first = NULL;
     symtab->last = NULL;
-    
+
     datatab = salloc(sizeof(DataTab));
     datatab->first = NULL;
     datatab->last = NULL;
-    
+
     Line *l = salloc(sizeof(Line));
-    
+
     if (configuration.in_fnamec < 0) {
         die("Invalid number of command line arguments.\n");
     }
@@ -94,12 +90,12 @@ int main(int argc, char **argv) {
         }
     }
     sfree(l);
-    
-	printdf("SYMBOLS\n");
+
+    printdf("SYMBOLS\n");
     Symbol *sym = symtab->first;
     while (sym != NULL) {
         printdf("label: %s\t%ld\n", sym->label, sym->value);
-        
+
         sfree(sym->label);
         sym->label = NULL;
         Symbol *tmp = sym;
@@ -110,7 +106,7 @@ int main(int argc, char **argv) {
     sfree(symtab);
     symtab = NULL;
     sym = NULL;
-    
+
     printdf("DATATAB\n");
     Data *data = datatab->first;
     while (data != NULL) {
@@ -118,7 +114,7 @@ int main(int argc, char **argv) {
         switch (data->type) {
         case DATA_TYPE_LABEL:
             printdf("%" PRIu8 " bytes label \"%s\"\n", data->bytec, data->contents.symbol);
-            free(data->contents.symbol);
+            sfree(data->contents.symbol);
             break;
         case DATA_TYPE_BYTES:
 #ifndef NDEBUG
@@ -130,6 +126,9 @@ int main(int argc, char **argv) {
             printf("\n");
 #endif
             sfree(data->contents.bytes);
+            break;
+        case DATA_TYPE_NONE:
+            printdf("Empty data.\n");
             break;
         default:
             printdf("Garbage data.\n");
@@ -143,9 +142,9 @@ int main(int argc, char **argv) {
     datatab = NULL;
     data = NULL;
     //fclose(out);
-    
+
 #ifdef _WIN32
-	getc(stdin);
+    getc(stdin);
 #endif
 
 	return 0;
@@ -393,7 +392,7 @@ void add_data(Data *data) {
 static void parse_mnemonic(Line *line) {
     struct pseudo_instruction *pseudo_op;
     
-    if (line->mnemonic[0]) {
+    if (line->mnemonic[0] == '.') {
         parse_pseudo_op(line);
     }
     else if ((pseudo_op = get_pseudo_op(line)) != NULL) {

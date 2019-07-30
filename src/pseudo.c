@@ -181,11 +181,11 @@ static void pseudo_include(Line *line) {
 static void pseudo_org(Line *line) {
     char *lend;
     size_t new_address = strtol(line->argv[0].val.str, &lend, 0) & address_mask;
-    if (*lend != '\0') {
-        fail("Value is not a number.\n");
-    }
-    else if (lend == line->argv[0].val.str) {
-        // Set address to symbol value
+    if (*lend == '\0') {
+        printdf("new address is 0x%lX\n", new_address);
         address = new_address;
+    }
+    else {
+        fail("Value is not a number.\n");
     }
 }

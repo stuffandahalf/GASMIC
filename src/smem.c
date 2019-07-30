@@ -31,19 +31,12 @@ void release(void) {
 
 static struct alloced *find_memory(void *ptr) {
     struct alloced *mem;
-	if (ptr == alloced_mem.last->address) {
-		return alloced_mem.last;
-	}
-    for (mem = alloced_mem.first; mem != NULL && mem != alloced_mem.last; mem = mem->next) {
+    for (mem = alloced_mem.last; mem != NULL; mem = mem->prev) {
         if (mem->address == ptr) {
-            //break;
             return mem;
         }
     }
-    //if (mem == NULL) {
     die("Failed to locate provided address, are you sure you salloced it?\n");
-    //}
-    //return mem;
 }
 
 void smem_diagnostic(void) {
@@ -138,6 +131,13 @@ void sfree(void *ptr) {
     }
     if (next != NULL) {
 	    next->prev = prev;
+    }
+    
+    if (alloced_mem.first == a) {
+        alloced_mem.first = a->next;
+    }
+    if (alloced_mem.last == a) {
+        alloced_mem.last = a->prev;
     }
     
     free(a->address);

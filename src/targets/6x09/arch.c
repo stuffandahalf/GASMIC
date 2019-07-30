@@ -187,9 +187,9 @@ static void process_instruction_motorola(Line *line, MC6x09_Instruction *instr, 
 //}
 
 static void process_instruction(Line *line, MC6x09_Instruction *instr, Register *reg, Data *data) {
-    data->type = DATA_TYPE_BYTES;
-    data->address = address;
-    switch (configuration.syntax) {
+    //data->type = DATA_TYPE_BYTES;
+    //data->address = address;
+    /*switch (configuration.syntax) {
     case SYNTAX_MOTOROLA:
         process_instruction_motorola(line, instr, reg, data);
         break;
@@ -203,7 +203,9 @@ static void process_instruction(Line *line, MC6x09_Instruction *instr, Register 
     default:
         printdf("Invalid instruction syntax.\n");
         break;
-    }
+    }*/
+    
+    
     
     add_data(data);
 }
@@ -278,6 +280,9 @@ instruction_found:
     
     Data *assembled = salloc(sizeof(Data));
     assembled->next = NULL;
+    assembled->type = DATA_TYPE_NONE;
+    assembled->bytec = 0;
+    assembled->contents.bytes = NULL;
     process_instruction(l, i, reg, assembled);
 
     /*char *mnem = NULL;
