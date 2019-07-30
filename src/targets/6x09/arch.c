@@ -404,7 +404,7 @@ static MC6x09_Instruction instructions[] = {
             { MC6809_ADDR_MODE_INH, 0x3A },
             { MC6809_ADDR_MODE_INVALID, 0 }
         }},
-        { NULL, NULL }
+        { NULL, 0 }
     }},
     { "ADC", MC6809 | HD6309, ARG_ORDER_TO_REG, {
         { MC6809_REGISTER(MC6809_REG_A), {
@@ -421,7 +421,7 @@ static MC6x09_Instruction instructions[] = {
             { MC6809_ADDR_MODE_EXT, 0xF9 },
             { MC6809_ADDR_MODE_INVALID, 0 }
         }},
-        { NULL, NULL }
+        { NULL, 0 }
     }},
     { "ADC", HD6309, ARG_ORDER_TO_REG, {
         { MC6809_REGISTER(MC6809_REG_D), {
@@ -431,7 +431,7 @@ static MC6x09_Instruction instructions[] = {
             { MC6809_ADDR_MODE_EXT, 0x10B9 },
             { MC6809_ADDR_MODE_INVALID, 0 }
         }},
-        { NULL, NULL }
+        { NULL, 0 }
     }},
     { 0, 0, 0, 0 }
 };
