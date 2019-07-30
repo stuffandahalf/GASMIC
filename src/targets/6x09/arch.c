@@ -2,8 +2,8 @@
 
 static void parse_6809_instruction(Line *l);
 static void parse_6309_instruction(Line *l);
-static MC6x09_Instruction instructions[];
-static Register registers[];
+extern const MC6x09_Instruction instructions[];
+extern const Register registers[];
 
 Architecture *ARCH_MC6809;
 Architecture *ARCH_HD6309;
@@ -370,7 +370,7 @@ static void parse_6309_instruction(Line *l) {
     { "", NULL, 0 }
 };*/
 
-static Register registers[] = {
+const Register registers[] = {
     { "NONE", 0, MC6809 | HD6309 },
     { "A", 1, MC6809 | HD6309 },
     { "B", 1, MC6809 | HD6309 },
@@ -391,14 +391,14 @@ static Register registers[] = {
     { "MD", 1, HD6309 },
     { 0, 0, 0 }
 };
-#ifdef DEBUG
+#ifndef NDEBUG
 const int regc = sizeof(registers) / sizeof(Register) - 1;
 #endif
 
-#define MC6809_REGISTER(reg) (reg > 0 && reg < HD6309_REG_E) ? &(registers[reg]) : NULL
-#define HD6309_REGISTER(reg) (reg > 0 && reg <= HD6309_REG_MD) ? &(registers[reg]) : NULL
+#define MC6809_REGISTER(reg) ((reg > 0 && reg < HD6309_REG_E) ? &(registers[reg]) : NULL)
+#define HD6309_REGISTER(reg) ((reg > 0 && reg <= HD6309_REG_MD) ? &(registers[reg]) : NULL)
 
-static MC6x09_Instruction instructions[] = {
+const MC6x09_Instruction instructions[] = {
     { "ABX", MC6809 | HD6309, ARG_ORDER_NONE, {
         { MC6809_REGISTER(MC6809_REG_NONE), {
             { MC6809_ADDR_MODE_INH, 0x3A },
@@ -435,6 +435,7 @@ static MC6x09_Instruction instructions[] = {
     }},
     { 0, 0, 0, 0 }
 };
+//static MC6x09_Instruction *instructions = _instructions;
 
 //static Instruction instructions[] = {
 ///*  mnemonic     architectures     opcode   argument order      addressing modes                                                allowed registers */

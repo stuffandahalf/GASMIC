@@ -89,7 +89,7 @@ typedef struct {
                 uint8_t mode; \
                 Topcode opcode; \
             } addressing_modes[mode_count]; \
-        } registers[reg_count]; \
+        } registers[reg_count + 1]; \
     }
 
 /*typedef struct {
