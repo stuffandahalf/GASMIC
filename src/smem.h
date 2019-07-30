@@ -13,9 +13,16 @@ void sfree(void *ptr);
 void smem_diagnostic(void);
 #endif
 
+#if defined(_WIN32) && !defined(NDEBUG)
+#define AWAIT_WINDOWS getc(stdin)
+#else
+#define AWAIT_WINDOWS
+#endif
+
 #define die(fmt, ...) { \
     fprintf(stderr, fmt, ##__VA_ARGS__); \
     release(); \
+	AWAIT_WINDOWS; \
     exit(1); \
 }
 
