@@ -1,5 +1,5 @@
 #include <as.h>
-#include <arch.h>
+//#include <targets/6x09/arch.h>
 
 /*
  * struc?
@@ -36,7 +36,7 @@ static struct pseudo_instruction pseudo_ops[] = {
     { ".INCLUDE", &pseudo_include, 1 },
     { ".ORG", &pseudo_org, 1 },
     //{ ".SYNTAX", &pseudo_syntax, 1 },
-    { "", NULL, 0 }
+    { 0, 0, 0 }
 };
 
 struct pseudo_instruction *get_pseudo_op(Line *line) {
@@ -89,7 +89,7 @@ static void pseudo_arch(Line *line) {
         data = salloc(sizeof(Data)); \
         data->type = DATA_TYPE_BYTES; \
         data->next = NULL; \
-        data->address = (addr_t)address; \
+        data->address = address & address_mask; \
         if (line->argv[i].val.str[0] == '"' || line->argv[i].val.str[0] == '\'') { \
             data->bytec = strlen(line->argv[i].val.str) - 1; \
             data->contents.bytes = salloc(sizeof(uint8_t) * data->bytec); \
@@ -108,15 +108,15 @@ static void pseudo_arch(Line *line) {
             } \
             data->bytec = sizeof(T); \
             data->contents.bytes = salloc(sizeof(T)); \
-            if (ENDIANNESS == ARCH_BIG_ENDIAN) { \
-                puts("big endian"); \
+            if (configuration.arch->endianness == ARCH_ENDIAN_BIG) { \
+                printdf("big endian"); \
                 for (j = sizeof(T) - 1; j >= 0; j--) { \
                     data->contents.bytes[j] = number & 0xFF; \
                     number >>= 8; \
                 } \
             } \
-            else if (ENDIANNESS == ARCH_LITTLE_ENDIAN) { \
-                puts("little endian"); \
+            else if (configuration.arch->endianness == ARCH_ENDIAN_LITTLE) { \
+                printdf("little endian"); \
                 for (j = 0; j < sizeof(T); j++) { \
                     data->contents.bytes[j] = number & 0xFF; \
                     number >>= 8; \
@@ -180,11 +180,12 @@ static void pseudo_include(Line *line) {
 
 static void pseudo_org(Line *line) {
     char *lend;
-    address = strtol(line->argv[0].val.str, &lend, 0);
-    if (lend == line->argv[0].val.str || *lend != '\0') {
-        fail("Value is not a number.\n");
+    size_t new_address = strtol(line->argv[0].val.str, &lend, 0) & address_mask;
+    if (*lend == '\0') {
+        printdf("new address is 0x%lX\n", new_address);
+        address = new_address;
     }
-    else if (lend == line->argv[0].val.str) {
-        // Set address to symbol value
+    else {
+        fail("Value is not a number.\n");
     }
 }

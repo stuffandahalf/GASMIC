@@ -6,6 +6,7 @@
 struct alloced {
     void *address;
     struct alloced *next;
+	struct alloced *prev;
 };
 
 static struct {
@@ -30,16 +31,12 @@ void release(void) {
 
 static struct alloced *find_memory(void *ptr) {
     struct alloced *mem;
-    for (mem = alloced_mem.first; mem != NULL; mem = mem->next) {
+    for (mem = alloced_mem.last; mem != NULL; mem = mem->prev) {
         if (mem->address == ptr) {
-            //break;
             return mem;
         }
     }
-    //if (mem == NULL) {
     die("Failed to locate provided address, are you sure you salloced it?\n");
-    //}
-    //return mem;
 }
 
 void smem_diagnostic(void) {
@@ -52,25 +49,36 @@ void smem_diagnostic(void) {
 }
 
 void *salloc(size_t size) {
-    struct alloced *a;
-    if ((a = malloc(sizeof(struct alloced))) == NULL) {
-        die("Failed to allocate storage for alloced memory\n");
-    }
-    
-    if ((a->address = malloc(size)) == NULL) {
+    void *ptr = NULL;
+    if ((ptr = malloc(size)) == NULL) {
         die("Failed to allocate memory\n");
     }
-    a->next = NULL;
     
-    if (alloced_mem.first == NULL) {
-        alloced_mem.first = a;
-    }
-    else {
-        alloced_mem.last->next = a;
-    }
-    alloced_mem.last = a;
+	saquire(ptr);
     
-    return a->address;
+    return ptr;
+}
+
+void *saquire(void *ptr) {
+	struct alloced *a;
+	if ((a = malloc(sizeof(struct alloced))) == NULL) {
+		die("Failed to allocate storage for allocated memory\n");
+	}
+
+	a->address = ptr;
+	a->next = NULL;
+
+	if (alloced_mem.first == NULL) {
+		alloced_mem.first = a;
+		a->prev = NULL;
+	}
+	else {
+		alloced_mem.last->next = a;
+		a->prev = alloced_mem.last;
+	}
+	alloced_mem.last = a;
+
+	return a->address;
 }
 
 void *srealloc(void *ptr, size_t size) {
@@ -85,7 +93,7 @@ void *srealloc(void *ptr, size_t size) {
 }
 
 void sfree(void *ptr) {
-    struct alloced *prev = NULL;
+    /*struct alloced *prev = NULL;
     struct alloced *a = alloced_mem.first;
     //printf("looking for address: %p\n", ptr);
     while (a != NULL) {
@@ -111,6 +119,25 @@ void sfree(void *ptr) {
     }
     else {
         prev->next = a->next;
+    }*/
+
+	struct alloced *a = find_memory(ptr);
+
+	struct alloced *prev = a->prev;
+	struct alloced *next = a->next;
+
+    if (prev != NULL) {
+	    prev->next = next;
+    }
+    if (next != NULL) {
+	    next->prev = prev;
+    }
+    
+    if (alloced_mem.first == a) {
+        alloced_mem.first = a->next;
+    }
+    if (alloced_mem.last == a) {
+        alloced_mem.last = a->prev;
     }
     
     free(a->address);

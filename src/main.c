@@ -1,16 +1,20 @@
 #include <stdio.h>
 #include <string.h>
-#include <stdint.h>
+#ifdef _WIN32
+#include <getopt.h>
+#define strdup _strdup
+#else
 #include <unistd.h>
+#endif
 #include <as.h>
-#include <arch.h>
+#include <targets.h>
 
 #define LINEBUFFERSIZE (256)
 char buffer[LINEBUFFERSIZE];
 
 static void configure(int argc, char *argv[]);
 char *str_to_upper(char str[]);
-static void trim_str(char str[]);
+//static void trim_str(char str[]);
 static void parse_line(Line *l, char *buffer);
 static void add_label(Line *l);
 static void parse_mnemonic(Line *l);
@@ -19,26 +23,27 @@ Config configuration;
     
 //FILE *in;
 FILE *out;
-addr_t address;
+size_t address;
+size_t address_mask;    // bits to mask the address to;
 size_t line_num;
 SymTab *symtab;
 DataTab *datatab;
 //SymTab *undefined_symtab;
 
-#ifdef DEBUG
-extern void smem_diagnostic(void);
-#endif
+Architecture **architectures[] = { TARGETS };
 
 int main(int argc, char **argv) {
+    INIT_TARGETS();
+
     if ((configuration.out_fname = strdup("a.out")) == NULL) {
         die("Failed to duplicate string\n");
     }
     FILE *in;
     //out = stdout;
-    configuration.arch = architectures;
+    configuration.arch = *architectures[0];
     configuration.in_fnames = NULL;
     configuration.in_fnamec = 0;
-    configuration.syntax = DEFAULT_SYNTAX;
+    configuration.syntax = configuration.arch->default_syntax;
     address = 0;
     line_num = 1;
 
@@ -47,17 +52,27 @@ int main(int argc, char **argv) {
     //out = fopen(out_fname, "w+");
     free(configuration.out_fname);
     configuration.out_fname = NULL;
-    
+
+    address_mask = 0;
+    int i;
+    for (i = 0; i < configuration.arch->bytes_per_address * configuration.arch->byte_size; i++) {
+        if (i) {
+            address_mask <<= 1;
+        }
+        address_mask |= 1;
+    }
+    printdf("Address mask: %lX\n", address_mask);
+
     symtab = salloc(sizeof(SymTab));
     symtab->first = NULL;
     symtab->last = NULL;
-    
+
     datatab = salloc(sizeof(DataTab));
     datatab->first = NULL;
     datatab->last = NULL;
-    
+
     Line *l = salloc(sizeof(Line));
-    
+
     if (configuration.in_fnamec < 0) {
         die("Invalid number of command line arguments.\n");
     }
@@ -65,7 +80,7 @@ int main(int argc, char **argv) {
         assemble(stdin, l);
     }
     else {
-        int i;
+        unsigned int i;
         for (i = 0; i < configuration.in_fnamec; i++) {
             if ((in = fopen(configuration.in_fnames[i], "r")) == NULL) {
                 die("Failed to open input file %s\n", configuration.in_fnames[i]);
@@ -75,16 +90,12 @@ int main(int argc, char **argv) {
         }
     }
     sfree(l);
-    
-    #ifdef DEBUG
-    puts("symtab");
-    #endif
+
+    printdf("SYMBOLS\n");
     Symbol *sym = symtab->first;
     while (sym != NULL) {
-        #ifdef DEBUG
-        printf("label: %s\t%ld\n", sym->label, sym->value);
-        #endif
-        
+        printdf("label: %s\t%ld\n", sym->label, sym->value);
+
         sfree(sym->label);
         sym->label = NULL;
         Symbol *tmp = sym;
@@ -95,30 +106,29 @@ int main(int argc, char **argv) {
     sfree(symtab);
     symtab = NULL;
     sym = NULL;
-    
-    #ifdef DEBUG
-    puts("datatab");
-    #endif
+
+    printdf("DATATAB\n");
     Data *data = datatab->first;
     while (data != NULL) {
-        #ifdef DEBUG
-        printf("data address: %lX,  ", data->address);
-        #endif
+        printdf("data address: %lX,  ", data->address);
         switch (data->type) {
         case DATA_TYPE_LABEL:
-            printdf("%d bytes label \"%s\"\n", data->bytec, data->contents.symbol);
-            free(data->contents.symbol);
+            printdf("%" PRIu8 " bytes label \"%s\"\n", data->bytec, data->contents.symbol);
+            sfree(data->contents.symbol);
             break;
         case DATA_TYPE_BYTES:
-            #ifdef DEBUG
-            printf("%d bytes ", data->bytec);
+#ifndef NDEBUG
+            printf("%" PRIu8 " bytes ", data->bytec);
             int i;
             for (i = 0; i < data->bytec; i++) {
-                printf("%X ", data->contents.bytes[i]);
+                printf("%" PRIX8, data->contents.bytes[i]);
             }
             printf("\n");
-            #endif
+#endif
             sfree(data->contents.bytes);
+            break;
+        case DATA_TYPE_NONE:
+            printdf("Empty data.\n");
             break;
         default:
             printdf("Garbage data.\n");
@@ -132,12 +142,18 @@ int main(int argc, char **argv) {
     datatab = NULL;
     data = NULL;
     //fclose(out);
-    
+
+    DESTROY_TARGETS();
+
+#ifdef _WIN32
+    getc(stdin);
+#endif
+
 	return 0;
 }
 
 void assemble(FILE *in, Line *l) {
-    while (fgets(buffer, LINEBUFFERSIZE, in) != NULL) {        
+    while (fgets(buffer, LINEBUFFERSIZE, in) != NULL) {
         if (buffer[0] != '\0' || buffer[0] != '\n') {
             l->line_state = 0;
             l->arg_buf_size = 2;
@@ -147,7 +163,7 @@ void assemble(FILE *in, Line *l) {
             
             parse_line(l, buffer);
             
-            #ifdef DEBUG
+#ifndef NDEBUG
             //printf("%s\t%s", l->label, l->mnemonic);
             if (l->line_state & LINE_STATE_LABEL) {
                 printf("%s", l->label);
@@ -156,15 +172,14 @@ void assemble(FILE *in, Line *l) {
                 if (l->line_state & LINE_STATE_LABEL) {
                     puts("\t");
                 }
-                printdf("%s", l->mnemonic);
+                printf("%s", l->mnemonic);
             }
-            int i;
+            unsigned int i;
             for (i = 0; i < l->argc; i++) {
                 printf("\t%s", l->argv[i].val.str);
             }
             puts("");
-            #endif
-            
+#endif
             if (l->line_state & LINE_STATE_LABEL) {      // If current line has a label
                 add_label(l);
             }
@@ -181,6 +196,7 @@ void assemble(FILE *in, Line *l) {
 
 static void configure(int argc, char *argv[]) {
     int c;
+
     while ((c = getopt(argc, argv, "m:o:f:")) != -1) {
         switch (c) {
         case 'm':
@@ -198,22 +214,24 @@ static void configure(int argc, char *argv[]) {
             break;
         case 'f':
             break;
-        case 0:
+        case '?':
+        default:
+            die("Usage: %s [-m arch] [-o outfile]\n", argv[0]);
             break;
         }
     }
     
-    printf("argcount = %d\n", argc - optind);
+    printdf("argcount = %d\n", argc - optind);
     
     configuration.in_fnames = argv + sizeof(char) * optind;
     configuration.in_fnamec = argc - optind;
 }
 
 Architecture *str_to_arch(const char arch_name[]) {
-    Architecture *a;
-    for (a = architectures; a->name[0] != '\0'; a++) {
-        if (streq(arch_name, a->name)) {
-            return a;
+    Architecture ***a;
+    for (a = architectures; *a != NULL; a++) {
+        if (streq(arch_name, (**a)->name)) {
+            return **a;
         }
     }
     return NULL;
@@ -310,7 +328,7 @@ static void parse_line(Line *l, char *buffer) {
 }
 
 static void add_label(Line *l) {
-    Symbol *sym = salloc(sizeof(Symbol));    
+    Symbol *sym = salloc(sizeof(Symbol));
     
     sym->next = NULL;
     if (l->label[0] == '.') {
@@ -376,17 +394,13 @@ void add_data(Data *data) {
 static void parse_mnemonic(Line *line) {
     struct pseudo_instruction *pseudo_op;
     
-    switch(line->mnemonic[0]) {
-    case '.':
+    if (line->mnemonic[0] == '.') {
         parse_pseudo_op(line);
-        break;
-    default:
-        if ((pseudo_op = get_pseudo_op(line)) != NULL) {
-            pseudo_op->process(line);
-        }
-        else {
-            configuration.arch->parse_instruction(line);
-        }
-        break;
+    }
+    else if ((pseudo_op = get_pseudo_op(line)) != NULL) {
+        pseudo_op->process(line);
+    }
+    else {
+        configuration.arch->parse_instruction(line);
     }
 }

@@ -1,15 +1,34 @@
-#include <arch.h>
+#include <targets/z80/arch.h>
+
+Architecture *ARCH_Z80;
+
+static void parse_z80_instruction(Line *l);
+
+void Z80_init(void) {
+    ARCH_Z80 = salloc(sizeof(Architecture));
+    //ARCH_Z80->name = "z80";
+    ARCH_Z80->value = Z80;
+    strcpy(ARCH_Z80->name, "z80");
+    ARCH_Z80->byte_size = 8;
+    ARCH_Z80->bytes_per_address = 2;
+    ARCH_Z80->endianness = ARCH_ENDIAN_LITTLE;
+    ARCH_Z80->default_syntax = SYNTAX_INTEL;
+    ARCH_Z80->parse_instruction = &parse_z80_instruction;
+}
+void Z80_destroy(void) {
+    sfree(ARCH_Z80);
+}
 
 static void parse_z80_instruction(Line *l) {
     
 }
 
-Architecture architectures[] = {
+Architecture z80_architectures[] = {
     { "Z80", &parse_z80_instruction, Z80 },
     { "", NULL, 0 }
 };
 
-Register registers[] = {
+Register z80_registers[] = {
     { "A", 1, Z80 },
     { "F", 1, Z80 },
     { "AF", 2, Z80 },
@@ -30,10 +49,10 @@ Register registers[] = {
     { "PC", 2, Z80 },
     { "", 0, 0 }
 };
-#ifndef DEBUG
-int regc = sizeof(registers) / sizeof(Register) - 1
+#ifndef NDEBUG
+//int regc = sizeof(registers) / sizeof(Register) - 1;
 #endif
 
-Instruction instructions[] = {
-    { "", 0, 0, 0, 0, {} }
+Z80_Instruction z80_instructions[] = {
+    { "", 0, 0, 0, 0, 0 }
 };
