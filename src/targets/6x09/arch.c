@@ -22,10 +22,16 @@ void MC6809_init(void) {
     ARCH_INIT(MC6809, "6809");
     ARCH_MC6809->parse_instruction = &parse_6809_instruction;
 }
+void MC6809_destroy(void) {
+    sfree(ARCH_MC6809);
+}
 
 void HD6309_init(void) {
     ARCH_INIT(HD6309, "6309");
     ARCH_HD6309->parse_instruction = &parse_6309_instruction;
+}
+void HD6309_destroy(void) {
+    sfree(ARCH_HD6309);
 }
 
 /*static int test_instruction(MC6x09_Instruction *i, Line *l) {
@@ -51,8 +57,9 @@ static MC6x09_Instruction *locate_instruction(Line *l, int arch) {
     return NULL;
 }*/
 
-static void process_instruction_motorola(Line *line, MC6x09_Instruction *instr, Register *reg, Data *data) {
-    
+static void process_instruction_motorola(Line *line, const struct MC6x09_instruction_register *instr, const Register *reg, Data *data) {
+    //data->type = DATA_TYPE_BYTES;
+    //data->address = address;
 }
 
 //static void process_instruction_motorola(Line *line, MC6x09_Instruction *instr, Register *reg, Data *data) {
@@ -186,10 +193,8 @@ static void process_instruction_motorola(Line *line, MC6x09_Instruction *instr, 
 //    }
 //}
 
-static void process_instruction(Line *line, MC6x09_Instruction *instr, Register *reg, Data *data) {
-    //data->type = DATA_TYPE_BYTES;
-    //data->address = address;
-    /*switch (configuration.syntax) {
+static void process_instruction(Line *line, const struct MC6x09_instruction_register *instr, const Register *reg, Data *data) {
+    switch (configuration.syntax) {
     case SYNTAX_MOTOROLA:
         process_instruction_motorola(line, instr, reg, data);
         break;
@@ -203,29 +208,30 @@ static void process_instruction(Line *line, MC6x09_Instruction *instr, Register 
     default:
         printdf("Invalid instruction syntax.\n");
         break;
-    }*/
+    }
     
     
-    
+    //sfree(data);
     add_data(data);
 }
 
-static inline int instruction_supports_reg(MC6x09_Instruction *instruction, Register *reg) {
-    struct MC6809_instruction_register *instruction_reg = NULL;
+static inline const struct MC6x09_instruction_register *instruction_supports_reg(const MC6x09_Instruction *instruction, const Register *reg) {
+    const struct MC6x09_instruction_register *instruction_reg = NULL;
     for (instruction_reg = instruction->registers; instruction_reg->reg != NULL; instruction_reg++) {
         if (streq(reg->name, instruction_reg->reg->name)) {
-            return 1;
+            return instruction_reg;
         }
     }
-    return 0;
+    return NULL;
 }
 
 static void parse_instruction(Line *l, int arch) {
-    char *mnem = NULL;
-    char *line = NULL;
-    Register *reg = NULL;
+    const char *mnem = NULL;
+    const char *line = NULL;
+    const Register *reg = NULL;
+    const struct MC6x09_instruction_register *instruction_reg;
     
-    MC6x09_Instruction *i = NULL;
+    const MC6x09_Instruction *i = NULL;
     for (i = instructions; i->mnemonic[0] != '\0'; i++) {
         if (!(i->architectures & arch)) {
             goto next_instruction;
@@ -252,7 +258,7 @@ static void parse_instruction(Line *l, int arch) {
             case ARG_ORDER_FROM_REG:
             case ARG_ORDER_TO_REG:
                 for (reg = registers; reg->name[0] != '\0'; reg++) {
-                    if (streq(line, reg->name) && (reg->arcs & configuration.arch->value) && instruction_supports_reg(i, reg)) {
+                    if (streq(line, reg->name) && (reg->arcs & configuration.arch->value) && (instruction_reg = instruction_supports_reg(i, reg)) != NULL) {
                         goto instruction_found;
                     }
                 }
@@ -283,7 +289,7 @@ instruction_found:
     assembled->type = DATA_TYPE_NONE;
     assembled->bytec = 0;
     assembled->contents.bytes = NULL;
-    process_instruction(l, i, reg, assembled);
+    process_instruction(l, instruction_reg, reg, assembled);
 
     /*char *mnem = NULL;
     char *line = NULL;

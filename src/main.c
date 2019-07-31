@@ -143,6 +143,8 @@ int main(int argc, char **argv) {
     data = NULL;
     //fclose(out);
 
+    DESTROY_TARGETS();
+
 #ifdef _WIN32
     getc(stdin);
 #endif

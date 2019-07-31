@@ -38,7 +38,7 @@
 #define MC6809_ADDR_MODE_EXT        (5)
 #define MC6809_ADDR_MODE_INTER      (6)
 
-typedef ARCH_INSTRUCTION(MC6809, uint16_t, 17, 6) MC6x09_Instruction;
+typedef ARCH_INSTRUCTION(MC6x09, uint16_t, 17, 6) MC6x09_Instruction;
 
 //typedef uint16_t addr_t;
 
@@ -51,6 +51,8 @@ extern Architecture *ARCH_MC6809;
 extern Architecture *ARCH_HD6309;
 
 void MC6809_init(void);
+void MC6809_destroy(void);
 void HD6309_init(void);
+void HD6309_destroy(void);
 
 #endif

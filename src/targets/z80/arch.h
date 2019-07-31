@@ -42,5 +42,6 @@ extern size_t address;
 extern Architecture *ARCH_Z80;
 
 void Z80_init(void);
+void Z80_destroy(void);
 
 #endif

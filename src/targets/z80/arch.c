@@ -15,6 +15,9 @@ void Z80_init(void) {
     ARCH_Z80->default_syntax = SYNTAX_INTEL;
     ARCH_Z80->parse_instruction = &parse_z80_instruction;
 }
+void Z80_destroy(void) {
+    sfree(ARCH_Z80);
+}
 
 static void parse_z80_instruction(Line *l) {
     
