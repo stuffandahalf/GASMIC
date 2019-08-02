@@ -30,15 +30,7 @@
 #define HD6309_REG_Z       (16)
 #define HD6309_REG_MD      (17)
 
-#define MC6809_ADDR_MODE_INVALID    (0)
-#define MC6809_ADDR_MODE_INH        (1)
-#define MC6809_ADDR_MODE_IMM        (2)
-#define MC6809_ADDR_MODE_DIR        (3)
-#define MC6809_ADDR_MODE_IND        (4)
-#define MC6809_ADDR_MODE_EXT        (5)
-#define MC6809_ADDR_MODE_INTER      (6)
-
-typedef ARCH_INSTRUCTION(MC6x09, uint16_t, 17, 6) MC6x09_Instruction;
+//typedef ARCH_INSTRUCTION(MC6x09, uint16_t, 17, 6) MC6x09_Instruction;
 
 //typedef uint16_t addr_t;
 

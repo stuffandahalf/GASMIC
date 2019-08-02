@@ -104,7 +104,7 @@ typedef struct {
 #define MAX_MNEMONIC_LEN (10)
 //#define MAX_REGS (20)
 
-#define ARCH_INSTRUCTION(arch, Topcode, reg_count, mode_count) \
+/*#define ARCH_INSTRUCTION(arch, Topcode, reg_count, mode_count) \
     struct { \
         char mnemonic[MAX_MNEMONIC_LEN]; \
         uint8_t architectures; \
@@ -116,23 +116,41 @@ typedef struct {
                 Topcode opcode; \
             } addressing_modes[mode_count]; \
         } registers[reg_count + 1]; \
-    }
+    }*/
 
-/*typedef struct {
-    char mnemonic[MAXMNEMONICSIZE];
+
+typedef enum {
+	ADDR_MODE_INVALID,
+	ADDR_MODE_INHERENT,
+	ADDR_MODE_IMMEDIATE,
+	ADDR_MODE_DIRECT,
+	ADDR_MODE_INDIRECT,
+	ADDR_MODE_EXTENDED,
+	ADDR_MODE_INTERREGISTER
+} addr_mode_t;
+
+/*#define MC6809_ADDR_MODE_INVALID    (0)
+#define MC6809_ADDR_MODE_INH        (1)
+#define MC6809_ADDR_MODE_IMM        (2)
+#define MC6809_ADDR_MODE_DIR        (3)
+#define MC6809_ADDR_MODE_IND        (4)
+#define MC6809_ADDR_MODE_EXT        (5)
+#define MC6809_ADDR_MODE_INTER      (6)*/
+
+typedef struct {
+    char mnemonic[MAX_MNEMONIC_LEN];
     uint8_t architectures;
-    uint16_t base_opcode;
     uint8_t arg_order;
-    uint8_t address_modes;
     //Register *registers[MAX_REGS];
-    struct {
+    struct instruction_register {
         Register *reg;
         struct {
-            uint8_t mode;
-            uint16_t opcode;
+            addr_mode_t mode;
+			uint8_t opcode_size;	// in bytes
+            uint64_t opcode;
         } addressing_modes[10];
     } opcodes[];
-} Instruction;*/
+} Instruction;
 
 typedef enum {
     ARG_TYPE_NONE = 0,
@@ -180,12 +198,14 @@ typedef struct {
 
 typedef struct {
     char name[10];
-    void (*parse_instruction)(Line *l);
+    //void (*parse_instruction)(Line *l);
     int value;
     uint8_t byte_size;  // bits per byte
     uint8_t bytes_per_address;
     endian_t endianness;
     syntax_t default_syntax;
+	const Register *registers;
+	const Instruction **instructions;
 } Architecture;
 
 struct pseudo_instruction {

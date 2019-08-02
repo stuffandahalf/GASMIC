@@ -18,6 +18,7 @@ char *str_to_upper(char str[]);
 static void parse_line(Line *l, char *buffer);
 static void add_label(Line *l);
 static void parse_mnemonic(Line *l);
+static void parse_instruction(Line *l);
 
 Config configuration;
     
@@ -199,24 +200,24 @@ static void configure(int argc, char *argv[]) {
 
     while ((c = getopt(argc, argv, "m:o:f:")) != -1) {
         switch (c) {
-        case 'm':
+        case 'm':	// architecture
             configuration.arch = str_to_arch(optarg);
             if (configuration.arch == NULL) {
                 free(configuration.out_fname);
                 die("Unsupported architecture: %s\n", optarg);
             }
             break;
-        case 'o':
+        case 'o':	// output file
             free(configuration.out_fname);
             if ((configuration.out_fname = strdup(optarg)) == NULL) {
                 die("Failed to allocate new output file name");
             }
             break;
-        case 'f':
+        case 'f':	// output file format
             break;
         case '?':
         default:
-            die("Usage: %s [-m arch] [-o outfile]\n", argv[0]);
+            die("Usage: %s [-m arch] [-o outfile] [-f outformat]\n", argv[0]);
             break;
         }
     }
@@ -401,6 +402,86 @@ static void parse_mnemonic(Line *line) {
         pseudo_op->process(line);
     }
     else {
-        configuration.arch->parse_instruction(line);
+        //configuration.arch->parse_instruction(line);
+		parse_instruction(line);
     }
+}
+
+static inline const struct instruction_register *instruction_supports_reg(const Instruction *instruction, const Register *reg) {
+	const struct instruction_register *ir = NULL;
+	for (ir = instruction->opcodes; ir->reg != NULL; ir++) {
+		if (streq(reg->name, ir->reg->name)) {
+			return ir;
+		}
+	}
+	return NULL;
+}
+static void parse_instruction(Line *l) {
+	const char *mnem = NULL;
+	const char *line = NULL;
+	const Register *reg = NULL;
+	const struct instruction_register *instruction_reg = NULL;
+
+	const Instruction **i = NULL;
+
+	//const MC6x09_Instruction *i = NULL;
+	for (i = configuration.arch->instructions; i != NULL; i++) {
+		if (!((*i)->architectures & configuration.arch->value)) {
+			goto next_instruction;
+		}
+
+		switch (configuration.syntax) {
+		case SYNTAX_MOTOROLA:
+			mnem = (*i)->mnemonic;
+			line = l->mnemonic;
+			while (*mnem != '\0' && *line != '\0') {
+				if (*mnem++ != *line++) {
+					goto next_instruction;
+				}
+			}
+
+			switch ((*i)->arg_order) {
+			case ARG_ORDER_NONE:
+			case ARG_ORDER_INTERREG:
+				if (*line != '\0') {
+					goto next_instruction;
+				}
+				goto instruction_found;
+				break;
+			case ARG_ORDER_FROM_REG:
+			case ARG_ORDER_TO_REG:
+				for (reg = &(configuration.arch->registers[1]); reg->name[0] != '\0'; reg++) {
+					if (streq(line, reg->name) && (reg->arcs & configuration.arch->value) && ((instruction_reg = instruction_supports_reg(*i, reg)) != NULL)) {
+						goto instruction_found;
+					}
+				}
+				break;
+			}
+			break;
+		case SYNTAX_INTEL:
+		case SYNTAX_ATT:
+			fail("Selected syntax is not yet implemented.\n");
+			break;
+		case SYNTAX_UNKNOWN:
+		default:
+			fail("Invalid syntax selected.\n");
+			break;
+		}
+
+next_instruction:
+		continue;
+	}
+
+	fail("Instruction not found.\n");
+
+instruction_found:
+	while (0);
+
+	Data *assembled = salloc(sizeof(Data));
+	assembled->next = NULL;
+	assembled->type = DATA_TYPE_NONE;
+	assembled->bytec = 0;
+	assembled->contents.bytes = NULL;
+	//process_instruction(l, instruction_reg, reg, assembled);
+	printdf("Instruction Register is %s\n", instruction_reg ? instruction_reg->reg->name : "NONE");
 }

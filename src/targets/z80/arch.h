@@ -32,7 +32,7 @@
 
 #define Z80_ADDR_INVALID    (0)
 
-typedef ARCH_INSTRUCTION(Z80, uint8_t, 18, 6) Z80_Instruction;
+//typedef ARCH_INSTRUCTION(Z80, uint8_t, 18, 6) Z80_Instruction;
 
 extern size_t address;
 //extern Architecture architectures[];

@@ -13,7 +13,7 @@ void Z80_init(void) {
     ARCH_Z80->bytes_per_address = 2;
     ARCH_Z80->endianness = ARCH_ENDIAN_LITTLE;
     ARCH_Z80->default_syntax = SYNTAX_INTEL;
-    ARCH_Z80->parse_instruction = &parse_z80_instruction;
+    //ARCH_Z80->parse_instruction = &parse_z80_instruction;
 }
 void Z80_destroy(void) {
     sfree(ARCH_Z80);
@@ -53,6 +53,6 @@ Register z80_registers[] = {
 //int regc = sizeof(registers) / sizeof(Register) - 1;
 #endif
 
-Z80_Instruction z80_instructions[] = {
+/*Z80_Instruction z80_instructions[] = {
     { "", 0, 0, 0, 0, 0 }
-};
+};*/
