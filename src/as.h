@@ -1,5 +1,5 @@
-#ifndef _AS_H
-#define _AS_H
+#ifndef AS_H
+#define AS_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,7 +11,7 @@
 #include <inttypes.h>
 #include <smem.h>
 
-#define streq(__s1, __s2) !strcmp((const char *)__s1, (const char *)__s2)
+#define streq(__s1, __s2) !strcmp((const char *)(__s1), (const char *)(__s2))
 #define fail(msg, ...) die("\033[0;31mERROR \033[0m%ld: " msg, line_num,  ##__VA_ARGS__)
 
 // print to stderr

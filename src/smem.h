@@ -1,5 +1,5 @@
-#ifndef __SMEM_H
-#define __SMEM_H
+#ifndef SMEM_H
+#define SMEM_H
 
 #include <stdio.h>
 #include <stdlib.h>
