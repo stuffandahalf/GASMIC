@@ -8,6 +8,7 @@
 #endif
 #include <as.h>
 #include <targets.h>
+#include <util.h>
 
 #define LINEBUFFERSIZE (256)
 char buffer[LINEBUFFERSIZE];
@@ -16,7 +17,6 @@ static void configure(int argc, char *argv[]);
 char *str_to_upper(char str[]);
 //static void trim_str(char str[]);
 static void parse_line(Line *l, char *buffer);
-static void add_label(Line *l);
 static void parse_mnemonic(Line *l);
 static void parse_instruction(Line *l);
 
@@ -27,8 +27,6 @@ FILE *out;
 size_t address;
 size_t address_mask;    // bits to mask the address to;
 size_t line_num;
-SymTab *symtab;
-DataTab *datatab;
 //SymTab *undefined_symtab;
 
 Architecture **architectures[] = { TARGETS };
@@ -64,13 +62,8 @@ int main(int argc, char **argv) {
     }
     printdf("Address mask: %lX\n", address_mask);
 
-    symtab = salloc(sizeof(SymTab));
-    symtab->first = NULL;
-    symtab->last = NULL;
-
-    datatab = salloc(sizeof(DataTab));
-    datatab->first = NULL;
-    datatab->last = NULL;
+    init_data_table();
+    init_symbol_table();
 
     Line *l = salloc(sizeof(Line));
 
@@ -328,69 +321,6 @@ static void parse_line(Line *l, char *buffer) {
     }
 }
 
-static void add_label(Line *l) {
-    Symbol *sym = salloc(sizeof(Symbol));
-    
-    sym->next = NULL;
-    if (l->label[0] == '.') {
-        if (symtab->last == NULL) {
-            fail("Local label cannot be defined before any non-local labels.\n");
-        }
-        
-        sym->label = salloc(sizeof(char) * (strlen(symtab->last_parent->label) + strlen(l->label) + 1));
-        
-        register char *label = sym->label;
-        register char *c;
-        for (c = symtab->last_parent->label; *c != '\0'; c++) {
-            *(label++) = *c;
-        }
-        for (c = l->label; *c != '\0'; c++) {
-            *(label++) = *c;
-        }
-        *label = '\0';
-        
-        l->label = sym->label;
-    }
-    else {
-        sym->label = salloc(strlen(l->label) + sizeof(char));
-        strcpy(sym->label, l->label);
-        symtab->last_parent = sym;
-    }
-    
-    printdf("Parsed label = %s\n", sym->label);
-    
-    sym->value = address;
-    
-    Symbol *test_sym;
-    for (test_sym = symtab->first; test_sym != NULL; test_sym = test_sym->next) {
-        if (streq(test_sym->label, sym->label)) {
-            fail("Symbol \"%s\" is already defined.\n", test_sym->label);
-        }
-    }
-    
-    if (symtab->first == NULL) {
-        symtab->first = sym;
-    }
-    else {
-        symtab->last->next = sym;
-    }
-    symtab->last = sym;
-}
-
-void add_data(Data *data) {
-    if (datatab->first == NULL) {
-        datatab->first = data;
-    }
-    else {
-        datatab->last->next = data;
-    }
-    datatab->last = data;
-    Data *next = datatab->last->next;
-    while (next != NULL) {
-        datatab->last = next;
-        next = next->next;
-    }
-}
 
 static void parse_mnemonic(Line *line) {
     struct pseudo_instruction *pseudo_op;
@@ -475,13 +405,16 @@ next_instruction:
 	fail("Instruction not found.\n");
 
 instruction_found:
-	while (0);
+    ;
+	//while (0);
 
-	Data *assembled = salloc(sizeof(Data));
-	assembled->next = NULL;
+	Data *assembled = init_data(salloc(sizeof(Data)));
+	/*assembled->next = NULL;
 	assembled->type = DATA_TYPE_NONE;
 	assembled->bytec = 0;
-	assembled->contents.bytes = NULL;
+	assembled->contents.bytes = NULL;*/
 	//process_instruction(l, instruction_reg, reg, assembled);
 	printdf("Instruction Register is %s\n", instruction_reg ? instruction_reg->reg->name : "NONE");
+
+	add_data(assembled);
 }

@@ -1,4 +1,5 @@
-#include <as.h>
+//#include <as.h>
+#include <util.h>
 //#include <targets/6x09/arch.h>
 
 /*

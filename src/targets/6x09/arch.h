@@ -1,11 +1,7 @@
-#ifndef MC6x09_ARCH_H
-#define MC6x09_ARCH_H
+#ifndef GASMIC_MC6x09_ARCH_H
+#define GASMIC_MC6x09_ARCH_H
 
 #include <as.h>
-
-//#define ENDIANNESS ARCH_BIG_ENDIAN
-
-//#define DEFAULT_SYNTAX SYNTAX_MOTOROLA
 
 #define MC6809 (1)
 #define HD6309 (2)
@@ -30,14 +26,7 @@
 #define HD6309_REG_Z       (16)
 #define HD6309_REG_MD      (17)
 
-//typedef ARCH_INSTRUCTION(MC6x09, uint16_t, 17, 6) MC6x09_Instruction;
-
-//typedef uint16_t addr_t;
-
-extern size_t address;
-//extern Architecture architectures[];
-//extern Register registers[];
-//extern Instruction instructions[];
+//extern size_t address;
 
 extern Architecture *ARCH_MC6809;
 extern Architecture *ARCH_HD6309;

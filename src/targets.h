@@ -1,5 +1,5 @@
-#ifndef TARGETS_H
-#define TARGETS_H
+#ifndef GASMIC_TARGETS_H
+#define GASMIC_TARGETS_H
 
 #include <targets/6x09/arch.h>
 #include <targets/z80/arch.h>

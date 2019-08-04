@@ -1,5 +1,5 @@
-#ifndef AS_H
-#define AS_H
+#ifndef GASMIC_AS_H
+#define GASMIC_AS_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -143,7 +143,7 @@ typedef struct {
     uint8_t arg_order;
     //Register *registers[MAX_REGS];
     struct instruction_register {
-        Register *reg;
+        const Register *reg;
         struct {
             addr_mode_t mode;
 			uint8_t opcode_size;	// in bytes
@@ -225,14 +225,11 @@ typedef struct {
 extern size_t line_num;
 extern size_t address;
 extern size_t address_mask;
-extern SymTab *symtab;
-extern DataTab *datatab;
 extern Config configuration;
 
 void assemble(FILE *in, Line *l);
 Architecture *str_to_arch(const char arch_name[]);
 struct pseudo_instruction *get_pseudo_op(Line *line);
 void parse_pseudo_op(Line *line);
-void add_data(Data *data);
 
 #endif

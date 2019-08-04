@@ -1,5 +1,5 @@
-#ifndef SMEM_H
-#define SMEM_H
+#ifndef GASMIC_SMEM_H
+#define GASMIC_SMEM_H
 
 #include <stdio.h>
 #include <stdlib.h>

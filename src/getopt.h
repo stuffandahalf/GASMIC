@@ -1,5 +1,5 @@
-#ifndef GETOPT_H
-#define GETOPT_H
+#ifndef GASMIC_GETOPT_H
+#define GASMIC_GETOPT_H
 
 #include <stdbool.h>
 #include <string.h>

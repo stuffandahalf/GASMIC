@@ -1,12 +1,108 @@
 #include <targets/6x09/arch.h>
 
-//static void parse_6809_instruction(Line *l);
-//static void parse_6309_instruction(Line *l);
-extern const Instruction *instructions[];
-extern const Register registers[];
-
 Architecture *ARCH_MC6809;
 Architecture *ARCH_HD6309;
+
+static const Register registers[] = {
+    { "NONE", 0, MC6809 | HD6309 },
+    { "A", 1, MC6809 | HD6309 },
+    { "B", 1, MC6809 | HD6309 },
+    { "D", 2, MC6809 | HD6309 },
+    { "X", 2, MC6809 | HD6309 },
+    { "Y", 2, MC6809 | HD6309 },
+    { "U", 2, MC6809 | HD6309 },
+    { "S", 2, MC6809 | HD6309 },
+    { "PC", 2, MC6809 | HD6309 },
+    { "E", 1, HD6309 },
+    { "F", 1, HD6309 },
+    { "W", 2, HD6309 },
+    { "Q", 4, HD6309 },
+    { "V", 2, HD6309 },
+    { "Z", 2, HD6309 },
+    { "DP", 1, MC6809 | HD6309 },
+    { "CC", 1, MC6809 | HD6309 },
+    { "MD", 1, HD6309 },
+    { 0, 0, 0 }
+};
+#ifndef NDEBUG
+static const int regc = sizeof(registers) / sizeof(Register) - 1;
+#endif
+
+#define MC6809_REGISTER(reg) ((reg >= 0 && reg < HD6309_REG_E) ? &(registers[reg]) : NULL)
+#define HD6309_REGISTER(reg) ((reg >= 0 && reg <= HD6309_REG_MD) ? &(registers[reg]) : NULL)
+
+static const Instruction I_ABX = {
+    "ABX",
+    MC6809 | HD6309,
+    ARG_ORDER_NONE,
+    {
+        {
+            MC6809_REGISTER(MC6809_REG_NONE),
+            {
+                { ADDR_MODE_INHERENT, 1, 0x3A },
+                { ADDR_MODE_INVALID, 0, 0 }
+            }
+        },
+        { NULL, 0 }
+    }
+};
+
+const Instruction I_ADC_ALL = {
+    "ADC",
+    MC6809 | HD6309,
+    ARG_ORDER_TO_REG,
+    {
+        {
+            MC6809_REGISTER(MC6809_REG_A),
+            {
+                { ADDR_MODE_IMMEDIATE, 1, 0x89 },
+                { ADDR_MODE_DIRECT, 1, 0x99 },
+                { ADDR_MODE_INDIRECT, 1, 0xA9 },
+                { ADDR_MODE_EXTENDED, 1, 0xB9 },
+                { ADDR_MODE_INVALID, 0, 0 }
+            }
+        },
+        {
+            MC6809_REGISTER(MC6809_REG_B),
+            {
+                { ADDR_MODE_IMMEDIATE, 1, 0xC9 },
+                { ADDR_MODE_DIRECT, 1, 0xD9 },
+                { ADDR_MODE_INDIRECT, 1, 0xE9 },
+                { ADDR_MODE_EXTENDED, 1, 0xF9 },
+                { ADDR_MODE_INVALID, 0, 0 }
+            }
+        },
+        { NULL, 0 }
+    }
+};
+
+const Instruction I_ADC_HD6309 = {
+    "ADC",
+    HD6309,
+    ARG_ORDER_TO_REG,
+    {
+        {
+            MC6809_REGISTER(MC6809_REG_D),
+            {
+                { ADDR_MODE_IMMEDIATE, 2, 0x1089 },
+                { ADDR_MODE_DIRECT, 2, 0x1099 },
+                { ADDR_MODE_INDIRECT, 2, 0x10A9 },
+                { ADDR_MODE_EXTENDED, 2, 0x10B9 },
+                { ADDR_MODE_INVALID, 0, 0 }
+            }
+        },
+        { NULL, 0 }
+    }
+};
+
+const Instruction *instructions[] = {
+    &I_ABX,
+    &I_ADC_ALL,
+    &I_ADC_HD6309,
+    NULL
+};
+
+
 
 #define ARCH_INIT(arch_var, arch_name) { \
     ARCH_##arch_var = salloc(sizeof(Architecture)); \
@@ -22,7 +118,6 @@ Architecture *ARCH_HD6309;
 
 void MC6809_init(void) {
     ARCH_INIT(MC6809, "6809");
-    //ARCH_MC6809->parse_instruction = &parse_6809_instruction;
 }
 void MC6809_destroy(void) {
     sfree(ARCH_MC6809);
@@ -30,7 +125,6 @@ void MC6809_destroy(void) {
 
 void HD6309_init(void) {
     ARCH_INIT(HD6309, "6309");
-    //ARCH_HD6309->parse_instruction = &parse_6309_instruction;
 }
 void HD6309_destroy(void) {
     sfree(ARCH_HD6309);
@@ -59,10 +153,10 @@ static MC6x09_Instruction *locate_instruction(Line *l, int arch) {
     return NULL;
 }*/
 
-static void process_instruction_motorola(Line *line, const struct MC6x09_instruction_register *instr, const Register *reg, Data *data) {
+//static void process_instruction_motorola(Line *line, const struct MC6x09_instruction_register *instr, const Register *reg, Data *data) {
     //data->type = DATA_TYPE_BYTES;
     //data->address = address;
-}
+//}
 
 //static void process_instruction_motorola(Line *line, MC6x09_Instruction *instr, Register *reg, Data *data) {
 //    if (instr->address_modes == MC6809_ADDR_MODE_INH) {
@@ -378,105 +472,9 @@ static void parse_6309_instruction(Line *l) {
     { "", NULL, 0 }
 };*/
 
-const Register registers[] = {
-    { "NONE", 0, MC6809 | HD6309 },
-    { "A", 1, MC6809 | HD6309 },
-    { "B", 1, MC6809 | HD6309 },
-    { "D", 2, MC6809 | HD6309 },
-    { "X", 2, MC6809 | HD6309 },
-    { "Y", 2, MC6809 | HD6309 },
-    { "U", 2, MC6809 | HD6309 },
-    { "S", 2, MC6809 | HD6309 },
-    { "PC", 2, MC6809 | HD6309 },
-    { "E", 1, HD6309 },
-    { "F", 1, HD6309 },
-    { "W", 2, HD6309 },
-    { "Q", 4, HD6309 },
-    { "V", 2, HD6309 },
-    { "Z", 2, HD6309 },
-    { "DP", 1, MC6809 | HD6309 },
-    { "CC", 1, MC6809 | HD6309 },
-    { "MD", 1, HD6309 },
-    { 0, 0, 0 }
-};
-#ifndef NDEBUG
-const int regc = sizeof(registers) / sizeof(Register) - 1;
-#endif
-
-#define MC6809_REGISTER(reg) ((reg > 0 && reg < HD6309_REG_E) ? &(registers[reg]) : NULL)
-#define HD6309_REGISTER(reg) ((reg > 0 && reg <= HD6309_REG_MD) ? &(registers[reg]) : NULL)
 
 
-const Instruction I_ABX = { 
-	"ABX",
-	MC6809 | HD6309,
-	ARG_ORDER_NONE,
-	{
-		{
-			MC6809_REGISTER(MC6809_REG_NONE),
-			{
-				{ ADDR_MODE_INHERENT, 1, 0x3A },
-				{ ADDR_MODE_INVALID, 0, 0 }
-			}
-		},
-		{ NULL, 0 }
-	}
-};
 
-const Instruction I_ADC_ALL = {
-	"ADC",
-	MC6809 | HD6309,
-	ARG_ORDER_TO_REG,
-	{
-		{
-			MC6809_REGISTER(MC6809_REG_A),
-			{
-				{ ADDR_MODE_IMMEDIATE, 1, 0x89 },
-				{ ADDR_MODE_DIRECT, 1, 0x99 },
-				{ ADDR_MODE_INDIRECT, 1, 0xA9 },
-				{ ADDR_MODE_EXTENDED, 1, 0xB9 },
-				{ ADDR_MODE_INVALID, 0, 0 }
-			}
-		},
-		{
-			MC6809_REGISTER(MC6809_REG_B),
-			{
-				{ ADDR_MODE_IMMEDIATE, 1, 0xC9 },
-				{ ADDR_MODE_DIRECT, 1, 0xD9 },
-				{ ADDR_MODE_INDIRECT, 1, 0xE9 },
-				{ ADDR_MODE_EXTENDED, 1, 0xF9 },
-				{ ADDR_MODE_INVALID, 0, 0 }
-			}
-		},
-		{ NULL, 0 }
-	}
-};
-
-const Instruction I_ADC_HD6309 = {
-	"ADC",
-	HD6309,
-	ARG_ORDER_TO_REG,
-	{
-		{
-			MC6809_REGISTER(MC6809_REG_D),
-			{
-				{ ADDR_MODE_IMMEDIATE, 2, 0x1089 },
-				{ ADDR_MODE_DIRECT, 2, 0x1099 },
-				{ ADDR_MODE_INDIRECT, 2, 0x10A9 },
-				{ ADDR_MODE_EXTENDED, 2, 0x10B9 },
-				{ ADDR_MODE_INVALID, 0, 0 }
-			}
-		},
-		{ NULL, 0 }
-	}
-};
-
-const Instruction *instructions[] = {
-    &I_ABX,
-    &I_ADC_ALL,
-    &I_ADC_HD6309,
-    NULL
-};
 //static MC6x09_Instruction *instructions = _instructions;
 
 //static Instruction instructions[] = {

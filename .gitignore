@@ -56,5 +56,7 @@ dist
 *.bin
 
 .vs
+.idea
+cmake-build-debug
 xcode
 .DS_Store
