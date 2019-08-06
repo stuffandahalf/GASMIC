@@ -191,7 +191,7 @@ void assemble(FILE *in, Line *l) {
 static void configure(int argc, char *argv[]) {
     int c;
 
-    while ((c = getopt(argc, argv, "m:o:f:")) != -1) {
+    while ((c = getopt(argc, argv, "hm:o:f:")) != -1) {
         switch (c) {
         case 'm':	// architecture
             configuration.arch = str_to_arch(optarg);
@@ -208,12 +208,19 @@ static void configure(int argc, char *argv[]) {
             break;
         case 'f':	// output file format
             break;
-        case '?':
-        default:
+        case 'h':
             die("Usage: %s [-m arch] [-o outfile] [-f outformat]\n", argv[0]);
             break;
+        default:
+            goto exit;
+            break;
+        /*case '?':
+        default:
+            die("Usage: %s [-m arch] [-o outfile] [-f outformat]\n", argv[0]);
+            break;*/
         }
     }
+exit:
     
     printdf("argcount = %d\n", argc - optind);
     
@@ -252,7 +259,7 @@ static void parse_line(Line *l, char *buffer) {
         case '\'':
             l->line_state ^= LINE_STATE_QUOTE;
             if (l->line_state & LINE_STATE_QUOTE) {
-                //buffer++;
+                buffer++;
             }
             else {
                 *c = '\0';
