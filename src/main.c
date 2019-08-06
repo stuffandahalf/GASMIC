@@ -244,7 +244,7 @@ char *str_to_upper(char str[]) {
     return str;
 }
 
-static void parse_line(Line *l, char *buffer) {    
+static void parse_line(Line *l, char *buffer) {
     register char *c;
     for (c = buffer; *c != '\0'; c++) {
         switch (*c) {
@@ -355,7 +355,7 @@ static void parse_instruction(Line *l) {
 	const Instruction **i = NULL;
 
 	//const MC6x09_Instruction *i = NULL;
-	for (i = configuration.arch->instructions; i != NULL; i++) {
+	for (i = configuration.arch->instructions; *i != NULL; i++) {
 		if (!((*i)->architectures & configuration.arch->value)) {
 			goto next_instruction;
 		}

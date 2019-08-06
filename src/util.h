@@ -9,7 +9,7 @@ extern DataTab *datatab;
 int init_data_table();
 int init_symbol_table();
 Data *init_data(Data *data);
-void add_label(Line *l);
-void add_data(Data *d);
+void add_label(Line *line);
+void add_data(Data *data);
 
 #endif //GASMIC_UTIL_H

@@ -26,32 +26,32 @@ int init_data_table() {
     return 1;
 }
 
-void add_label(Line *l) {
+void add_label(Line *line) {
     Symbol *sym = salloc(sizeof(Symbol));
 
     sym->next = NULL;
-    if (l->label[0] == '.') {
+    if (line->label[0] == '.') {
         if (symtab->last == NULL) {
             fail("Local label cannot be defined before any non-local labels.\n");
         }
 
-        sym->label = salloc(sizeof(char) * (strlen(symtab->last_parent->label) + strlen(l->label) + 1));
+        sym->label = salloc(sizeof(char) * (strlen(symtab->last_parent->label) + strlen(line->label) + 1));
 
         register char *label = sym->label;
         register char *c;
         for (c = symtab->last_parent->label; *c != '\0'; c++) {
             *(label++) = *c;
         }
-        for (c = l->label; *c != '\0'; c++) {
+        for (c = line->label; *c != '\0'; c++) {
             *(label++) = *c;
         }
         *label = '\0';
 
-        l->label = sym->label;
+        line->label = sym->label;
     }
     else {
-        sym->label = salloc(strlen(l->label) + sizeof(char));
-        strcpy(sym->label, l->label);
+        sym->label = salloc(strlen(line->label) + sizeof(char));
+        strcpy(sym->label, line->label);
         symtab->last_parent = sym;
     }
 
