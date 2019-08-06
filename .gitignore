@@ -51,12 +51,11 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
-build
 dist
 *.bin
 
 .vs
 .idea
-cmake-build-debug
+*build*
 xcode
 .DS_Store
