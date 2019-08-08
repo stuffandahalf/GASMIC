@@ -29,10 +29,17 @@ static void pseudo_org(Line *line);
 
 static struct pseudo_instruction pseudo_ops[] = {
     { ".ARCH", &pseudo_arch, 1 },
+
     { ".DB", &pseudo_set_byte, -1 },
     { ".DW", &pseudo_set_word, -1 },
     { ".DD", &pseudo_set_double, -1 },
     { ".DQ", &pseudo_set_quad, -1 },
+
+    { ".RESB", &pseudo_reserve_byte, 1 },
+    { ".RESW", &pseudo_reserve_word, 1 },
+    { ".RESD", &pseudo_reserve_double, 1 },
+    { ".RESQ", &pseudo_reserve_quad, 1 },
+
     { ".EQU", &pseudo_equ, 1 },
     { ".INCLUDE", &pseudo_include, 1 },
     { ".ORG", &pseudo_org, 1 },
@@ -143,6 +150,26 @@ static void pseudo_set_double(Line *line) {
 
 static void pseudo_set_quad(Line *line) {
     pseudo_set_data(uint64_t, line);
+}
+
+#define pseudo_reserve_data(T, line) { \
+    \
+}
+
+static void pseudo_reserve_bytes(Line *line) {
+    pseudo_reserve_data(uint8_t, line);
+}
+
+static void pseudo_reserve_words(Line *line) {
+    pseudo_reserve_data(uint16_t, line);
+}
+
+static void pseudo_reserve_doubles(Line *line) {
+    pseudo_reserve_data(uint32_t, line);
+}
+
+static void pseudo_reserve_quads(Line *line) {
+    pseudo_reserve_data(uint64_t, line);
 }
 
 static void pseudo_equ(Line *line) {

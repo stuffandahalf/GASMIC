@@ -1,2 +1,2 @@
     ABX
-    ADC a, 3
+    ADCA 3
