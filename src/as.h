@@ -82,7 +82,7 @@ typedef enum {
 typedef struct data_entry {
     data_type_t type;
     size_t address;
-    uint8_t bytec;
+    uint8_t bytec;  // This needs to become a union of uint8_t and char *label
     union {
         char *symbol;
         uint8_t *bytes;
