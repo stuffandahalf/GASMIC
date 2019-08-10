@@ -16,9 +16,10 @@ static void configure(int argc, char *argv[]);
 //static void trim_str(char str[]);
 static void parse_line(Line *l, char *buffer);
 static void parse_mnemonic(Line *l);
-typedef void (*parse_instruction_func_t)(Line *l);
+static void set_syntax_parser();
 static void parse_instruction_motorola(Line *l);
-static void parse_instruction_att(Line *l)
+static void parse_instruction_att(Line *l);
+static void parse_instruction_intel(Line *l);
 
 Config configuration;
     
@@ -54,6 +55,7 @@ int main(int argc, char **argv) {
     configuration.out_fname = NULL;
 
     init_address_mask();
+    set_syntax_parser();
 
     init_data_table();
     init_symbol_table();
@@ -378,17 +380,25 @@ static inline const struct instruction_register *instruction_supports_reg(const 
 	}
 	return NULL;
 }
-static void parse_instruction(Line *l) {
+static void set_syntax_parser() {
     switch (configuration.syntax) {
     case SYNTAX_MOTOROLA:
+        parse_instruction = &parse_instruction_motorola;
         break;
     case SYNTAX_ATT:
+        fail("AT&T instruction syntax is not yet implemented.\n");
+        parse_instruction = &parse_instruction_att;
         break;
     case SYNTAX_INTEL:
+        fail("Intel instruction syntax is not yet implemented.\n");
+        parse_instruction = &parse_instruction_intel;
         break;
-    case SYNTAX
+    case SYNTAX_UNKNOWN:
+        fail("Unrecognized syntax.\n");
     }
+}
 
+static void parse_instruction_motorola(Line *l) {
 	const char *mnem = NULL;
 	const char *line = NULL;
 	const Register *reg = NULL;
@@ -401,44 +411,31 @@ static void parse_instruction(Line *l) {
 		if (!((*i)->architectures & configuration.arch->value)) {
 			goto next_instruction;
 		}
+        mnem = (*i)->mnemonic;
+        line = l->mnemonic;
+        while (*mnem != '\0' && *line != '\0') {
+            if (*mnem++ != *line++) {
+                goto next_instruction;
+            }
+        }
 
-		switch (configuration.syntax) {
-		case SYNTAX_MOTOROLA:
-			mnem = (*i)->mnemonic;
-			line = l->mnemonic;
-			while (*mnem != '\0' && *line != '\0') {
-				if (*mnem++ != *line++) {
-					goto next_instruction;
-				}
-			}
-
-			switch ((*i)->arg_order) {
-			case ARG_ORDER_NONE:
-			case ARG_ORDER_INTERREG:
-				if (*line != '\0') {
-					goto next_instruction;
-				}
-				goto instruction_found;
-				break;
-			case ARG_ORDER_FROM_REG:
-			case ARG_ORDER_TO_REG:
-				for (reg = &(configuration.arch->registers[1]); reg->name[0] != '\0'; reg++) {
-					if (streq(line, reg->name) && (reg->arcs & configuration.arch->value) && ((instruction_reg = instruction_supports_reg(*i, reg)) != NULL)) {
-						goto instruction_found;
-					}
-				}
-				break;
-			}
-			break;
-		case SYNTAX_INTEL:
-		case SYNTAX_ATT:
-			fail("Selected syntax is not yet implemented.\n");
-			break;
-		case SYNTAX_UNKNOWN:
-		default:
-			fail("Invalid syntax selected.\n");
-			break;
-		}
+        switch ((*i)->arg_order) {
+        case ARG_ORDER_NONE:
+        case ARG_ORDER_INTERREG:
+            if (*line != '\0') {
+                goto next_instruction;
+            }
+            goto instruction_found;
+            break;
+        case ARG_ORDER_FROM_REG:
+        case ARG_ORDER_TO_REG:
+            for (reg = &(configuration.arch->registers[1]); reg->name[0] != '\0'; reg++) {
+                if (streq(line, reg->name) && (reg->arcs & configuration.arch->value) && ((instruction_reg = instruction_supports_reg(*i, reg)) != NULL)) {
+                    goto instruction_found;
+                }
+            }
+            break;
+        }
 
 next_instruction:
 		continue;
@@ -459,4 +456,12 @@ instruction_found:
 	printdf("Instruction Register is %s\n", instruction_reg ? instruction_reg->reg->name : "NONE");
 
 	add_data(assembled);
+}
+
+static void parse_instruction_att(Line *l) {
+    
+}
+
+static void parse_instruction_intel(Line *l) {
+    
 }
