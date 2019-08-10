@@ -230,6 +230,7 @@ extern size_t address;
 extern size_t address_mask;
 extern Config configuration;
 
+void init_address_mask();
 void assemble(FILE *in, Line *l);
 Architecture *str_to_arch(const char arch_name[]);
 struct pseudo_instruction *get_pseudo_op(Line *line);

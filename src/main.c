@@ -50,15 +50,7 @@ int main(int argc, char **argv) {
     free(configuration.out_fname);
     configuration.out_fname = NULL;
 
-    address_mask = 0;
-    int i;
-    for (i = 0; i < configuration.arch->bytes_per_address * configuration.arch->byte_size; i++) {
-        if (i) {
-            address_mask <<= 1;
-        }
-        address_mask |= 1;
-    }
-    printdf("Address mask: %lX\n", address_mask);
+    init_address_mask();
 
     init_data_table();
     init_symbol_table();
@@ -142,6 +134,18 @@ int main(int argc, char **argv) {
 #endif
 
 	return 0;
+}
+
+void init_address_mask() {
+    address_mask = 0;
+    int i;
+    for (i = 0; i < configuration.arch->bytes_per_address * configuration.arch->byte_size; i++) {
+        if (i) {
+            address_mask <<= 1;
+        }
+        address_mask |= 1;
+    }
+    printdf("Address mask: %lX\n", address_mask);
 }
 
 void assemble(FILE *in, Line *l) {

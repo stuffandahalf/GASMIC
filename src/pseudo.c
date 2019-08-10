@@ -18,7 +18,7 @@
  * .global
  */
 
-static void pseudo_arch(Line *line);
+static void pseudo_set_arch(Line *line);
 static void pseudo_set_byte(Line *line);
 static void pseudo_set_word(Line *line);
 static void pseudo_set_double(Line *line);
@@ -32,23 +32,23 @@ static void pseudo_include(Line *line);
 static void pseudo_org(Line *line);
 
 static struct pseudo_instruction pseudo_ops[] = {
-    { ".ARCH", &pseudo_arch, 1 },
+    { ".ARCH", &pseudo_set_arch,        1 },
 
-    { ".DB", &pseudo_set_byte, -1 },
-    { ".DW", &pseudo_set_word, -1 },
-    { ".DD", &pseudo_set_double, -1 },
-    { ".DQ", &pseudo_set_quad, -1 },
+    { ".DB", &pseudo_set_byte,          -1 },
+    { ".DW", &pseudo_set_word,          -1 },
+    { ".DD", &pseudo_set_double,        -1 },
+    { ".DQ", &pseudo_set_quad,          -1 },
 
-    { ".RESB", &pseudo_reserve_bytes, 1 },
-    { ".RESW", &pseudo_reserve_words, 1 },
+    { ".RESB", &pseudo_reserve_bytes,   1 },
+    { ".RESW", &pseudo_reserve_words,   1 },
     { ".RESD", &pseudo_reserve_doubles, 1 },
-    { ".RESQ", &pseudo_reserve_quads, 1 },
+    { ".RESQ", &pseudo_reserve_quads,   1 },
 
-    { ".EQU", &pseudo_equ, 1 },
-    { ".INCLUDE", &pseudo_include, 1 },
-    { ".ORG", &pseudo_org, 1 },
+    { ".EQU", &pseudo_equ,              1 },
+    { ".INCLUDE", &pseudo_include,      1 },
+    { ".ORG", &pseudo_org,              1 },
     //{ ".SYNTAX", &pseudo_syntax, 1 },
-    { 0, 0, 0 }
+    { 0, 0,                             0 }
 };
 
 struct pseudo_instruction *get_pseudo_op(Line *line) {
@@ -70,13 +70,14 @@ void parse_pseudo_op(Line *line) {
     pseudo_inst->process(line);
 }
 
-static void pseudo_arch(Line *line) {    
+static void pseudo_set_arch(Line *line) {
     if (datatab->first == NULL) {
         Architecture *arch = str_to_arch(line->argv[0].val.str);
         if (arch == NULL) {
             fail("Failed to locate architecture %s.\n", line->argv[0].val.str);
         }
         configuration.arch = arch;
+        init_address_mask();
         printf("%s\n", configuration.arch->name);
     }
     else {
