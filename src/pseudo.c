@@ -143,11 +143,10 @@ static void pseudo_set_quad(Line *line) { pseudo_set_data(uint64_t, line); }
     if (line->argc != 1) { \
         fail("Reserving bytes requires one parameter.\n"); \
     } \
-    Data *data = data_init(salloc(sizeof(Data))); \
+    Data *data = init_data(salloc(sizeof(Data))); \
     data->type = DATA_TYPE_BYTES; \
-    long count = 0;
-    char *end;
-    //strtol(line->argv[0])
+    long count = 0; \
+    char *end; \
 }
 
 static void pseudo_reserve_bytes(Line *line) { pseudo_reserve_data(uint8_t, line); }
