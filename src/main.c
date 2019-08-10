@@ -16,7 +16,9 @@ static void configure(int argc, char *argv[]);
 //static void trim_str(char str[]);
 static void parse_line(Line *l, char *buffer);
 static void parse_mnemonic(Line *l);
-static void parse_instruction(Line *l);
+typedef void (*parse_instruction_func_t)(Line *l);
+static void parse_instruction_motorola(Line *l);
+static void parse_instruction_att(Line *l)
 
 Config configuration;
     
@@ -25,6 +27,7 @@ FILE *out;
 size_t address;
 size_t address_mask;    // bits to mask the address to;
 size_t line_num;
+void (*parse_instruction)(Line *l);
 //SymTab *undefined_symtab;
 
 Architecture **architectures[] = { TARGETS };
@@ -351,7 +354,6 @@ static void parse_line(Line *l, char *buffer) {
     }
 }
 
-
 static void parse_mnemonic(Line *line) {
     struct pseudo_instruction *pseudo_op;
     
@@ -377,6 +379,16 @@ static inline const struct instruction_register *instruction_supports_reg(const 
 	return NULL;
 }
 static void parse_instruction(Line *l) {
+    switch (configuration.syntax) {
+    case SYNTAX_MOTOROLA:
+        break;
+    case SYNTAX_ATT:
+        break;
+    case SYNTAX_INTEL:
+        break;
+    case SYNTAX
+    }
+
 	const char *mnem = NULL;
 	const char *line = NULL;
 	const Register *reg = NULL;

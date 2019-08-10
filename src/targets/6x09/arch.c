@@ -95,10 +95,27 @@ const Instruction I_ADC_HD6309 = {
     }
 };
 
+const Instruction I_ADCR_HD6309 = {
+    "ADCR",
+    HD6309,
+    ARG_ORDER_INTERREG,
+    {
+        {
+            HD6309_REGISTER(MC6809_REG_NONE),
+            {
+                { ADDR_MODE_IMMEDIATE, 2, 0x1031 },
+                { ADDR_MODE_INVALID, 0, 0 }
+            }
+        },
+        { NULL, 0 }
+    }
+};
+
 const Instruction *instructions[] = {
     &I_ABX,
     &I_ADC_ALL,
     &I_ADC_HD6309,
+    &I_ADCR_HD6309,
     NULL
 };
 
