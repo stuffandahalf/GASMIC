@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <string.h>
 #ifdef _WIN32
 #include <getopt.h>
 #define strdup _strdup
@@ -14,7 +13,6 @@
 char buffer[LINEBUFFERSIZE];
 
 static void configure(int argc, char *argv[]);
-char *str_to_upper(char str[]);
 //static void trim_str(char str[]);
 static void parse_line(Line *l, char *buffer);
 static void parse_mnemonic(Line *l);
@@ -148,8 +146,8 @@ int main(int argc, char **argv) {
 
 void assemble(FILE *in, Line *l) {
     while (fgets(buffer, LINEBUFFERSIZE, in) != NULL) {
-        if (buffer[0] != '\0' || buffer[0] != '\n') {
-            l->line_state = 0;
+        if (buffer[0] != '\0' && buffer[0] != '\n') {
+            l->line_state = LINE_STATE_CLEAR;
             l->arg_buf_size = 2;
             //l->argv = salloc(sizeof(char *) * l->arg_buf_size);
             l->argv = salloc(sizeof(LineArg) * l->arg_buf_size);
@@ -238,27 +236,37 @@ Architecture *str_to_arch(const char arch_name[]) {
     return NULL;
 }
 
-char *str_to_upper(char str[]) {
-    register char *c;
-    for (c = str; *c != '\0'; c++) {
-        if (*c >= 'a' && *c <= 'z') {
-            *c += 'A' - 'a';
-        }
-        else if (*c == '\n') {
-            *c = '\0';
-        }
-    }
-    return str;
-}
-
 static void parse_line(Line *l, char *buffer) {
     register char *c;
+    arg_type_t arg_type = ARG_TYPE_UNPROCESSED;
     for (c = buffer; *c != '\0'; c++) {
         switch (*c) {
         case '"':
+            if (l->line_state & LINE_STATE_SINGLE_QUOTE) {
+                break;
+            }
+            else if (!(l->line_state & LINE_STATE_DOUBLE_QUOTE) && c != buffer) {
+                fail("Quotes must occur at the beginning of a field.\n");
+            }
+            l->line_state ^= LINE_STATE_DOUBLE_QUOTE;
+            if (l->line_state & LINE_STATE_DOUBLE_QUOTE) {
+                arg_type = ARG_TYPE_STRING;
+                buffer++;
+            }
+            else {
+                *c = '\0';
+            }
+            break;
         case '\'':
-            l->line_state ^= LINE_STATE_QUOTE;
-            if (l->line_state & LINE_STATE_QUOTE) {
+            if (l->line_state & LINE_STATE_DOUBLE_QUOTE) {
+                break;
+            }
+            else if (!(l->line_state & LINE_STATE_SINGLE_QUOTE) && c != buffer) {
+                fail("Quotes must occur at the beginning of a field.\n");
+            }
+            l->line_state ^= LINE_STATE_SINGLE_QUOTE;
+            if (l->line_state & LINE_STATE_SINGLE_QUOTE) {
+                arg_type = ARG_TYPE_STRING;
                 buffer++;
             }
             else {
@@ -275,12 +283,15 @@ static void parse_line(Line *l, char *buffer) {
         case '\n':
         case '\t':
         case ' ':
-        case ',':   // Might be worth making this seperate
-            if (!(l->line_state & LINE_STATE_QUOTE) && !(l->line_state & LINE_STATE_BRACKET)) {
+        case ',':   // Might be worth making this separate
+            if (!(l->line_state & LINE_STATE_SINGLE_QUOTE || l->line_state & LINE_STATE_DOUBLE_QUOTE) && !(l->line_state & LINE_STATE_BRACKET)) {
                 if (c != buffer) {
                     if (!(l->line_state & LINE_STATE_MNEMONIC)) { // if mnemonic is not set
                         if (*c == ',') {
                             fail("Unexpected ',' character.\n");
+                        }
+                        else if (arg_type == ARG_TYPE_STRING) {
+                            fail("Mnemonic cannot be string literal.\n");
                         }
                         l->mnemonic = buffer;
                         l->line_state |= LINE_STATE_MNEMONIC;
@@ -292,8 +303,9 @@ static void parse_line(Line *l, char *buffer) {
                             l->argv = srealloc(l->argv, sizeof(LineArg) * l->arg_buf_size);
                         }
                         LineArg *la = &(l->argv[l->argc++]);
-                        la->type = ARG_TYPE_STR;
+                        la->type = arg_type;
                         la->val.str = buffer;
+                        arg_type = ARG_TYPE_UNPROCESSED;
                     }
                     
                     *c = '\0';
@@ -303,8 +315,15 @@ static void parse_line(Line *l, char *buffer) {
             }
             break;
         case ':':
-            if (l->line_state & LINE_STATE_MNEMONIC) {
+            printdf("0x%X\n", l->line_state & ~(LINE_STATE_LABEL | LINE_STATE_MNEMONIC));
+            if (l->line_state & ~(LINE_STATE_LABEL | LINE_STATE_MNEMONIC)) {
+                fail("Invalid character in label.\n");
+            }
+            else if (l->line_state & LINE_STATE_MNEMONIC) {
                 fail("Label must occur at the beginning of a line.\n");
+            }
+            else if (arg_type == ARG_TYPE_STRING) {
+                fail("Label cannot be a string literal.\n");
             }
             l->label = buffer;
             *c = '\0';
@@ -319,7 +338,7 @@ static void parse_line(Line *l, char *buffer) {
         }
         //buffer++;     // Why doesnt this work?
     }
-    if (l->line_state & LINE_STATE_QUOTE) {
+    if (l->line_state & LINE_STATE_SINGLE_QUOTE || l->line_state & LINE_STATE_DOUBLE_QUOTE) {
         fail("Unmatched quote.\n");
     }
     if (l->line_state & LINE_STATE_BRACKET) {

@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
+#include <ctype.h>
 #ifdef __cplusplus
 #define __STDC_FORMAT_MACROS
 #endif
@@ -153,10 +153,11 @@ typedef struct {
 } Instruction;
 
 typedef enum {
-    ARG_TYPE_NONE = 0,
-    ARG_TYPE_REG = 1,
-    ARG_TYPE_SYM = 2,
-    ARG_TYPE_STR = 3
+    ARG_TYPE_NONE,
+    ARG_TYPE_REGULAR,
+    ARG_TYPE_SYMBOL,
+    ARG_TYPE_STRING,
+    ARG_TYPE_UNPROCESSED
 } arg_type_t;
 
 /*#define ARG_TYPE_NONE 0
@@ -166,7 +167,7 @@ typedef enum {
 #define ARG_STATE_BRACKET 1
 
 typedef struct {
-    uint8_t type;
+    arg_type_t type;
     //uint8_t addr_mode;
     union {
         char *str;
@@ -176,10 +177,12 @@ typedef struct {
 } LineArg;
 
 typedef enum {
+    LINE_STATE_CLEAR = 0,
     LINE_STATE_LABEL = 1,
     LINE_STATE_MNEMONIC = 2,
-    LINE_STATE_QUOTE = 4,
-    LINE_STATE_BRACKET = 8
+    LINE_STATE_SINGLE_QUOTE = 4,
+    LINE_STATE_DOUBLE_QUOTE = 8,
+    LINE_STATE_BRACKET = 16
 } line_state_t;
 
 /*#define LINE_STATE_LABEL (1)
@@ -231,5 +234,12 @@ void assemble(FILE *in, Line *l);
 Architecture *str_to_arch(const char arch_name[]);
 struct pseudo_instruction *get_pseudo_op(Line *line);
 void parse_pseudo_op(Line *line);
+
+static inline char *str_to_upper(char str[]) {
+    for (char *c = str; *c != '\0'; c++) {
+        *c = (char)toupper(*c);
+    }
+    return str;
+}
 
 #endif
