@@ -15,14 +15,14 @@ char buffer[LINEBUFFERSIZE];
 static void configure(int argc, char *argv[]);
 //static void trim_str(char str[]);
 static void parse_line(Line *l, char *buffer);
-static void parse_mnemonic(Line *l);
+static void resolve_mnemonic_type(Line *l);
 static void set_syntax_parser();
 static void parse_instruction_motorola(Line *l);
 static void parse_instruction_att(Line *l);
 static void parse_instruction_intel(Line *l);
 
 Config configuration;
-    
+
 //FILE *in;
 FILE *out;
 size_t address;
@@ -134,7 +134,7 @@ int main(int argc, char **argv) {
 
     DESTROY_TARGETS();
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(NDEBUG)
     getc(stdin);
 #endif
 
@@ -161,9 +161,9 @@ void assemble(FILE *in, Line *l) {
             //l->argv = salloc(sizeof(char *) * l->arg_buf_size);
             l->argv = salloc(sizeof(LineArg) * l->arg_buf_size);
             l->argc = 0;
-            
+
             parse_line(l, buffer);
-            
+
 #ifndef NDEBUG
             //printf("%s\t%s", l->label, l->mnemonic);
             if (l->line_state & LINE_STATE_LABEL) {
@@ -186,9 +186,9 @@ void assemble(FILE *in, Line *l) {
             }
             if (l->line_state & LINE_STATE_MNEMONIC) {   // If current line has a mnemonic
                 str_to_upper(l->mnemonic);
-                parse_mnemonic(l);
+                resolve_mnemonic_type(l);
             }
-            
+
             sfree(l->argv);
         }
         line_num++;
@@ -228,9 +228,9 @@ static void configure(int argc, char *argv[]) {
         }
     }
 exit:
-    
+
     printdf("argcount = %d\n", argc - optind);
-    
+
     configuration.in_fnames = argv + sizeof(char) * optind;
     configuration.in_fnamec = argc - optind;
 }
@@ -316,7 +316,7 @@ static void parse_line(Line *l, char *buffer) {
                         la->val.str = buffer;
                         arg_type = ARG_TYPE_UNPROCESSED;
                     }
-                    
+
                     *c = '\0';
                     buffer = c;
                 }
@@ -338,7 +338,7 @@ static void parse_line(Line *l, char *buffer) {
             *c = '\0';
             buffer = c;
             buffer++;
-            
+
             printdf("parsed literal label = %s\n", l->label);
             l->line_state |= LINE_STATE_LABEL;
             break;
@@ -356,9 +356,9 @@ static void parse_line(Line *l, char *buffer) {
     }
 }
 
-static void parse_mnemonic(Line *line) {
+static void resolve_mnemonic_type(Line *line) {
     struct pseudo_instruction *pseudo_op;
-    
+
     if (line->mnemonic[0] == '.') {
         parse_pseudo_op(line);
     }
@@ -459,9 +459,9 @@ instruction_found:
 }
 
 static void parse_instruction_att(Line *l) {
-    
+
 }
 
 static void parse_instruction_intel(Line *l) {
-    
+
 }
