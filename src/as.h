@@ -12,7 +12,11 @@
 #include <smem.h>
 
 #define streq(__s1, __s2) !strcmp((const char *)(__s1), (const char *)(__s2))
+#ifdef _WIN32
+#define fail(msg, ...) die("ERROR %ld: " msg, line_num, ##__VA_ARGS__)
+#else
 #define fail(msg, ...) die("\033[0;31mERROR \033[0m%ld: " msg, line_num,  ##__VA_ARGS__)
+#endif
 
 // print to stderr
 #define printef(fmt, ...) fprintf(stderr, fmt, ##__VA_ARGS__)
