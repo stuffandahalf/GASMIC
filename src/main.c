@@ -1,7 +1,6 @@
 #include <stdio.h>
 #ifdef _WIN32
 #include <getopt.h>
-#define strdup _strdup
 #else
 #include <unistd.h>
 #endif
@@ -36,22 +35,20 @@ Architecture **architectures[] = { TARGETS };
 int main(int argc, char **argv) {
     INIT_TARGETS();
 
-    if ((configuration.out_fname = strdup("a.out")) == NULL) {
-        die("Failed to duplicate string\n");
-    }
     FILE *in;
     //out = stdout;
     configuration.arch = *architectures[0];
     configuration.in_fnames = NULL;
     configuration.in_fnamec = 0;
     configuration.syntax = configuration.arch->default_syntax;
+	configuration.out_fname = "a.out";
     address = 0;
     line_num = 1;
 
     configure(argc, argv);
 
     //out = fopen(out_fname, "w+");
-    free(configuration.out_fname);
+    //free(configuration.out_fname);
     configuration.out_fname = NULL;
 
     init_address_mask();
