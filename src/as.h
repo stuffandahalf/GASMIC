@@ -26,7 +26,21 @@
 
 // print if debug build
 #ifndef NDEBUG
-#define printdf(fmt, ...) printf("[%s:%d] >> " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#include <stdarg.h>
+static inline int printdf(const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+
+    int count = 0;
+
+    count += printf("[%s:%d] >> ", __FILE__, __LINE__);
+    count += vprintf(fmt, args);
+
+    va_end(args);
+
+    return count;
+}
+//#define printdf(fmt, ...) printf("[%s:%d] >> " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
 #else
 #define printdf(fmt, ...)
 #endif
