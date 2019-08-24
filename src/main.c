@@ -321,9 +321,8 @@ static void parse_line(Line *l, char *buffer) {
             }
             break;
         case ':':
-            printdf("0x%X\n", l->line_state & ~(LINE_STATE_LABEL | LINE_STATE_MNEMONIC));
-            if (l->line_state & ~(LINE_STATE_LABEL | LINE_STATE_MNEMONIC)) {
-                fail("Invalid character in label.\n");
+            if (l->line_state & LINE_STATE_LABEL) {
+                fail("Invalid label.\n");
             }
             else if (l->line_state & LINE_STATE_MNEMONIC) {
                 fail("Label must occur at the beginning of a line.\n");

@@ -198,13 +198,19 @@ typedef struct {
 } LineArg;
 
 typedef enum {
-    LINE_STATE_CLEAR = 0,
-    LINE_STATE_LABEL = 1,
-    LINE_STATE_MNEMONIC = 2,
-    LINE_STATE_SINGLE_QUOTE = 4,
-    LINE_STATE_DOUBLE_QUOTE = 8,
-    LINE_STATE_BRACKET = 16
+    LINE_STATE_CLEAR = 0u,
+    LINE_STATE_LABEL = 1u,
+    LINE_STATE_MNEMONIC = 2u,
+    LINE_STATE_SINGLE_QUOTE = 4u,
+    LINE_STATE_DOUBLE_QUOTE = 8u,
+    LINE_STATE_BRACKET = 16u
 } line_state_t;
+/*#define LINE_STATE_CLEAR        0u
+#define LINE_STATE_LABEL        1u
+#define LINE_STATE_MNEMONIC     2u
+#define LINE_STATE_SINGLE_QUOTE 4u
+#define LINE_STATE_DOUBLE_QUOTE 8u
+#define LINE_STATE_BRACKET      16u*/
 
 /*#define LINE_STATE_LABEL (1)
 #define LINE_STATE_MNEMONIC (2)
