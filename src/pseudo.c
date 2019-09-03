@@ -51,7 +51,8 @@ static struct pseudo_instruction pseudo_ops[] = {
     { 0, 0,                             0 }
 };
 
-struct pseudo_instruction *get_pseudo_op(Line *line) {
+struct pseudo_instruction *get_pseudo_op(Line *line)
+{
     struct pseudo_instruction *pseudo_op;
     for (pseudo_op = pseudo_ops; *pseudo_op->instruction != '\0'; pseudo_op++) {
         if ((pseudo_op->args == -1 || pseudo_ops->args == line->argc)
@@ -62,7 +63,8 @@ struct pseudo_instruction *get_pseudo_op(Line *line) {
     return NULL;
 }
 
-void parse_pseudo_op(Line *line) {
+void parse_pseudo_op(Line *line)
+{
     struct pseudo_instruction *pseudo_inst = get_pseudo_op(line);
     if (pseudo_inst == NULL) {
         fail("Unable to find pseudo instruction %s.\n", line->mnemonic);
@@ -70,7 +72,8 @@ void parse_pseudo_op(Line *line) {
     pseudo_inst->process(line);
 }
 
-static void pseudo_set_arch(Line *line) {
+static void pseudo_set_arch(Line *line)
+{
     if (datatab->first == NULL) {
         Architecture *arch = str_to_arch(line->argv[0].val.str);
         if (arch == NULL) {
@@ -89,8 +92,8 @@ static void pseudo_set_arch(Line *line) {
     char *send; \
     T number; \
     Data *data; \
-    int i; \
-    int j; \
+    size_t i; \
+    size_t j; \
     for (i = 0; i < line->argc; i++) { \
         data = salloc(sizeof(Data)); \
         data->type = DATA_TYPE_BYTES; \
@@ -109,24 +112,28 @@ static void pseudo_set_arch(Line *line) {
             address += data->bytec; \
         } \
         else { \
+            data->bytec = sizeof(T); \
             number = (T)strtol(line->argv[i].val.str, &send, 0); \
             if (*send != '\0') { \
-                fail("Unrecognized data %s\n.", line->argv[i].val.str); \
+                data->type = DATA_TYPE_SYMBOL; \
+                data->contents.symbol = line->argv[i].val.str; \
+                /*fail("Unrecognized data %s\n.", line->argv[i].val.str);*/ \
             } \
-            data->bytec = sizeof(T); \
-            data->contents.bytes = salloc(sizeof(T)); \
-            if (configuration.arch->endianness == ARCH_ENDIAN_BIG) { \
-                printdf("big endian\n"); \
-                for (j = sizeof(T) - 1; j >= 0; j--) { \
-                    data->contents.bytes[j] = number & 0xFF; \
-                    number >>= 8; \
+            else { \
+                data->contents.bytes = salloc(sizeof(T)); \
+                if (configuration.arch->endianness == ARCH_ENDIAN_BIG) { \
+                    printdf("big endian\n"); \
+                    for (j = sizeof(T) - 1; j >= 0; j--) { \
+                        data->contents.bytes[j] = number & 0xFF; \
+                        number >>= 8; \
+                    } \
                 } \
-            } \
-            else if (configuration.arch->endianness == ARCH_ENDIAN_LITTLE) { \
-                printdf("little endian\n"); \
-                for (j = 0; j < sizeof(T); j++) { \
-                    data->contents.bytes[j] = number & 0xFF; \
-                    number >>= 8; \
+                else if (configuration.arch->endianness == ARCH_ENDIAN_LITTLE) { \
+                    printdf("little endian\n"); \
+                    for (j = 0; j < sizeof(T); j++) { \
+                        data->contents.bytes[j] = number & 0xFF; \
+                        number >>= 8; \
+                    } \
                 } \
             } \
             address += sizeof(T); \
@@ -155,7 +162,8 @@ static void pseudo_reserve_words(Line *line) { pseudo_reserve_data(uint16_t, lin
 static void pseudo_reserve_doubles(Line *line) { pseudo_reserve_data(uint32_t, line); }
 static void pseudo_reserve_quads(Line *line) { pseudo_reserve_data(uint64_t, line); }
 
-static void pseudo_equ(Line *line) {
+static void pseudo_equ(Line *line)
+{
     if (!(line->line_state & LINE_STATE_LABEL)) {
         fail("Pseudo instruction .EQU requires a label on the same line.\n");
     }
@@ -171,7 +179,8 @@ static void pseudo_equ(Line *line) {
     }
 }
 
-static void pseudo_include(Line *line) {
+static void pseudo_include(Line *line)
+{
     FILE *included_file;
     if ((included_file = fopen(line->argv[0].val.str, "r")) == NULL) {
         fail("Failed to open included file \"%s\".\n", line->argv[0].val.str);
@@ -189,7 +198,8 @@ static void pseudo_include(Line *line) {
     //line->argv = salloc(line->argc * sizeof(char *));
 }
 
-static void pseudo_org(Line *line) {
+static void pseudo_org(Line *line)
+{
     char *lend;
     size_t new_address = strtol(line->argv[0].val.str, &lend, 0) & address_mask;
     if (*lend == '\0') {

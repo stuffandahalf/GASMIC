@@ -7,6 +7,7 @@
 #include <as.h>
 #include <targets.h>
 #include <util.h>
+#include <arithmetic.h>
 
 #define LINEBUFFERSIZE (256)
 char buffer[LINEBUFFERSIZE];
@@ -32,7 +33,13 @@ void (*parse_instruction)(Line *l);
 
 Architecture **architectures[] = { TARGETS };
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
+    //struct token *stack = parse_expression("_start + 1 + 3");
+    struct token *stack = parse_expression("1 *(2 +3)");
+    free_token_stack(stack);
+    return 0;
+
     INIT_TARGETS();
 
     FILE *in;
@@ -98,7 +105,7 @@ int main(int argc, char **argv) {
     while (data != NULL) {
         printdf("data address: %lX,  ", data->address);
         switch (data->type) {
-        case DATA_TYPE_LABEL:
+        case DATA_TYPE_SYMBOL:
             printdf("%" PRIu8 " bytes label \"%s\"\n", data->bytec, data->contents.symbol);
             sfree(data->contents.symbol);
             break;
@@ -138,7 +145,8 @@ int main(int argc, char **argv) {
 	return 0;
 }
 
-void init_address_mask() {
+void init_address_mask()
+{
     address_mask = 0;
     int i;
     for (i = 0; i < configuration.arch->bytes_per_address * configuration.arch->byte_size; i++) {
@@ -150,7 +158,8 @@ void init_address_mask() {
     printdf("Address mask: %lX\n", address_mask);
 }
 
-void assemble(FILE *in, Line *l) {
+void assemble(FILE *in, Line *l)
+{
     while (fgets(buffer, LINEBUFFERSIZE, in) != NULL) {
         if (buffer[0] != '\0' && buffer[0] != '\n') {
             l->line_state = LINE_STATE_CLEAR;
@@ -192,7 +201,8 @@ void assemble(FILE *in, Line *l) {
     }
 }
 
-static void configure(int argc, char *argv[]) {
+static void configure(int argc, char *argv[])
+{
     int c;
 
     while ((c = getopt(argc, argv, "hm:o:f:")) != -1) {
@@ -232,7 +242,8 @@ exit:
     configuration.in_fnamec = argc - optind;
 }
 
-Architecture *str_to_arch(const char arch_name[]) {
+Architecture *str_to_arch(const char arch_name[])
+{
     Architecture ***a;
     for (a = architectures; *a != NULL; a++) {
         if (streq(arch_name, (**a)->name)) {
@@ -242,7 +253,8 @@ Architecture *str_to_arch(const char arch_name[]) {
     return NULL;
 }
 
-static void parse_line(Line *l, char *buffer) {
+static void parse_line(Line *l, char *buffer)
+{
     register char *c;
     arg_type_t arg_type = ARG_TYPE_UNPROCESSED;
     for (c = buffer; *c != '\0'; c++) {
@@ -307,7 +319,6 @@ static void parse_line(Line *l, char *buffer) {
             }
             break;
         case ',':
-        case '\n':
             if (c == buffer) {
                 break;
             }
@@ -325,6 +336,33 @@ static void parse_line(Line *l, char *buffer) {
             buffer = c;
             buffer++;
             arg_type = ARG_TYPE_UNPROCESSED;
+            break;
+
+        case '\n':
+            if (l->line_state & (LINE_STATE_SINGLE_QUOTE | LINE_STATE_DOUBLE_QUOTE)) {
+                fail("Unterminated string constant.");
+            }
+            *c = '\0';
+            if (!(l->line_state & LINE_STATE_MNEMONIC)) {
+                //*c = '\0';
+                l->mnemonic = buffer;
+                buffer = c;
+                buffer++;
+                l->line_state |= LINE_STATE_MNEMONIC;
+            }
+            else {
+                if (l->argc == l->arg_buf_size) {
+                    l->arg_buf_size += 2;
+                    l->argv = srealloc(l->argv, sizeof(LineArg) * l->arg_buf_size);
+                }
+                LineArg *la = &(l->argv[l->argc++]);
+                la->type = arg_type;
+                la->val.str = buffer;
+
+                //*c = '\0';
+            }
+            buffer = c;
+            buffer++;
             break;
 
 //        case '\n':
@@ -393,7 +431,8 @@ static void parse_line(Line *l, char *buffer) {
     }
 }
 
-static void resolve_mnemonic_type(Line *line) {
+static void resolve_mnemonic_type(Line *line)
+{
     struct pseudo_instruction *pseudo_op;
 
     if (line->mnemonic[0] == '.') {
@@ -408,7 +447,8 @@ static void resolve_mnemonic_type(Line *line) {
     }
 }
 
-static inline const struct instruction_register *instruction_supports_reg(const Instruction *instruction, const Register *reg) {
+static inline const struct instruction_register *instruction_supports_reg(const Instruction *instruction, const Register *reg)
+{
 	const struct instruction_register *ir = NULL;
 	for (ir = instruction->opcodes; ir->reg != NULL; ir++) {
 		if (streq(reg->name, ir->reg->name)) {
@@ -417,7 +457,8 @@ static inline const struct instruction_register *instruction_supports_reg(const 
 	}
 	return NULL;
 }
-static void set_syntax_parser() {
+static void set_syntax_parser()
+{
     switch (configuration.syntax) {
     case SYNTAX_MOTOROLA:
         parse_instruction = &parse_instruction_motorola;
@@ -435,7 +476,8 @@ static void set_syntax_parser() {
     }
 }
 
-static void parse_instruction_motorola(Line *l) {
+static void parse_instruction_motorola(Line *l)
+{
 	const char *mnem = NULL;
 	const char *line = NULL;
 	const Register *reg = NULL;
@@ -495,10 +537,12 @@ instruction_found:
 	add_data(assembled);
 }
 
-static void parse_instruction_att(Line *l) {
+static void parse_instruction_att(Line *l)
+{
 
 }
 
-static void parse_instruction_intel(Line *l) {
+static void parse_instruction_intel(Line *l)
+{
 
 }

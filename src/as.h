@@ -92,12 +92,12 @@ typedef struct {
 } SymTab;
 
 /*#define DATA_TYPE_NONE  (0)
-#define DATA_TYPE_LABEL (1)
+#define DATA_TYPE_SYMBOL (1)
 #define DATA_TYPE_BYTES (2)*/
 
 typedef enum {
     DATA_TYPE_NONE = 0,
-    DATA_TYPE_LABEL = 1,
+    DATA_TYPE_SYMBOL = 1,
     DATA_TYPE_BYTES = 2
 } data_type_t;
 typedef struct data_entry {

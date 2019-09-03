@@ -252,7 +252,7 @@ static MC6x09_Instruction *locate_instruction(Line *l, int arch) {
 //                Data *next = data->next;
 //                next->bytec = reg->width;
 //                next->address = address;
-//                next->type = DATA_TYPE_LABEL;
+//                next->type = DATA_TYPE_SYMBOL;
 //                if (*c == '.') {
 //                    next->contents.symbol = salloc(sizeof(char) * (strlen(symtab->last_parent->label) + strlen(c) + 1));
 //                    if (next->contents.symbol == NULL) {
