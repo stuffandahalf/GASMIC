@@ -35,9 +35,12 @@ Architecture **architectures[] = { TARGETS };
 
 int main(int argc, char **argv)
 {
-    //struct token *stack = parse_expression("_start + 1 + 3");
-    struct token *stack = parse_expression("1 *(2 +3)");
-    free_token_stack(stack);
+    //struct token *rpn_expr = parse_expression("1 *(2 +3)");
+    struct token *rpn_expr = parse_expression("(_start * 3) + tmp");
+    //struct token *rpn_expr = parse_expression("(_start * 3 + tmp");
+    print_token_list(rpn_expr);
+    printf("%d\n", arithmetic_status_code);
+    free_token_chain(rpn_expr);
     return 0;
 
     INIT_TARGETS();
