@@ -79,6 +79,23 @@ typedef enum {
 #define ARG_ORDER_TO_REG    (2)
 #define ARG_ORDER_INTERREG  (3)*/
 
+#if 0
+enum address_type {
+    ADDRESS_TYPE_ABSOLUTE;
+    ADDRESS_TYPE_RELATIVE;
+};
+struct address {
+    enum address_type type;
+    union {
+        size_t absolute;
+        struct {
+            struct token *root_expr;
+            size_t offset;
+        };
+    } value;
+};
+#endif
+
 typedef struct symtab_entry {
     char *label;
     size_t value;
