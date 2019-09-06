@@ -1,5 +1,6 @@
 //#include <as.h>
 #include <util.h>
+#include <arithmetic.h>
 //#include <targets/6x09/arch.h>
 
 /*
@@ -51,7 +52,8 @@ static struct pseudo_instruction pseudo_ops[] = {
     { 0, 0,                             0 }
 };
 
-struct pseudo_instruction *get_pseudo_op(Line *line) {
+struct pseudo_instruction *get_pseudo_op(Line *line)
+{
     struct pseudo_instruction *pseudo_op;
     for (pseudo_op = pseudo_ops; *pseudo_op->instruction != '\0'; pseudo_op++) {
         if ((pseudo_op->args == -1 || pseudo_ops->args == line->argc)
@@ -62,7 +64,8 @@ struct pseudo_instruction *get_pseudo_op(Line *line) {
     return NULL;
 }
 
-void parse_pseudo_op(Line *line) {
+void parse_pseudo_op(Line *line)
+{
     struct pseudo_instruction *pseudo_inst = get_pseudo_op(line);
     if (pseudo_inst == NULL) {
         fail("Unable to find pseudo instruction %s.\n", line->mnemonic);
@@ -70,7 +73,8 @@ void parse_pseudo_op(Line *line) {
     pseudo_inst->process(line);
 }
 
-static void pseudo_set_arch(Line *line) {
+static void pseudo_set_arch(Line *line)
+{
     if (datatab->first == NULL) {
         Architecture *arch = str_to_arch(line->argv[0].val.str);
         if (arch == NULL) {
@@ -86,54 +90,83 @@ static void pseudo_set_arch(Line *line) {
 }
 
 #define pseudo_set_data(T, line) { \
-    char *send; \
+    char *endptr; \
     T number; \
     Data *data; \
-    int i; \
-    int j; \
+    size_t i; \
+    size_t j; \
     for (i = 0; i < line->argc; i++) { \
-        data = salloc(sizeof(Data)); \
-        data->type = DATA_TYPE_BYTES; \
-        data->next = NULL; \
-        data->address = address & address_mask; \
-        printdf("%c\n", line->argv[i].val.str[0]); \
-        if (line->argv[i].val.str[0] == '"' || line->argv[i].val.str[0] == '\'') { \
-            data->bytec = strlen(line->argv[i].val.str) - 1; \
-            data->contents.bytes = salloc(sizeof(uint8_t) * data->bytec); \
-            uint8_t *current_byte = data->contents.bytes; \
-            char *j; \
-            for (j = &line->argv[i].val.str[1]; *j != '\0'; j++) { \
-                number = (*j) & 0xFF; \
-                *current_byte++ = number; \
-            } \
-            address += data->bytec; \
+        data = init_data(salloc(sizeof(Data))); \
+        data->address = address && address_mask; \
+        if (line->argv[i].type == ARG_TYPE_STRING) { \
+            data->type = DATA_TYPE_BYTES; \
+            data->bytec = strlen(line->argv[i].val.str) + 1; \
+            data->contents.bytes = salloc(sizeof(char) * data->bytec); \
+            strcpy(data->contents.bytes, line->argv[i].val.str); \
         } \
         else { \
-            number = (T)strtol(line->argv[i].val.str, &send, 0); \
-            if (*send != '\0') { \
-                fail("Unrecognized data %s\n.", line->argv[i].val.str); \
-            } \
+            data->type = DATA_TYPE_EXPRESSION; \
             data->bytec = sizeof(T); \
-            data->contents.bytes = salloc(sizeof(T)); \
-            if (configuration.arch->endianness == ARCH_ENDIAN_BIG) { \
-                printdf("big endian\n"); \
-                for (j = sizeof(T) - 1; j >= 0; j--) { \
-                    data->contents.bytes[j] = number & 0xFF; \
-                    number >>= 8; \
-                } \
-            } \
-            else if (configuration.arch->endianness == ARCH_ENDIAN_LITTLE) { \
-                printdf("little endian\n"); \
-                for (j = 0; j < sizeof(T); j++) { \
-                    data->contents.bytes[j] = number & 0xFF; \
-                    number >>= 8; \
-                } \
-            } \
-            address += sizeof(T); \
+            data->contents.rpn_expr = line->argv[i].val.rpn_expr; \
         } \
+        address += data->bytec; \
         add_data(data); \
     } \
 }
+
+//#define pseudo_set_data(T, line) { \
+//    char *send; \
+//    T number; \
+//    Data *data; \
+//    size_t i; \
+//    size_t j; \
+//    for (i = 0; i < line->argc; i++) { \
+//        data = salloc(sizeof(Data)); \
+//        data->type = DATA_TYPE_BYTES; \
+//        data->next = NULL; \
+//        data->address = address & address_mask; \
+//        printdf("%c\n", line->argv[i].val.str[0]); \
+//        if (line->argv[i].val.str[0] == '"' || line->argv[i].val.str[0] == '\'') { \
+//            data->bytec = strlen(line->argv[i].val.str) - 1; \
+//            data->contents.bytes = salloc(sizeof(uint8_t) * data->bytec); \
+//            uint8_t *current_byte = data->contents.bytes; \
+//            char *j; \
+//            for (j = &line->argv[i].val.str[1]; *j != '\0'; j++) { \
+//                number = (*j) & 0xFF; \
+//                *current_byte++ = number; \
+//            } \
+//            address += data->bytec; \
+//        } \
+//        else { \
+//            data->bytec = sizeof(T); \
+//            number = (T)strtol(line->argv[i].val.str, &send, 0); \
+//            if (*send != '\0') { \
+//                data->type = DATA_TYPE_SYMBOL; \
+//                data->contents.symbol = line->argv[i].val.str; \
+//                /*fail("Unrecognized data %s\n.", line->argv[i].val.str);*/ \
+//            } \
+//            else { \
+//                data->contents.bytes = salloc(sizeof(T)); \
+//                if (configuration.arch->endianness == ARCH_ENDIAN_BIG) { \
+//                    printdf("big endian\n"); \
+//                    for (j = sizeof(T) - 1; j >= 0; j--) { \
+//                        data->contents.bytes[j] = number & 0xFF; \
+//                        number >>= 8; \
+//                    } \
+//                } \
+//                else if (configuration.arch->endianness == ARCH_ENDIAN_LITTLE) { \
+//                    printdf("little endian\n"); \
+//                    for (j = 0; j < sizeof(T); j++) { \
+//                        data->contents.bytes[j] = number & 0xFF; \
+//                        number >>= 8; \
+//                    } \
+//                } \
+//            } \
+//            address += sizeof(T); \
+//        } \
+//        add_data(data); \
+//    } \
+//}
 
 static void pseudo_set_byte(Line *line) { pseudo_set_data(uint8_t, line); }
 static void pseudo_set_word(Line *line) { pseudo_set_data(uint16_t, line); }
@@ -155,7 +188,8 @@ static void pseudo_reserve_words(Line *line) { pseudo_reserve_data(uint16_t, lin
 static void pseudo_reserve_doubles(Line *line) { pseudo_reserve_data(uint32_t, line); }
 static void pseudo_reserve_quads(Line *line) { pseudo_reserve_data(uint64_t, line); }
 
-static void pseudo_equ(Line *line) {
+static void pseudo_equ(Line *line)
+{
     if (!(line->line_state & LINE_STATE_LABEL)) {
         fail("Pseudo instruction .EQU requires a label on the same line.\n");
     }
@@ -171,7 +205,8 @@ static void pseudo_equ(Line *line) {
     }
 }
 
-static void pseudo_include(Line *line) {
+static void pseudo_include(Line *line)
+{
     FILE *included_file;
     if ((included_file = fopen(line->argv[0].val.str, "r")) == NULL) {
         fail("Failed to open included file \"%s\".\n", line->argv[0].val.str);
@@ -189,7 +224,8 @@ static void pseudo_include(Line *line) {
     //line->argv = salloc(line->argc * sizeof(char *));
 }
 
-static void pseudo_org(Line *line) {
+static void pseudo_org(Line *line)
+{
     char *lend;
     size_t new_address = strtol(line->argv[0].val.str, &lend, 0) & address_mask;
     if (*lend == '\0') {

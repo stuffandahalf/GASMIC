@@ -7,6 +7,8 @@
 #include <as.h>
 #include <targets.h>
 #include <util.h>
+#include <arithmetic.h>
+#include "as.h"
 
 #define LINEBUFFERSIZE (256)
 char buffer[LINEBUFFERSIZE];
@@ -32,7 +34,18 @@ void (*parse_instruction)(Line *l);
 
 Architecture **architectures[] = { TARGETS };
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
+#if 0
+    //struct token *rpn_expr = parse_expression("1 *(2 +3)");
+    struct token *rpn_expr = parse_expression("(_start * 3) + tmp");
+    //struct token *rpn_expr = parse_expression("(_start * 3 + tmp");
+    print_token_list(rpn_expr);
+    printf("%d\n", arithmetic_status_code);
+    free_token_chain(rpn_expr);
+    return 0;
+#endif
+
     INIT_TARGETS();
 
     FILE *in;
@@ -98,9 +111,13 @@ int main(int argc, char **argv) {
     while (data != NULL) {
         printdf("data address: %lX,  ", data->address);
         switch (data->type) {
-        case DATA_TYPE_LABEL:
-            printdf("%" PRIu8 " bytes label \"%s\"\n", data->bytec, data->contents.symbol);
-            sfree(data->contents.symbol);
+        case DATA_TYPE_EXPRESSION:
+            //printdf("%" PRIu8 " bytes label \"%s\"\n", data->bytec, data->contents.symbol);
+            //sfree(data->contents.symbol);
+#ifndef NDEBUG
+            print_token_list(data->contents.rpn_expr);
+#endif
+            free_token_chain(data->contents.rpn_expr);
             break;
         case DATA_TYPE_BYTES:
 #ifndef NDEBUG
@@ -138,7 +155,8 @@ int main(int argc, char **argv) {
 	return 0;
 }
 
-void init_address_mask() {
+void init_address_mask()
+{
     address_mask = 0;
     int i;
     for (i = 0; i < configuration.arch->bytes_per_address * configuration.arch->byte_size; i++) {
@@ -150,7 +168,8 @@ void init_address_mask() {
     printdf("Address mask: %lX\n", address_mask);
 }
 
-void assemble(FILE *in, Line *l) {
+void assemble(FILE *in, Line *l)
+{
     while (fgets(buffer, LINEBUFFERSIZE, in) != NULL) {
         if (buffer[0] != '\0' && buffer[0] != '\n') {
             l->line_state = LINE_STATE_CLEAR;
@@ -192,7 +211,8 @@ void assemble(FILE *in, Line *l) {
     }
 }
 
-static void configure(int argc, char *argv[]) {
+static void configure(int argc, char *argv[])
+{
     int c;
 
     while ((c = getopt(argc, argv, "hm:o:f:")) != -1) {
@@ -232,7 +252,8 @@ exit:
     configuration.in_fnamec = argc - optind;
 }
 
-Architecture *str_to_arch(const char arch_name[]) {
+Architecture *str_to_arch(const char arch_name[])
+{
     Architecture ***a;
     for (a = architectures; *a != NULL; a++) {
         if (streq(arch_name, (**a)->name)) {
@@ -242,7 +263,8 @@ Architecture *str_to_arch(const char arch_name[]) {
     return NULL;
 }
 
-static void parse_line(Line *l, char *buffer) {
+static void parse_line(Line *l, char *buffer)
+{
     register char *c;
     arg_type_t arg_type = ARG_TYPE_UNPROCESSED;
     for (c = buffer; *c != '\0'; c++) {
@@ -286,40 +308,107 @@ static void parse_line(Line *l, char *buffer) {
         case '[':
             l->line_state ^= LINE_STATE_BRACKET;
             break;
-        case '\n':
+
         case '\t':
         case ' ':
-        case ',':   // Might be worth making this separate
-            if (!(l->line_state & LINE_STATE_SINGLE_QUOTE || l->line_state & LINE_STATE_DOUBLE_QUOTE) && !(l->line_state & LINE_STATE_BRACKET)) {
-                if (c != buffer) {
-                    if (!(l->line_state & LINE_STATE_MNEMONIC)) { // if mnemonic is not set
-                        if (*c == ',') {
-                            fail("Unexpected ',' character.\n");
-                        }
-                        else if (arg_type == ARG_TYPE_STRING) {
-                            fail("Mnemonic cannot be string literal.\n");
-                        }
-                        l->mnemonic = buffer;
-                        l->line_state |= LINE_STATE_MNEMONIC;
-                    }
-                    else { // Argument
-                        if (l->argc == l->arg_buf_size) {
-                            l->arg_buf_size += 2;
-                            //srealloc(l->argv, sizeof(char *) * l->arg_buf_size);
-                            l->argv = srealloc(l->argv, sizeof(LineArg) * l->arg_buf_size);
-                        }
-                        LineArg *la = &(l->argv[l->argc++]);
-                        la->type = arg_type;
-                        la->val.str = buffer;
-                        arg_type = ARG_TYPE_UNPROCESSED;
-                    }
-
-                    *c = '\0';
-                    buffer = c;
-                }
+            if (l->line_state & (LINE_STATE_SINGLE_QUOTE | LINE_STATE_DOUBLE_QUOTE)) {
+                break;
+            }
+            if (c == buffer) {
+                buffer++;
+            }
+            /*else if (l->line_state & LINE_STATE_MNEMONIC) {
+                fail("Mnemonic already set.\n");
+            }*/
+            else if (!(l->line_state & LINE_STATE_MNEMONIC)) {
+                *c = '\0';
+                l->mnemonic = buffer;
+                l->line_state |= LINE_STATE_MNEMONIC;
+                buffer = c;
                 buffer++;
             }
             break;
+        case ',':
+            if (c == buffer) {
+                break;
+            }
+            if (!(l->line_state & LINE_STATE_MNEMONIC)) {
+                fail("No mnemonic preceding argument.\n");
+            }
+            if (l->argc == l->arg_buf_size) {
+                l->arg_buf_size += 2;
+                l->argv = srealloc(l->argv, sizeof(LineArg) * l->arg_buf_size);
+            }
+            LineArg *la = &(l->argv[l->argc++]);
+            la->type = arg_type;
+            la->val.str = buffer;
+            *c = '\0';
+            buffer = c;
+            buffer++;
+            arg_type = ARG_TYPE_UNPROCESSED;
+            break;
+
+        case '\n':
+            if (l->line_state & (LINE_STATE_SINGLE_QUOTE | LINE_STATE_DOUBLE_QUOTE)) {
+                fail("Unterminated string constant.");
+            }
+            *c = '\0';
+            if (!(l->line_state & LINE_STATE_MNEMONIC)) {
+                l->mnemonic = buffer;
+                //*c = '\0';    // TODO: check this
+                buffer = c;
+                buffer++;
+                l->line_state |= LINE_STATE_MNEMONIC;
+            }
+            else {
+                if (l->argc == l->arg_buf_size) {
+                    l->arg_buf_size += 2;
+                    l->argv = srealloc(l->argv, sizeof(LineArg) * l->arg_buf_size);
+                }
+                LineArg *la = &(l->argv[l->argc++]);
+                la->type = arg_type;
+                la->val.str = buffer;
+                arg_type = ARG_TYPE_UNPROCESSED;
+                //*c = '\0';
+            }
+            buffer = c;
+            buffer++;
+            break;
+
+//        case '\n':
+//        case '\t':
+//        case ' ':
+//        case ',':   // Might be worth making this separate
+//            if (!(l->line_state & LINE_STATE_SINGLE_QUOTE || l->line_state & LINE_STATE_DOUBLE_QUOTE) && !(l->line_state & LINE_STATE_BRACKET)) {
+//                if (c != buffer) {
+//                    if (!(l->line_state & LINE_STATE_MNEMONIC)) { // if mnemonic is not set
+//                        if (*c == ',') {
+//                            fail("Unexpected ',' character.\n");
+//                        }
+//                        else if (arg_type == ARG_TYPE_STRING) {
+//                            fail("Mnemonic cannot be string literal.\n");
+//                        }
+//                        l->mnemonic = buffer;
+//                        l->line_state |= LINE_STATE_MNEMONIC;
+//                    }
+//                    else { // Argument
+//                        if (l->argc == l->arg_buf_size) {
+//                            l->arg_buf_size += 2;
+//                            //srealloc(l->argv, sizeof(char *) * l->arg_buf_size);
+//                            l->argv = srealloc(l->argv, sizeof(LineArg) * l->arg_buf_size);
+//                        }
+//                        LineArg *la = &(l->argv[l->argc++]);
+//                        la->type = arg_type;
+//                        la->val.str = buffer;
+//                        arg_type = ARG_TYPE_UNPROCESSED;
+//                    }
+//
+//                    *c = '\0';
+//                    buffer = c;
+//                }
+//                buffer++;
+//            }
+//            break;
         case ':':
             if (l->line_state & LINE_STATE_LABEL) {
                 fail("Invalid label.\n");
@@ -352,13 +441,19 @@ static void parse_line(Line *l, char *buffer) {
     }
 }
 
-static void resolve_mnemonic_type(Line *line) {
+static void resolve_mnemonic_type(Line *line)
+{
     struct pseudo_instruction *pseudo_op;
 
-    if (line->mnemonic[0] == '.') {
+    if (line->mnemonic[0] == '\0') {
+        return;
+    }
+    else if (line->mnemonic[0] == '.') {
+        prepare_line(line);
         parse_pseudo_op(line);
     }
     else if ((pseudo_op = get_pseudo_op(line)) != NULL) {
+        prepare_line(line);
         pseudo_op->process(line);
     }
     else {
@@ -367,7 +462,8 @@ static void resolve_mnemonic_type(Line *line) {
     }
 }
 
-static inline const struct instruction_register *instruction_supports_reg(const Instruction *instruction, const Register *reg) {
+static inline const struct instruction_register *instruction_supports_reg(const Instruction *instruction, const Register *reg)
+{
 	const struct instruction_register *ir = NULL;
 	for (ir = instruction->opcodes; ir->reg != NULL; ir++) {
 		if (streq(reg->name, ir->reg->name)) {
@@ -376,7 +472,8 @@ static inline const struct instruction_register *instruction_supports_reg(const 
 	}
 	return NULL;
 }
-static void set_syntax_parser() {
+static void set_syntax_parser()
+{
     switch (configuration.syntax) {
     case SYNTAX_MOTOROLA:
         parse_instruction = &parse_instruction_motorola;
@@ -394,9 +491,10 @@ static void set_syntax_parser() {
     }
 }
 
-static void parse_instruction_motorola(Line *l) {
-	const char *mnem = NULL;
-	const char *line = NULL;
+static void parse_instruction_motorola(Line *l)
+{
+	const char *instr_mnem = NULL;
+	const char *line_mnemonicc = NULL;
 	const Register *reg = NULL;
 	const struct instruction_register *instruction_reg = NULL;
 
@@ -407,10 +505,10 @@ static void parse_instruction_motorola(Line *l) {
 		if (!((*i)->architectures & configuration.arch->value)) {
 			goto next_instruction;
 		}
-        mnem = (*i)->mnemonic;
-        line = l->mnemonic;
-        while (*mnem != '\0' && *line != '\0') {
-            if (*mnem++ != *line++) {
+        instr_mnem = (*i)->mnemonic;
+        line_mnemonicc = l->mnemonic;
+        while (*instr_mnem != '\0' && *line_mnemonicc != '\0') {
+            if (*instr_mnem++ != *line_mnemonicc++) {
                 goto next_instruction;
             }
         }
@@ -418,15 +516,39 @@ static void parse_instruction_motorola(Line *l) {
         switch ((*i)->arg_order) {
         case ARG_ORDER_NONE:
         case ARG_ORDER_INTERREG:
-            if (*line != '\0') {
+            if (*line_mnemonicc != '\0') {
                 goto next_instruction;
             }
+            if ((*i)->arg_order == ARG_ORDER_NONE) {
+                goto instruction_found;
+            }
+
+            // check that the two arguments are registers and assign the argument
+            if (l->argc != 2) {
+                goto next_instruction;
+            }
+            size_t j;
+            for (j = 0; j < l->argc; j++) {
+                if (l->argv[j].type != ARG_TYPE_UNPROCESSED) {
+                    goto next_instruction;
+                }
+                for (reg = &(configuration.arch->registers[1]); reg->name[0] != '\0'; reg++) {
+                    if (streq(l->argv[j].val.str, reg->name)) {
+                        l->argv[j].type = ARG_TYPE_REGISTER;
+                        l->argv[j].val.reg = reg;
+                    }
+                    else {
+                        goto next_instruction;
+                    }
+                }
+            }
             goto instruction_found;
+
             break;
         case ARG_ORDER_FROM_REG:
         case ARG_ORDER_TO_REG:
             for (reg = &(configuration.arch->registers[1]); reg->name[0] != '\0'; reg++) {
-                if (streq(line, reg->name) && (reg->arcs & configuration.arch->value) && ((instruction_reg = instruction_supports_reg(*i, reg)) != NULL)) {
+                if (streq(line_mnemonicc, reg->name) && (reg->arcs & configuration.arch->value) && ((instruction_reg = instruction_supports_reg(*i, reg)) != NULL)) {
                     goto instruction_found;
                 }
             }
@@ -443,7 +565,9 @@ instruction_found:
     ;
 	//while (0);
 
-	Data *assembled = init_data(salloc(sizeof(Data)));
+    prepare_line(l);
+
+	Data *data = init_data(salloc(sizeof(Data)));
 	/*assembled->next = NULL;
 	assembled->type = DATA_TYPE_NONE;
 	assembled->bytec = 0;
@@ -451,13 +575,17 @@ instruction_found:
 	//process_instruction(l, instruction_reg, reg, assembled);
 	printdf("Instruction Register is %s\n", instruction_reg ? instruction_reg->reg->name : "NONE");
 
-	add_data(assembled);
+	configuration.arch->process_line(l, data);
+
+	add_data(data);
 }
 
-static void parse_instruction_att(Line *l) {
+static void parse_instruction_att(Line *l)
+{
 
 }
 
-static void parse_instruction_intel(Line *l) {
+static void parse_instruction_intel(Line *l)
+{
 
 }

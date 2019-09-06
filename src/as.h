@@ -27,7 +27,7 @@
 // print if debug build
 #ifndef NDEBUG
 #include <stdarg.h>
-static inline int printdf(const char *fmt, ...) {
+/*static inline int printdf(const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
 
@@ -39,8 +39,8 @@ static inline int printdf(const char *fmt, ...) {
     va_end(args);
 
     return count;
-}
-//#define printdf(fmt, ...) printf("[%s:%d] >> " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+}*/
+#define printdf(fmt, ...) printf("[%s:%d] >> " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
 #else
 #define printdf(fmt, ...)
 #endif
@@ -79,6 +79,23 @@ typedef enum {
 #define ARG_ORDER_TO_REG    (2)
 #define ARG_ORDER_INTERREG  (3)*/
 
+#if 0
+enum address_type {
+    ADDRESS_TYPE_ABSOLUTE;
+    ADDRESS_TYPE_RELATIVE;
+};
+struct address {
+    enum address_type type;
+    union {
+        size_t absolute;
+        struct {
+            struct token *root_expr;
+            size_t offset;
+        };
+    } value;
+};
+#endif
+
 typedef struct symtab_entry {
     char *label;
     size_t value;
@@ -92,21 +109,21 @@ typedef struct {
 } SymTab;
 
 /*#define DATA_TYPE_NONE  (0)
-#define DATA_TYPE_LABEL (1)
+#define DATA_TYPE_SYMBOL (1)
 #define DATA_TYPE_BYTES (2)*/
 
 typedef enum {
     DATA_TYPE_NONE = 0,
-    DATA_TYPE_LABEL = 1,
-    DATA_TYPE_BYTES = 2
+    DATA_TYPE_EXPRESSION = 2,
+    DATA_TYPE_BYTES = 4
 } data_type_t;
 typedef struct data_entry {
     data_type_t type;
     size_t address;
     uint8_t bytec;  // This needs to become a union of uint8_t and char *label
     union {
-        char *symbol;
         uint8_t *bytes;
+        struct token *rpn_expr;
     } contents;
     struct data_entry *next;
 } Data;
@@ -174,11 +191,10 @@ typedef struct {
 } Instruction;
 
 typedef enum {
-    ARG_TYPE_NONE,
-    ARG_TYPE_REGULAR,
-    ARG_TYPE_SYMBOL,
+    ARG_TYPE_UNPROCESSED,
     ARG_TYPE_STRING,
-    ARG_TYPE_UNPROCESSED
+    ARG_TYPE_EXPRESSION,
+    ARG_TYPE_REGISTER
 } arg_type_t;
 
 /*#define ARG_TYPE_NONE 0
@@ -192,8 +208,8 @@ typedef struct {
     //uint8_t addr_mode;
     union {
         char *str;
-        Register *reg;
-        Symbol *sym;
+        struct token *rpn_expr;
+        const Register *reg;
     } val;
 } LineArg;
 
@@ -236,6 +252,7 @@ typedef struct {
     syntax_t default_syntax;
 	const Register *registers;
 	const Instruction **instructions;
+	void (*process_line)(Line *line, Data *data);
 } Architecture;
 
 struct pseudo_instruction {

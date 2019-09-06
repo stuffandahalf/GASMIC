@@ -5,7 +5,8 @@ static int optcharind = 1;
 char *optarg = NULL;
 int optopt;
 
-int getopt(int argc, char *const *argv, const char *arglist) {
+int getopt(int argc, char *const *argv, const char *arglist)
+{
 	if (optind == argc) {
 		return -1;
 	}
@@ -55,6 +56,7 @@ int getopt(int argc, char *const *argv, const char *arglist) {
 	
 }
 
-int getopt_stateless(int argc, char **argv, getopt_t *opts) {
+int getopt_stateless(int argc, char **argv, getopt_t *opts)
+{
 	return -1;
 }
