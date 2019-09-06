@@ -119,7 +119,15 @@ const Instruction *instructions[] = {
     NULL
 };
 
+static void MC6809_process_line(Line *line, Data *data)
+{
 
+}
+
+static void HD6309_process_line(Line *line, Data *data)
+{
+
+}
 
 #define ARCH_INIT(arch_var, arch_name) { \
     ARCH_##arch_var = salloc(sizeof(Architecture)); \
@@ -131,19 +139,24 @@ const Instruction *instructions[] = {
     ARCH_##arch_var->default_syntax = SYNTAX_MOTOROLA; \
 	ARCH_##arch_var->registers = registers; \
 	ARCH_##arch_var->instructions = instructions; \
+	ARCH_##arch_var->process_line = &arch_var##_process_line; \
 }
 
-void MC6809_init(void) {
+void MC6809_init(void)
+{
     ARCH_INIT(MC6809, "6809");
 }
-void MC6809_destroy(void) {
+void MC6809_destroy(void)
+{
     sfree(ARCH_MC6809);
 }
 
-void HD6309_init(void) {
+void HD6309_init(void)
+{
     ARCH_INIT(HD6309, "6309");
 }
-void HD6309_destroy(void) {
+void HD6309_destroy(void)
+{
     sfree(ARCH_HD6309);
 }
 

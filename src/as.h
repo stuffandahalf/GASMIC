@@ -97,16 +97,16 @@ typedef struct {
 
 typedef enum {
     DATA_TYPE_NONE = 0,
-    DATA_TYPE_SYMBOL = 1,
-    DATA_TYPE_BYTES = 2
+    DATA_TYPE_EXPRESSION = 2,
+    DATA_TYPE_BYTES = 4
 } data_type_t;
 typedef struct data_entry {
     data_type_t type;
     size_t address;
     uint8_t bytec;  // This needs to become a union of uint8_t and char *label
     union {
-        char *symbol;
         uint8_t *bytes;
+        struct token *rpn_expr;
     } contents;
     struct data_entry *next;
 } Data;
@@ -174,11 +174,10 @@ typedef struct {
 } Instruction;
 
 typedef enum {
-    ARG_TYPE_NONE,
-    ARG_TYPE_REGULAR,
-    ARG_TYPE_SYMBOL,
+    ARG_TYPE_UNPROCESSED,
     ARG_TYPE_STRING,
-    ARG_TYPE_UNPROCESSED
+    ARG_TYPE_EXPRESSION,
+    ARG_TYPE_REGISTER
 } arg_type_t;
 
 /*#define ARG_TYPE_NONE 0
@@ -192,8 +191,8 @@ typedef struct {
     //uint8_t addr_mode;
     union {
         char *str;
-        Register *reg;
-        Symbol *sym;
+        struct token *rpn_expr;
+        const Register *reg;
     } val;
 } LineArg;
 
@@ -236,6 +235,7 @@ typedef struct {
     syntax_t default_syntax;
 	const Register *registers;
 	const Instruction **instructions;
+	void (*process_line)(Line *line, Data *data);
 } Architecture;
 
 struct pseudo_instruction {

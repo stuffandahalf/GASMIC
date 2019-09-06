@@ -1,4 +1,5 @@
-#include "util.h"
+#include <util.h>
+#include <arithmetic.h>
 
 SymTab *symtab;
 DataTab *datatab;
@@ -95,5 +96,19 @@ void add_data(Data *data) {
     while (next != NULL) {
         datatab->last = next;
         next = next->next;
+    }
+}
+
+void prepare_line(Line *line)
+{
+    size_t i;
+    for (i = 0; i < line->argc; i++) {
+        if (line->argv[i].type == ARG_TYPE_UNPROCESSED) {
+            line->argv[i].type = ARG_TYPE_EXPRESSION;
+            line->argv[i].val.rpn_expr = parse_expression(line->argv[i].val.str);
+            if (arithmetic_status_code != ARITHMETIC_SUCCESS) {
+                fail("Failed to parse expression.");
+            }
+        }
     }
 }

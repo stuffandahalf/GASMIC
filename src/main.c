@@ -8,6 +8,7 @@
 #include <targets.h>
 #include <util.h>
 #include <arithmetic.h>
+#include "as.h"
 
 #define LINEBUFFERSIZE (256)
 char buffer[LINEBUFFERSIZE];
@@ -35,6 +36,7 @@ Architecture **architectures[] = { TARGETS };
 
 int main(int argc, char **argv)
 {
+#if 0
     //struct token *rpn_expr = parse_expression("1 *(2 +3)");
     struct token *rpn_expr = parse_expression("(_start * 3) + tmp");
     //struct token *rpn_expr = parse_expression("(_start * 3 + tmp");
@@ -42,6 +44,7 @@ int main(int argc, char **argv)
     printf("%d\n", arithmetic_status_code);
     free_token_chain(rpn_expr);
     return 0;
+#endif
 
     INIT_TARGETS();
 
@@ -108,9 +111,13 @@ int main(int argc, char **argv)
     while (data != NULL) {
         printdf("data address: %lX,  ", data->address);
         switch (data->type) {
-        case DATA_TYPE_SYMBOL:
-            printdf("%" PRIu8 " bytes label \"%s\"\n", data->bytec, data->contents.symbol);
-            sfree(data->contents.symbol);
+        case DATA_TYPE_EXPRESSION:
+            //printdf("%" PRIu8 " bytes label \"%s\"\n", data->bytec, data->contents.symbol);
+            //sfree(data->contents.symbol);
+#ifndef NDEBUG
+            print_token_list(data->contents.rpn_expr);
+#endif
+            free_token_chain(data->contents.rpn_expr);
             break;
         case DATA_TYPE_BYTES:
 #ifndef NDEBUG
@@ -310,10 +317,10 @@ static void parse_line(Line *l, char *buffer)
             if (c == buffer) {
                 buffer++;
             }
-            else if (l->line_state & LINE_STATE_MNEMONIC) {
-                fail("Mnemonic already set.");
-            }
-            else {
+            /*else if (l->line_state & LINE_STATE_MNEMONIC) {
+                fail("Mnemonic already set.\n");
+            }*/
+            else if (!(l->line_state & LINE_STATE_MNEMONIC)) {
                 *c = '\0';
                 l->mnemonic = buffer;
                 l->line_state |= LINE_STATE_MNEMONIC;
@@ -347,8 +354,8 @@ static void parse_line(Line *l, char *buffer)
             }
             *c = '\0';
             if (!(l->line_state & LINE_STATE_MNEMONIC)) {
-                //*c = '\0';
                 l->mnemonic = buffer;
+                //*c = '\0';    // TODO: check this
                 buffer = c;
                 buffer++;
                 l->line_state |= LINE_STATE_MNEMONIC;
@@ -361,7 +368,7 @@ static void parse_line(Line *l, char *buffer)
                 LineArg *la = &(l->argv[l->argc++]);
                 la->type = arg_type;
                 la->val.str = buffer;
-
+                arg_type = ARG_TYPE_UNPROCESSED;
                 //*c = '\0';
             }
             buffer = c;
@@ -438,10 +445,15 @@ static void resolve_mnemonic_type(Line *line)
 {
     struct pseudo_instruction *pseudo_op;
 
-    if (line->mnemonic[0] == '.') {
+    if (line->mnemonic[0] == '\0') {
+        return;
+    }
+    else if (line->mnemonic[0] == '.') {
+        prepare_line(line);
         parse_pseudo_op(line);
     }
     else if ((pseudo_op = get_pseudo_op(line)) != NULL) {
+        prepare_line(line);
         pseudo_op->process(line);
     }
     else {
@@ -481,8 +493,8 @@ static void set_syntax_parser()
 
 static void parse_instruction_motorola(Line *l)
 {
-	const char *mnem = NULL;
-	const char *line = NULL;
+	const char *instr_mnem = NULL;
+	const char *line_mnemonicc = NULL;
 	const Register *reg = NULL;
 	const struct instruction_register *instruction_reg = NULL;
 
@@ -493,10 +505,10 @@ static void parse_instruction_motorola(Line *l)
 		if (!((*i)->architectures & configuration.arch->value)) {
 			goto next_instruction;
 		}
-        mnem = (*i)->mnemonic;
-        line = l->mnemonic;
-        while (*mnem != '\0' && *line != '\0') {
-            if (*mnem++ != *line++) {
+        instr_mnem = (*i)->mnemonic;
+        line_mnemonicc = l->mnemonic;
+        while (*instr_mnem != '\0' && *line_mnemonicc != '\0') {
+            if (*instr_mnem++ != *line_mnemonicc++) {
                 goto next_instruction;
             }
         }
@@ -504,15 +516,39 @@ static void parse_instruction_motorola(Line *l)
         switch ((*i)->arg_order) {
         case ARG_ORDER_NONE:
         case ARG_ORDER_INTERREG:
-            if (*line != '\0') {
+            if (*line_mnemonicc != '\0') {
                 goto next_instruction;
             }
+            if ((*i)->arg_order == ARG_ORDER_NONE) {
+                goto instruction_found;
+            }
+
+            // check that the two arguments are registers and assign the argument
+            if (l->argc != 2) {
+                goto next_instruction;
+            }
+            size_t j;
+            for (j = 0; j < l->argc; j++) {
+                if (l->argv[j].type != ARG_TYPE_UNPROCESSED) {
+                    goto next_instruction;
+                }
+                for (reg = &(configuration.arch->registers[1]); reg->name[0] != '\0'; reg++) {
+                    if (streq(l->argv[j].val.str, reg->name)) {
+                        l->argv[j].type = ARG_TYPE_REGISTER;
+                        l->argv[j].val.reg = reg;
+                    }
+                    else {
+                        goto next_instruction;
+                    }
+                }
+            }
             goto instruction_found;
+
             break;
         case ARG_ORDER_FROM_REG:
         case ARG_ORDER_TO_REG:
             for (reg = &(configuration.arch->registers[1]); reg->name[0] != '\0'; reg++) {
-                if (streq(line, reg->name) && (reg->arcs & configuration.arch->value) && ((instruction_reg = instruction_supports_reg(*i, reg)) != NULL)) {
+                if (streq(line_mnemonicc, reg->name) && (reg->arcs & configuration.arch->value) && ((instruction_reg = instruction_supports_reg(*i, reg)) != NULL)) {
                     goto instruction_found;
                 }
             }
@@ -529,7 +565,9 @@ instruction_found:
     ;
 	//while (0);
 
-	Data *assembled = init_data(salloc(sizeof(Data)));
+    prepare_line(l);
+
+	Data *data = init_data(salloc(sizeof(Data)));
 	/*assembled->next = NULL;
 	assembled->type = DATA_TYPE_NONE;
 	assembled->bytec = 0;
@@ -537,7 +575,9 @@ instruction_found:
 	//process_instruction(l, instruction_reg, reg, assembled);
 	printdf("Instruction Register is %s\n", instruction_reg ? instruction_reg->reg->name : "NONE");
 
-	add_data(assembled);
+	configuration.arch->process_line(l, data);
+
+	add_data(data);
 }
 
 static void parse_instruction_att(Line *l)
