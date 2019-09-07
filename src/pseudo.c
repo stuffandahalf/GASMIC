@@ -97,12 +97,13 @@ static void pseudo_set_arch(Line *line)
     size_t j; \
     for (i = 0; i < line->argc; i++) { \
         data = init_data(salloc(sizeof(Data))); \
-        data->address = address && address_mask; \
+        data->address = address & address_mask; \
         if (line->argv[i].type == ARG_TYPE_STRING) { \
             data->type = DATA_TYPE_BYTES; \
-            data->bytec = strlen(line->argv[i].val.str) + 1; \
+            data->bytec = strlen(line->argv[i].val.str); \
             data->contents.bytes = salloc(sizeof(char) * data->bytec); \
-            strcpy(data->contents.bytes, line->argv[i].val.str); \
+            /*strncpy(data->contents.bytes, line->argv[i].val.str, data->bytec);*/ \
+            memcpy(data->contents.bytes, line->argv[i].val.str, data->bytec); \
         } \
         else { \
             data->type = DATA_TYPE_EXPRESSION; \

@@ -51,7 +51,8 @@ static const Instruction *instructions[] = {
 };
 
 
-void Z80_init(void) {
+void Z80_init(void)
+{
     ARCH_Z80 = salloc(sizeof(Architecture));
     ARCH_Z80->value = Z80;
     strcpy(ARCH_Z80->name, "z80");
@@ -62,6 +63,7 @@ void Z80_init(void) {
     ARCH_Z80->registers = registers;
     ARCH_Z80->instructions = instructions;
 }
-void Z80_destroy(void) {
+void Z80_destroy(void)
+{
     sfree(ARCH_Z80);
 }

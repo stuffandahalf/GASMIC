@@ -47,7 +47,7 @@ static const Instruction I_ABX = {
     }
 };
 
-const Instruction I_ADC_ALL = {
+static const Instruction I_ADC_ALL = {
     "ADC",
     MC6809 | HD6309,
     ARG_ORDER_TO_REG,
@@ -76,7 +76,7 @@ const Instruction I_ADC_ALL = {
     }
 };
 
-const Instruction I_ADC_HD6309 = {
+static const Instruction I_ADC_HD6309 = {
     "ADC",
     HD6309,
     ARG_ORDER_TO_REG,
@@ -95,7 +95,7 @@ const Instruction I_ADC_HD6309 = {
     }
 };
 
-const Instruction I_ADCR_HD6309 = {
+static const Instruction I_ADCR_HD6309 = {
     "ADCR",
     HD6309,
     ARG_ORDER_INTERREG,
@@ -111,7 +111,7 @@ const Instruction I_ADCR_HD6309 = {
     }
 };
 
-const Instruction *instructions[] = {
+static const Instruction *instructions[] = {
     &I_ABX,
     &I_ADC_ALL,
     &I_ADC_HD6309,

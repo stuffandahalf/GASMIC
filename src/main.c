@@ -93,7 +93,7 @@ int main(int argc, char **argv)
     printdf("SYMBOLS\n");
     Symbol *sym = symtab->first;
     while (sym != NULL) {
-        printdf("label: %s\t%ld\n", sym->label, sym->value);
+        printdf("label: %s = %ld\n", sym->label, sym->value);
 
         sfree(sym->label);
         sym->label = NULL;
@@ -115,15 +115,19 @@ int main(int argc, char **argv)
             //printdf("%" PRIu8 " bytes label \"%s\"\n", data->bytec, data->contents.symbol);
             //sfree(data->contents.symbol);
 #ifndef NDEBUG
+            printf("RPN expression: ");
             print_token_list(data->contents.rpn_expr);
 #endif
             free_token_chain(data->contents.rpn_expr);
             break;
         case DATA_TYPE_BYTES:
 #ifndef NDEBUG
-            printf("%" PRIu8 " bytes ", data->bytec);
+            printf("%" PRIu8 " bytes: ", data->bytec);
             int i;
             for (i = 0; i < data->bytec; i++) {
+                if (i) {
+                    printf(", ");
+                }
                 printf("%" PRIX8, data->contents.bytes[i]);
             }
             printf("\n");
@@ -161,9 +165,9 @@ void init_address_mask()
     int i;
     for (i = 0; i < configuration.arch->bytes_per_address * configuration.arch->byte_size; i++) {
         if (i) {
-            address_mask <<= 1;
+            address_mask <<= 1u;
         }
-        address_mask |= 1;
+        address_mask |= 1u;
     }
     printdf("Address mask: %lX\n", address_mask);
 }
@@ -350,7 +354,7 @@ static void parse_line(Line *l, char *buffer)
 
         case '\n':
             if (l->line_state & (LINE_STATE_SINGLE_QUOTE | LINE_STATE_DOUBLE_QUOTE)) {
-                fail("Unterminated string constant.");
+                fail("Unterminated string constant.\n");
             }
             *c = '\0';
             if (!(l->line_state & LINE_STATE_MNEMONIC)) {
