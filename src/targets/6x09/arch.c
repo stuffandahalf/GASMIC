@@ -119,12 +119,12 @@ static const Instruction *instructions[] = {
     NULL
 };
 
-static void MC6809_process_line(Line *line, Data *data)
+static void MC6809_process_line(Line *line, struct instruction_register *instr_reg, Data *data)
 {
-
+    
 }
 
-static void HD6309_process_line(Line *line, Data *data)
+static void HD6309_process_line(Line *line, struct instruction_register *instr_reg, Data *data)
 {
 
 }

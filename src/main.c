@@ -498,7 +498,7 @@ static void set_syntax_parser()
 static void parse_instruction_motorola(Line *l)
 {
 	const char *instr_mnem = NULL;
-	const char *line_mnemonicc = NULL;
+	const char *line_mnemonic = NULL;
 	const Register *reg = NULL;
 	const struct instruction_register *instruction_reg = NULL;
 
@@ -510,9 +510,9 @@ static void parse_instruction_motorola(Line *l)
 			goto next_instruction;
 		}
         instr_mnem = (*i)->mnemonic;
-        line_mnemonicc = l->mnemonic;
-        while (*instr_mnem != '\0' && *line_mnemonicc != '\0') {
-            if (*instr_mnem++ != *line_mnemonicc++) {
+        line_mnemonic = l->mnemonic;
+        while (*instr_mnem != '\0' && *line_mnemonic != '\0') {
+            if (*instr_mnem++ != *line_mnemonic++) {
                 goto next_instruction;
             }
         }
@@ -520,7 +520,7 @@ static void parse_instruction_motorola(Line *l)
         switch ((*i)->arg_order) {
         case ARG_ORDER_NONE:
         case ARG_ORDER_INTERREG:
-            if (*line_mnemonicc != '\0') {
+            if (*line_mnemonic != '\0') {
                 goto next_instruction;
             }
             if ((*i)->arg_order == ARG_ORDER_NONE) {
@@ -552,7 +552,7 @@ static void parse_instruction_motorola(Line *l)
         case ARG_ORDER_FROM_REG:
         case ARG_ORDER_TO_REG:
             for (reg = &(configuration.arch->registers[1]); reg->name[0] != '\0'; reg++) {
-                if (streq(line_mnemonicc, reg->name) && (reg->arcs & configuration.arch->value) && ((instruction_reg = instruction_supports_reg(*i, reg)) != NULL)) {
+                if (streq(line_mnemonic, reg->name) && (reg->arcs & configuration.arch->value) && ((instruction_reg = instruction_supports_reg(*i, reg)) != NULL)) {
                     goto instruction_found;
                 }
             }
@@ -579,7 +579,7 @@ instruction_found:
 	//process_instruction(l, instruction_reg, reg, assembled);
 	printdf("Instruction Register is %s\n", instruction_reg ? instruction_reg->reg->name : "NONE");
 
-	configuration.arch->process_line(l, data);
+	configuration.arch->process_line(l, instruction_reg, data);
 
 	add_data(data);
 }

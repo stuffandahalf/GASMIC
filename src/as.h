@@ -252,7 +252,7 @@ typedef struct {
     syntax_t default_syntax;
 	const Register *registers;
 	const Instruction **instructions;
-	void (*process_line)(Line *line, Data *data);
+	void (*process_line)(Line *line, struct instruction_register *instr_reg, Data *data);
 } Architecture;
 
 struct pseudo_instruction {
