@@ -27,7 +27,7 @@ static const Register registers[] = {
 static const int regc = sizeof(registers) / sizeof(Register) - 1;
 #endif
 
-#define Z80_REGISTER(reg) ((reg >= 0 && reg <= Z80_REG_PC) ? &(registers[reg]) : NULL)
+#define Z80_REGISTER(reg) (((reg) >= 0 && (reg) <= Z80_REG_PC) ? &(registers[reg]) : NULL)
 
 static const Instruction I_NOP = {
     "NOP",
@@ -50,18 +50,24 @@ static const Instruction *instructions[] = {
     NULL
 };
 
+void Z80_process_line(Line *line, const struct instruction_register *instr_reg, Data *data)
+{
+    printdf("Hello from Z80 line processor.\n");
+}
 
 void Z80_init(void)
 {
     ARCH_Z80 = salloc(sizeof(Architecture));
     ARCH_Z80->value = Z80;
-    strcpy(ARCH_Z80->name, "z80");
+    //strcpy(ARCH_Z80->name, "z80");
+    ARCH_Z80->name = "Z80";
     ARCH_Z80->byte_size = 8;
     ARCH_Z80->bytes_per_address = 2;
     ARCH_Z80->endianness = ARCH_ENDIAN_LITTLE;
     ARCH_Z80->default_syntax = SYNTAX_INTEL;
     ARCH_Z80->registers = registers;
     ARCH_Z80->instructions = instructions;
+    ARCH_Z80->process_line = &Z80_process_line;
 }
 void Z80_destroy(void)
 {

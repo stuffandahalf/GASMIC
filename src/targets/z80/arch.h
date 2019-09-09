@@ -26,8 +26,6 @@
 #define Z80_REG_R       (17)
 #define Z80_REG_PC      (18)
 
-extern size_t address;
-
 extern Architecture *ARCH_Z80;
 
 void Z80_init(void);

@@ -3,8 +3,8 @@
 
 #include <as.h>
 
-#define MC6809 (1)
-#define HD6309 (2)
+#define MC6809 (1u)
+#define HD6309 (2u)
 
 /*#define MC6809_REG_INVALID (-1)
 #define MC6809_REG_NONE    (0)

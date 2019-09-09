@@ -6,9 +6,9 @@
 #endif
 #include <as.h>
 #include <targets.h>
+#include <pseudo.h>
 #include <util.h>
 #include <arithmetic.h>
-#include "as.h"
 
 #define LINEBUFFERSIZE (256)
 char buffer[LINEBUFFERSIZE];
@@ -79,7 +79,7 @@ int main(int argc, char **argv)
         assemble(stdin, l);
     }
     else {
-        unsigned int i;
+        size_t i;
         for (i = 0; i < configuration.in_fnamec; i++) {
             if ((in = fopen(configuration.in_fnames[i], "r")) == NULL) {
                 die("Failed to open input file %s\n", configuration.in_fnames[i]);
@@ -186,25 +186,25 @@ void assemble(FILE *in, Line *l)
 
 #ifndef NDEBUG
             //printf("%s\t%s", l->label, l->mnemonic);
-            if (l->line_state & LINE_STATE_LABEL) {
+            if (l->line_state & FLAG(LINE_STATE_LABEL)) {
                 printf("%s", l->label);
             }
-            if (l->line_state & LINE_STATE_MNEMONIC) {
-                if (l->line_state & LINE_STATE_LABEL) {
+            if (l->line_state & FLAG(LINE_STATE_MNEMONIC)) {
+                if (l->line_state & FLAG(LINE_STATE_LABEL)) {
                     puts("\t");
                 }
                 printf("%s", l->mnemonic);
             }
-            unsigned int i;
+            size_t i;
             for (i = 0; i < l->argc; i++) {
                 printf("\t%s", l->argv[i].val.str);
             }
             puts("");
 #endif
-            if (l->line_state & LINE_STATE_LABEL) {      // If current line has a label
+            if (l->line_state & FLAG(LINE_STATE_LABEL)) {      // If current line has a label
                 add_label(l);
             }
-            if (l->line_state & LINE_STATE_MNEMONIC) {   // If current line has a mnemonic
+            if (l->line_state & FLAG(LINE_STATE_MNEMONIC)) {   // If current line has a mnemonic
                 str_to_upper(l->mnemonic);
                 resolve_mnemonic_type(l);
             }
@@ -270,18 +270,19 @@ Architecture *str_to_arch(const char arch_name[])
 static void parse_line(Line *l, char *buffer)
 {
     register char *c;
-    arg_type_t arg_type = ARG_TYPE_UNPROCESSED;
+    LineArg *la = NULL;
+    enum arg_type arg_type = ARG_TYPE_UNPROCESSED;
     for (c = buffer; *c != '\0'; c++) {
         switch (*c) {
         case '"':
-            if (l->line_state & LINE_STATE_SINGLE_QUOTE) {
+            if (l->line_state & FLAG(LINE_STATE_SINGLE_QUOTE)) {
                 break;
             }
-            else if (!(l->line_state & LINE_STATE_DOUBLE_QUOTE) && c != buffer) {
+            else if (!(l->line_state & FLAG(LINE_STATE_DOUBLE_QUOTE)) && c != buffer) {
                 fail("Quotes must occur at the beginning of a field.\n");
             }
-            l->line_state ^= LINE_STATE_DOUBLE_QUOTE;
-            if (l->line_state & LINE_STATE_DOUBLE_QUOTE) {
+            l->line_state ^= FLAG(LINE_STATE_DOUBLE_QUOTE);
+            if (l->line_state & FLAG(LINE_STATE_DOUBLE_QUOTE)) {
                 arg_type = ARG_TYPE_STRING;
                 buffer++;
             }
@@ -290,14 +291,14 @@ static void parse_line(Line *l, char *buffer)
             }
             break;
         case '\'':
-            if (l->line_state & LINE_STATE_DOUBLE_QUOTE) {
+            if (l->line_state & FLAG(LINE_STATE_DOUBLE_QUOTE)) {
                 break;
             }
-            else if (!(l->line_state & LINE_STATE_SINGLE_QUOTE) && c != buffer) {
+            else if (!(l->line_state & FLAG(LINE_STATE_SINGLE_QUOTE)) && c != buffer) {
                 fail("Quotes must occur at the beginning of a field.\n");
             }
-            l->line_state ^= LINE_STATE_SINGLE_QUOTE;
-            if (l->line_state & LINE_STATE_SINGLE_QUOTE) {
+            l->line_state ^= FLAG(LINE_STATE_SINGLE_QUOTE);
+            if (l->line_state & FLAG(LINE_STATE_SINGLE_QUOTE)) {
                 arg_type = ARG_TYPE_STRING;
                 buffer++;
             }
@@ -306,16 +307,16 @@ static void parse_line(Line *l, char *buffer)
             }
             break;
         case ']':
-            if (!(l->line_state & LINE_STATE_BRACKET)) {
+            if (!(l->line_state & FLAG(LINE_STATE_BRACKET))) {
                 fail("']' requires '[' first.");
             }
         case '[':
-            l->line_state ^= LINE_STATE_BRACKET;
+            l->line_state ^= FLAG(LINE_STATE_BRACKET);
             break;
 
         case '\t':
         case ' ':
-            if (l->line_state & (LINE_STATE_SINGLE_QUOTE | LINE_STATE_DOUBLE_QUOTE)) {
+            if (l->line_state & (FLAG(LINE_STATE_SINGLE_QUOTE) | FLAG(LINE_STATE_DOUBLE_QUOTE))) {
                 break;
             }
             if (c == buffer) {
@@ -324,10 +325,10 @@ static void parse_line(Line *l, char *buffer)
             /*else if (l->line_state & LINE_STATE_MNEMONIC) {
                 fail("Mnemonic already set.\n");
             }*/
-            else if (!(l->line_state & LINE_STATE_MNEMONIC)) {
+            else if (!(l->line_state & FLAG(LINE_STATE_MNEMONIC))) {
                 *c = '\0';
                 l->mnemonic = buffer;
-                l->line_state |= LINE_STATE_MNEMONIC;
+                l->line_state |= FLAG(LINE_STATE_MNEMONIC);
                 buffer = c;
                 buffer++;
             }
@@ -336,14 +337,14 @@ static void parse_line(Line *l, char *buffer)
             if (c == buffer) {
                 break;
             }
-            if (!(l->line_state & LINE_STATE_MNEMONIC)) {
+            if (!(l->line_state & FLAG(LINE_STATE_MNEMONIC))) {
                 fail("No mnemonic preceding argument.\n");
             }
             if (l->argc == l->arg_buf_size) {
                 l->arg_buf_size += 2;
                 l->argv = srealloc(l->argv, sizeof(LineArg) * l->arg_buf_size);
             }
-            LineArg *la = &(l->argv[l->argc++]);
+            /*LineArg **/la = &(l->argv[l->argc++]);
             la->type = arg_type;
             la->val.str = buffer;
             *c = '\0';
@@ -353,23 +354,22 @@ static void parse_line(Line *l, char *buffer)
             break;
 
         case '\n':
-            if (l->line_state & (LINE_STATE_SINGLE_QUOTE | LINE_STATE_DOUBLE_QUOTE)) {
+            if (l->line_state & (FLAG(LINE_STATE_SINGLE_QUOTE) | FLAG(LINE_STATE_DOUBLE_QUOTE))) {
                 fail("Unterminated string constant.\n");
             }
             *c = '\0';
-            if (!(l->line_state & LINE_STATE_MNEMONIC)) {
+            if (!(l->line_state & FLAG(LINE_STATE_MNEMONIC))) {
                 l->mnemonic = buffer;
-                //*c = '\0';    // TODO: check this
                 buffer = c;
                 buffer++;
-                l->line_state |= LINE_STATE_MNEMONIC;
+                l->line_state |= FLAG(LINE_STATE_MNEMONIC);
             }
             else {
                 if (l->argc == l->arg_buf_size) {
                     l->arg_buf_size += 2;
                     l->argv = srealloc(l->argv, sizeof(LineArg) * l->arg_buf_size);
                 }
-                LineArg *la = &(l->argv[l->argc++]);
+                /*LineArg **/la = &(l->argv[l->argc++]);
                 la->type = arg_type;
                 la->val.str = buffer;
                 arg_type = ARG_TYPE_UNPROCESSED;
@@ -414,10 +414,10 @@ static void parse_line(Line *l, char *buffer)
 //            }
 //            break;
         case ':':
-            if (l->line_state & LINE_STATE_LABEL) {
+            if (l->line_state & FLAG(LINE_STATE_LABEL)) {
                 fail("Invalid label.\n");
             }
-            else if (l->line_state & LINE_STATE_MNEMONIC) {
+            else if (l->line_state & FLAG(LINE_STATE_MNEMONIC)) {
                 fail("Label must occur at the beginning of a line.\n");
             }
             else if (arg_type == ARG_TYPE_STRING) {
@@ -428,18 +428,18 @@ static void parse_line(Line *l, char *buffer)
             buffer = c;
             buffer++;
 
-            printdf("parsed literal label = %s\n", l->label);
-            l->line_state |= LINE_STATE_LABEL;
+            //printdf("parsed literal label = %s\n", l->label);
+            l->line_state |= FLAG(LINE_STATE_LABEL);
             break;
         case ';':
             return;
         }
         //buffer++;     // Why doesnt this work?
     }
-    if (l->line_state & LINE_STATE_SINGLE_QUOTE || l->line_state & LINE_STATE_DOUBLE_QUOTE) {
+    if (l->line_state & (FLAG(LINE_STATE_SINGLE_QUOTE) | FLAG(LINE_STATE_DOUBLE_QUOTE))) {
         fail("Unmatched quote.\n");
     }
-    if (l->line_state & LINE_STATE_BRACKET) {
+    if (l->line_state & FLAG(LINE_STATE_BRACKET)) {
         //die("Error on line %ld. Unmatched bracket\n", line_num);
         fail("Unmatched bracket.\n");
     }
@@ -506,7 +506,7 @@ static void parse_instruction_motorola(Line *l)
 
 	//const MC6x09_Instruction *i = NULL;
 	for (i = configuration.arch->instructions; *i != NULL; i++) {
-		if (!((*i)->architectures & configuration.arch->value)) {
+		if (!((*i)->architectures & FLAG(configuration.arch->value))) {
 			goto next_instruction;
 		}
         instr_mnem = (*i)->mnemonic;
@@ -552,7 +552,8 @@ static void parse_instruction_motorola(Line *l)
         case ARG_ORDER_FROM_REG:
         case ARG_ORDER_TO_REG:
             for (reg = &(configuration.arch->registers[1]); reg->name[0] != '\0'; reg++) {
-                if (streq(line_mnemonic, reg->name) && (reg->arcs & configuration.arch->value) && ((instruction_reg = instruction_supports_reg(*i, reg)) != NULL)) {
+                if (streq(line_mnemonic, reg->name) && (reg->arcs & FLAG(configuration.arch->value)) &&
+                    ((instruction_reg = instruction_supports_reg(*i, reg)) != NULL)) {
                     goto instruction_found;
                 }
             }

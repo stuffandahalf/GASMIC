@@ -28,8 +28,8 @@ static const Register registers[] = {
 static const int regc = sizeof(registers) / sizeof(Register) - 1;
 #endif
 
-#define MC6809_REGISTER(reg) ((reg >= 0 && reg < HD6309_REG_E) ? &(registers[reg]) : NULL)
-#define HD6309_REGISTER(reg) ((reg >= 0 && reg <= HD6309_REG_MD) ? &(registers[reg]) : NULL)
+#define MC6809_REGISTER(reg) (((reg) >= 0 && (reg) < HD6309_REG_E) ? &(registers[reg]) : NULL)
+#define HD6309_REGISTER(reg) (((reg) >= 0 && (reg) <= HD6309_REG_MD) ? &(registers[reg]) : NULL)
 
 static const Instruction I_ABX = {
     "ABX",
@@ -119,20 +119,22 @@ static const Instruction *instructions[] = {
     NULL
 };
 
-static void MC6809_process_line(Line *line, struct instruction_register *instr_reg, Data *data)
+static void MC6809_process_line(Line *line, const struct instruction_register *instr_reg, Data *data)
 {
-    
+    printdf("Hello MC6809\n");
 }
 
-static void HD6309_process_line(Line *line, struct instruction_register *instr_reg, Data *data)
+static void HD6309_process_line(Line *line, const
+struct instruction_register *instr_reg, Data *data)
 {
-
+    printdf("Hello HD6309\n");
 }
 
-#define ARCH_INIT(arch_var, arch_name) { \
+#define ARCH_INIT(arch_var) { \
     ARCH_##arch_var = salloc(sizeof(Architecture)); \
     ARCH_##arch_var->value = arch_var; \
-    strcpy(ARCH_##arch_var->name, arch_name); \
+    /*strcpy(ARCH_##arch_var->name, arch_name);*/ \
+    ARCH_##arch_var->name = #arch_var; \
     ARCH_##arch_var->byte_size = 8; \
     ARCH_##arch_var->bytes_per_address = 2; \
     ARCH_##arch_var->endianness = ARCH_ENDIAN_BIG; \
@@ -144,7 +146,7 @@ static void HD6309_process_line(Line *line, struct instruction_register *instr_r
 
 void MC6809_init(void)
 {
-    ARCH_INIT(MC6809, "6809");
+    ARCH_INIT(MC6809);
 }
 void MC6809_destroy(void)
 {
@@ -153,7 +155,7 @@ void MC6809_destroy(void)
 
 void HD6309_init(void)
 {
-    ARCH_INIT(HD6309, "6309");
+    ARCH_INIT(HD6309);
 }
 void HD6309_destroy(void)
 {

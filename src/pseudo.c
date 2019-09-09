@@ -1,7 +1,6 @@
-//#include <as.h>
+#include <pseudo.h>
 #include <util.h>
 #include <arithmetic.h>
-//#include <targets/6x09/arch.h>
 
 /*
  * struc?
@@ -30,6 +29,7 @@ static void pseudo_reserve_doubles(Line *line);
 static void pseudo_reserve_quads(Line *line);
 static void pseudo_equ(Line *line);
 static void pseudo_include(Line *line);
+static void pseudo_insert(Line *line);
 static void pseudo_org(Line *line);
 
 static struct pseudo_instruction pseudo_ops[] = {
@@ -47,9 +47,10 @@ static struct pseudo_instruction pseudo_ops[] = {
 
     { ".EQU", &pseudo_equ,              1 },
     { ".INCLUDE", &pseudo_include,      1 },
+    { ".INSERT", &pseudo_insert,        1 },
     { ".ORG", &pseudo_org,              1 },
     //{ ".SYNTAX", &pseudo_syntax, 1 },
-    { 0, 0,                             0 }
+    { 0, 0,                     0 }
 };
 
 struct pseudo_instruction *get_pseudo_op(Line *line)
@@ -68,25 +69,24 @@ void parse_pseudo_op(Line *line)
 {
     struct pseudo_instruction *pseudo_inst = get_pseudo_op(line);
     if (pseudo_inst == NULL) {
-        fail("Unable to find pseudo instruction %s.\n", line->mnemonic);
+        fail("Unable to find pseudo instruction %s that takes %zu arguments.\n", line->mnemonic, line->argc);
     }
     pseudo_inst->process(line);
 }
 
 static void pseudo_set_arch(Line *line)
 {
-    if (datatab->first == NULL) {
-        Architecture *arch = str_to_arch(line->argv[0].val.str);
-        if (arch == NULL) {
-            fail("Failed to locate architecture %s.\n", line->argv[0].val.str);
-        }
-        configuration.arch = arch;
-        init_address_mask();
-        printf("%s\n", configuration.arch->name);
-    }
-    else {
+    if (datatab->first != NULL) {
         fail("Cannot switch architecture after code.\n");
     }
+
+    Architecture *arch = str_to_arch(line->argv[0].val.str);
+    if (arch == NULL) {
+        fail("Failed to locate architecture %s.\n", line->argv[0].val.str);
+    }
+    configuration.arch = arch;
+    init_address_mask();
+    printdf("%s\n", configuration.arch->name);
 }
 
 #define pseudo_set_data(T, line) { \
@@ -95,20 +95,19 @@ static void pseudo_set_arch(Line *line)
     Data *data; \
     size_t i; \
     size_t j; \
-    for (i = 0; i < line->argc; i++) { \
+    for (i = 0; i < (line)->argc; i++) { \
         data = init_data(salloc(sizeof(Data))); \
         data->address = address & address_mask; \
-        if (line->argv[i].type == ARG_TYPE_STRING) { \
+        if ((line)->argv[i].type == ARG_TYPE_STRING) { \
             data->type = DATA_TYPE_BYTES; \
-            data->bytec = strlen(line->argv[i].val.str); \
+            data->bytec = strlen((line)->argv[i].val.str); \
             data->contents.bytes = salloc(sizeof(char) * data->bytec); \
-            /*strncpy(data->contents.bytes, line->argv[i].val.str, data->bytec);*/ \
-            memcpy(data->contents.bytes, line->argv[i].val.str, data->bytec); \
+            memcpy(data->contents.bytes, (line)->argv[i].val.str, data->bytec); \
         } \
         else { \
             data->type = DATA_TYPE_EXPRESSION; \
             data->bytec = sizeof(T); \
-            data->contents.rpn_expr = line->argv[i].val.rpn_expr; \
+            data->contents.rpn_expr = (line)->argv[i].val.rpn_expr; \
         } \
         address += data->bytec; \
         add_data(data); \
@@ -175,9 +174,9 @@ static void pseudo_set_double(Line *line) { pseudo_set_data(uint32_t, line); }
 static void pseudo_set_quad(Line *line) { pseudo_set_data(uint64_t, line); }
 
 #define pseudo_reserve_data(T, line) { \
-    if (line->argc != 1) { \
+    /*if (line->argc != 1) { \
         fail("Reserving bytes requires one parameter.\n"); \
-    } \
+    } \*/ \
     Data *data = init_data(salloc(sizeof(Data))); \
     data->type = DATA_TYPE_BYTES; \
     long count = 0; \
@@ -191,7 +190,7 @@ static void pseudo_reserve_quads(Line *line) { pseudo_reserve_data(uint64_t, lin
 
 static void pseudo_equ(Line *line)
 {
-    if (!(line->line_state & LINE_STATE_LABEL)) {
+    if (!(line->line_state & FLAG(LINE_STATE_LABEL))) {
         fail("Pseudo instruction .EQU requires a label on the same line.\n");
     }
     if (line->argc != 1) {
@@ -225,10 +224,18 @@ static void pseudo_include(Line *line)
     //line->argv = salloc(line->argc * sizeof(char *));
 }
 
+/*
+ * Inserts the raw bytes of this file into the resulting binary
+ */
+static void pseudo_insert(Line *line)
+{
+    FILE *inserted_file;
+}
+
 static void pseudo_org(Line *line)
 {
     char *lend;
-    size_t new_address = strtol(line->argv[0].val.str, &lend, 0) & address_mask;
+    size_t new_address = strtoul(line->argv[0].val.str, &lend, 0) & address_mask;
     if (*lend == '\0') {
         printdf("new address is 0x%lX\n", new_address);
         address = new_address;

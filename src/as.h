@@ -45,34 +45,36 @@
 #define printdf(fmt, ...)
 #endif
 
-typedef enum {
+#define FLAG(f) ((unsigned int)(f))
+
+/*typedef*/ enum endian {
     ARCH_ENDIAN_BIG = 1,
     ARCH_ENDIAN_LITTLE = 2,
     ARCH_ENDIAN_MIXED = 3
-} endian_t;
+};// endian_t;
 
 /*#define ARCH_ENDIAN_BIG     (1)
 #define ARCH_ENDIAN_LITTLE  (2)
 #define ARCH_ENDIAN_MIXED   (3)*/
 
-typedef enum {
-    SYNTAX_UNKNOWN = 0,
-    SYNTAX_MOTOROLA = 1,
-    SYNTAX_INTEL = 2,
-    SYNTAX_ATT = 3,
-} syntax_t;
+/*typedef*/ enum syntax {
+    SYNTAX_UNKNOWN,
+    SYNTAX_MOTOROLA,
+    SYNTAX_INTEL,
+    SYNTAX_ATT,
+};// syntax_t;
 
 /*#define SYNTAX_UNKNOWN  (0)
 #define SYNTAX_MOTOROLA (1)
 #define SYNTAX_INTEL    (2)
 #define SYNTAX_ATT      (3)*/
 
-typedef enum {
-    ARG_ORDER_NONE = 0,
-    ARG_ORDER_FROM_REG = 1,
-    ARG_ORDER_TO_REG = 2,
-    ARG_ORDER_INTERREG = 3
-} arg_order_t;
+/*typedef*/ enum arg_order {
+    ARG_ORDER_NONE,
+    ARG_ORDER_FROM_REG,
+    ARG_ORDER_TO_REG,
+    ARG_ORDER_INTERREG
+};// arg_order_t;
 
 /*#define ARG_ORDER_NONE      (0)
 #define ARG_ORDER_FROM_REG  (1)
@@ -98,7 +100,7 @@ struct address {
 
 typedef struct symtab_entry {
     char *label;
-    size_t value;
+    int64_t value;
     struct symtab_entry *next;
 } Symbol;
 
@@ -112,15 +114,15 @@ typedef struct {
 #define DATA_TYPE_SYMBOL (1)
 #define DATA_TYPE_BYTES (2)*/
 
-typedef enum {
-    DATA_TYPE_NONE = 0,
-    DATA_TYPE_EXPRESSION = 2,
-    DATA_TYPE_BYTES = 4
-} data_type_t;
+/*typedef*/ enum data_type {
+    DATA_TYPE_NONE,
+    DATA_TYPE_EXPRESSION,
+    DATA_TYPE_BYTES
+}; //data_type_t;
 typedef struct data_entry {
-    data_type_t type;
+    enum data_type type;
     size_t address;
-    uint8_t bytec;  // This needs to become a union of uint8_t and char *label
+    uint8_t bytec;
     union {
         uint8_t *bytes;
         struct token *rpn_expr;
@@ -136,7 +138,7 @@ typedef struct {
 typedef struct {
     char name[5];
     int width;
-    int arcs;
+    unsigned int arcs;
 } Register;
 
 #define MAX_MNEMONIC_LEN (10)
@@ -157,7 +159,7 @@ typedef struct {
     }*/
 
 
-typedef enum {
+/*typedef*/ enum address_mode {
 	ADDR_MODE_INVALID,
 	ADDR_MODE_INHERENT,
 	ADDR_MODE_IMMEDIATE,
@@ -165,7 +167,7 @@ typedef enum {
 	ADDR_MODE_INDIRECT,
 	ADDR_MODE_EXTENDED,
 	ADDR_MODE_INTERREGISTER
-} addr_mode_t;
+};// addr_mode_t;
 
 /*#define MC6809_ADDR_MODE_INVALID    (0)
 #define MC6809_ADDR_MODE_INH        (1)
@@ -183,19 +185,19 @@ typedef struct {
     struct instruction_register {
         const Register *reg;
         struct {
-            addr_mode_t mode;
+            enum address_mode mode;
 			uint8_t opcode_size;	// in bytes
             uint64_t opcode;
         } addressing_modes[10];
     } opcodes[];
 } Instruction;
 
-typedef enum {
+/*typedef*/ enum arg_type {
     ARG_TYPE_UNPROCESSED,
     ARG_TYPE_STRING,
     ARG_TYPE_EXPRESSION,
     ARG_TYPE_REGISTER
-} arg_type_t;
+};// arg_type_t;
 
 /*#define ARG_TYPE_NONE 0
 #define ARG_TYPE_REG  1
@@ -204,7 +206,7 @@ typedef enum {
 #define ARG_STATE_BRACKET 1
 
 typedef struct {
-    arg_type_t type;
+    enum arg_type type;
     //uint8_t addr_mode;
     union {
         char *str;
@@ -213,14 +215,14 @@ typedef struct {
     } val;
 } LineArg;
 
-typedef enum {
+/*typedef*/ enum line_state {
     LINE_STATE_CLEAR = 0u,
     LINE_STATE_LABEL = 1u,
     LINE_STATE_MNEMONIC = 2u,
     LINE_STATE_SINGLE_QUOTE = 4u,
     LINE_STATE_DOUBLE_QUOTE = 8u,
     LINE_STATE_BRACKET = 16u
-} line_state_t;
+};// line_state_t;
 /*#define LINE_STATE_CLEAR        0u
 #define LINE_STATE_LABEL        1u
 #define LINE_STATE_MNEMONIC     2u
@@ -239,27 +241,22 @@ typedef struct {
     //char **argv;
     size_t argc;
     uint8_t arg_buf_size;
-    line_state_t line_state;
+    enum line_state line_state;
 } Line;
 
 typedef struct {
-    char name[10];
+    //char name[10];
+    char *name;
     //void (*parse_instruction)(Line *l);
     int value;
     uint8_t byte_size;  // bits per byte
     uint8_t bytes_per_address;
-    endian_t endianness;
-    syntax_t default_syntax;
+    enum endian endianness;
+    enum syntax default_syntax;
 	const Register *registers;
 	const Instruction **instructions;
-	void (*process_line)(Line *line, struct instruction_register *instr_reg, Data *data);
+	void (*process_line)(Line *line, const struct instruction_register *instr_reg, Data *data);
 } Architecture;
-
-struct pseudo_instruction {
-    char instruction[10];
-    void (*process)(Line *line);
-    size_t args;
-};
 
 typedef struct {
     char *out_fname;
@@ -277,8 +274,6 @@ extern Config configuration;
 void init_address_mask();
 void assemble(FILE *in, Line *l);
 Architecture *str_to_arch(const char arch_name[]);
-struct pseudo_instruction *get_pseudo_op(Line *line);
-void parse_pseudo_op(Line *line);
 
 static inline char *str_to_upper(char str[]) {
     for (char *c = str; *c != '\0'; c++) {

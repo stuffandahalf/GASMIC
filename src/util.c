@@ -22,7 +22,6 @@ int init_data_table()
     if (datatab != NULL) {
         return 0;
     }
-
     datatab = salloc(sizeof(DataTab));
     datatab->first = NULL;
     datatab->last = NULL;
@@ -30,12 +29,58 @@ int init_data_table()
     return 1;
 }
 
+/*
+ * Resolve a label into it's complete representation
+ * returns a salloced char *.
+ */
+char *resolve_symbol(char *symbol)
+{
+    char *complete_symbol = NULL;
+    if (*symbol != '.') {
+        complete_symbol = salloc(sizeof(char) * (strlen(symbol) + 1));
+        strcpy(complete_symbol, symbol);
+
+        return complete_symbol;
+    }
+
+    if (symtab->last_parent == NULL) {
+        fail("Local label cannot be defined before any non-local labels.\n");
+    }
+
+    size_t parent_len = strlen(symtab->last_parent->label);
+    size_t local_len = strlen(symbol);
+    complete_symbol = salloc(sizeof(char) * (parent_len + local_len + 1));
+
+    char *symbol_ptr = complete_symbol;
+    char *c;
+    for (c = symtab->last_parent->label; *c != '\0'; c++) {
+        *symbol_ptr++ = *c;
+    }
+    for (c = symbol; *c != '\0'; c++) {
+        *symbol_ptr++ = *c;
+    }
+    *symbol_ptr = '\0';
+    printdf("Symbol \"%s\" resolved to \"%s\"\n", symbol, complete_symbol);
+
+    return complete_symbol;
+}
+
+
 void add_label(Line *line)
 {
     Symbol *sym = salloc(sizeof(Symbol));
 
     sym->next = NULL;
+    sym->label = resolve_symbol(line->label);
+
     if (line->label[0] == '.') {
+        line->label = sym->label;
+    }
+    else {
+        symtab->last_parent = sym;
+    }
+
+    /*if (line->label[0] == '.') {
         if (symtab->last == NULL) {
             fail("Local label cannot be defined before any non-local labels.\n");
         }
@@ -58,9 +103,9 @@ void add_label(Line *line)
         sym->label = salloc(strlen(line->label) + sizeof(char));
         strcpy(sym->label, line->label);
         symtab->last_parent = sym;
-    }
+    }*/
 
-    printdf("Parsed label = %s\n", sym->label);
+    //printdf("Parsed label = %s\n", sym->label);
 
     sym->value = address;
 
