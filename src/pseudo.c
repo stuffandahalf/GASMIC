@@ -50,13 +50,13 @@ static struct pseudo_instruction pseudo_ops[] = {
     { ".INSERT", &pseudo_insert,        1 },
     { ".ORG", &pseudo_org,              1 },
     //{ ".SYNTAX", &pseudo_syntax, 1 },
-    { 0, 0,                     0 }
+    { NULL, NULL,                     0 }
 };
 
 struct pseudo_instruction *get_pseudo_op(Line *line)
 {
     struct pseudo_instruction *pseudo_op;
-    for (pseudo_op = pseudo_ops; *pseudo_op->instruction != '\0'; pseudo_op++) {
+    for (pseudo_op = pseudo_ops; pseudo_op->instruction != NULL; pseudo_op++) {
         if ((pseudo_op->args == -1 || pseudo_ops->args == line->argc)
                 && streq(line->mnemonic, (*line->mnemonic == '.' ? pseudo_op->instruction : &pseudo_op->instruction[1]))) {
             return pseudo_op;
