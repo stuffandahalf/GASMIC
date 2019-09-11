@@ -504,6 +504,7 @@ static void parse_instruction_motorola(Line *l)
 	const char *line_mnemonic = NULL;
 	const Register *reg = NULL;
 	const struct instruction_register *instruction_reg = NULL;
+	struct LineArg *argcpy = NULL;  // store a copy of the arguments in case processing fails
     size_t j;
 
 	const Instruction **i = NULL;
@@ -544,10 +545,11 @@ static void parse_instruction_motorola(Line *l)
                     if (streq(l->argv[j].val.str, reg->name)) {
                         l->argv[j].type = ARG_TYPE_REGISTER;
                         l->argv[j].val.reg = reg;
+                        break;
                     }
-                    else {
-                        goto next_instruction;
-                    }
+                }
+                if (l->argv[j].type != ARG_TYPE_REGISTER) {
+                    goto next_instruction;
                 }
             }
             l->address_mode = ADDR_MODE_INTERREGISTER;
@@ -572,8 +574,11 @@ evaluate_args:
             }
             //for (j = 0; j < l->argc; j++) {
             if (l->argv->type != ARG_TYPE_UNPROCESSED) {
-                continue;
+                goto next_instruction;
             }
+            argcpy = salloc(sizeof(LineArg));
+            memcpy(argcpy, l->argv, sizeof(LineArg));
+
             const char *c = l->argv->val.str;
             switch (*c) {
             case '>':
