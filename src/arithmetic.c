@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include "arithmetic.h"
 
 enum arithmetic_error arithmetic_status_code;
 
@@ -11,8 +10,12 @@ static struct operator operators[] = {
     { ')', 0 },
     { '/', 1 },
     { '*', 1 },
+    { '%', 1 },
     { '+', 2 },
     { '-', 2 },
+    { '^', 3 },
+    { '&', 4 },
+    { '|', 5 },
     { 0, 0 }
 };
 
