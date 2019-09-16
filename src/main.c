@@ -174,7 +174,7 @@ void init_address_mask()
 
 void assemble(FILE *in, Line *l)
 {
-    while (fgets(buffer, LINEBUFFERSIZE, in) != NULL) {
+a     while (fgets(buffer, LINEBUFFERSIZE, in) != NULL) {
         if (buffer[0] != '\0' && buffer[0] != '\n') {
             l->line_state = LINE_STATE_CLEAR;
             l->address_mode = ADDR_MODE_INVALID;
