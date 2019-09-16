@@ -316,7 +316,7 @@ static void parse_line(Line *l, char *buffer)
 
         case '\t':
         case ' ':
-            if (l->line_state & (FLAG(LINE_STATE_SINGLE_QUOTE) | FLAG(LINE_STATE_DOUBLE_QUOTE))) {
+            if (l->line_state & (FLAG(LINE_STATE_SINGLE_QUOTE) | FLAG(LINE_STATE_DOUBLE_QUOTE) | FLAG(LINE_STATE_BRACKET))) {
                 break;
             }
             if (c == buffer) {
@@ -334,7 +334,10 @@ static void parse_line(Line *l, char *buffer)
             }
             break;
         case ',':
-            if (c == buffer) {
+            /*if (c == buffer) {
+                break;
+            }*/
+            if (l->line_state & (FLAG(LINE_STATE_DOUBLE_QUOTE) | FLAG(LINE_STATE_SINGLE_QUOTE) | FLAG(LINE_STATE_BRACKET))) {
                 break;
             }
             if (!(l->line_state & FLAG(LINE_STATE_MNEMONIC))) {
