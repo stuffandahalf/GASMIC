@@ -238,7 +238,8 @@ void assemble(FILE *in, Line *l);
 Architecture *str_to_arch(const char arch_name[]);
 
 static inline char *str_to_upper(char str[]) {
-    for (char *c = str; *c != '\0'; c++) {
+    char *c;
+    for (c = str; *c != '\0'; c++) {
         *c = (char)toupper(*c);
     }
     return str;
