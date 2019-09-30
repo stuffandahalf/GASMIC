@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>GASMIC Manual</title>
+
+        <style>
+            body > * {
+                margin-left: 10%;
+                margin-right: 10%;
+            }
+
+            pre {
+                display: inline;
+            }
+
+            th {
+                text-align: left;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>GASMIC</h1>
+        <h2>Greg's Assembler (in C)</h2>
+        <div id="table-of-contents">
+            <h3>Table of Contents</h3>
+            <ul>
+                <li><a href="#introduction">Introduction</a></li>
+                <li><a href="#syntax">General Syntax</a></li>
+                <li><a href="#pseudo-instructions">Pseudo Instructions</a></li>
+                <li><a href="#code-layout">Code Walkthrough</a></li>
+                <li><a href="#retargetting">Retargetting</a></li>
+                <li><a href="#contact">Contact Information</a></li>
+            </ul>
+        </div>
+
+        <div id="introduction">
+            <h3>Introduction</h3>
+            <p>
+                This assembler is designed to address some of the syntactic quirks of conventional assembler for vintage architectures.
+                This project sprung from my desire for truly local labels and a consistent label syntax, but evolved into an educational tool, used to further my knowledge of low level programming.
+            </p>
+        </div>
+
+        <div id="syntax">
+            <h3>General Syntax</h3>
+            <p>This assembler follows a very uniform syntax akin to that of other assemblers.</p>
+            <pre>[label:] [mnemonic [arguments]]</pre>
+
+            <p>
+                GASMIC also supports various different instruction syntaxes.
+                Namely, GASMIC aims to support Motorola, AT&T, and Intel syntaxes, and provides a pseudo instruction to select the correct syntax.
+            </p>
+            <h4>Motorola Syntax</h4>
+            <ul>
+                <li>Instructions support single arguments (can be logically extended by instruction processing step).</li>
+                <li>Registers are generally appended to the end of the instruction with few exceptions. (Example: <pre>LDA</pre>, <pre>MOVEAX</pre>)</li>
+                <li>Indexed addressing uses <pre>[</pre> and <pre>]</pre>.</li>
+            </ul>
+            <h4>Intel Syntax</h4>
+            <ul>
+                <li>Instructions support multiple arguments.</li>
+                <li>Registers have no prefix. (Example: eax, A)</li>
+                <li>Indexed addressing uses <pre>[</pre> and <pre>]</pre>.</li>
+            </ul>
+            <h4>AT&T Syntax</h4>
+            <ul>
+                <li>Instructions support multiple arguments.</li>
+                <li>Registers are prefixed by <pre>%</pre>. (Example: %eax, %A)</li>
+                <li>Indexed addressing uses <pre>(</pre> and <pre>)</pre>.</li>
+            </ul>
+
+            <h4>Expression Parsing</h4>
+            <p>GASMIC supports arithmetic arguments which are calculate based on the following order of precedence (higher in table means higher precedence).</p>
+            <table id="operators">
+                <tr>
+                    <th>Operation</th>
+                    <th>Operator</th>
+                </tr>
+                <tr>
+                    <td>Brackets</td>
+                    <td><pre>( )</pre></td>
+                </tr>
+                <tr>
+                    <td>Multiplication</td>
+                    <td><pre>*</pre></td>
+                </tr>
+                <tr>
+                    <td>Division</td>
+                    <td><pre>/</pre></td>
+                </tr>
+                <tr>
+                    <td>Addition</td>
+                    <td><pre>+</pre></td>
+                </tr>
+                <tr>
+                    <td>Subtraction</td>
+                    <td><pre>-</pre></td>
+                </tr>
+                <tr>
+                    <td>Bitwise XOR</td>
+                    <td>^</td>
+                </tr>
+                <tr>
+                    <td>Bitwise AND</td>
+                    <td>&</td>
+                </tr>
+                <tr>
+                    <td>Bitwise OR</td>
+                    <td>|</td>
+                </tr>
+            </table>
+        </div>
+
+        <div id="pseudo-instructions">
+            <h3>Pseudo Instructions</h3>
+        </div>
+
+        <div id="code-layout">
+            <h3>Code Layout</h3>
+        </div>
+
+        <div id="retargetting">
+            <h3>Retargetting</h3>
+        </div>
+
+        <div id="contact-info">
+            <h3>Contact Me</h3>
+        </div>
+    </body>
+</html>
