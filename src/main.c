@@ -384,41 +384,6 @@ static void parse_line(Line *l, char *buffer)
             buffer = c;
             buffer++;
             break;
-
-//        case '\n':
-//        case '\t':
-//        case ' ':
-//        case ',':   // Might be worth making this separate
-//            if (!(l->line_state & LINE_STATE_SINGLE_QUOTE || l->line_state & LINE_STATE_DOUBLE_QUOTE) && !(l->line_state & LINE_STATE_BRACKET)) {
-//                if (c != buffer) {
-//                    if (!(l->line_state & LINE_STATE_MNEMONIC)) { // if mnemonic is not set
-//                        if (*c == ',') {
-//                            fail("Unexpected ',' character.\n");
-//                        }
-//                        else if (arg_type == ARG_TYPE_STRING) {
-//                            fail("Mnemonic cannot be string literal.\n");
-//                        }
-//                        l->mnemonic = buffer;
-//                        l->line_state |= LINE_STATE_MNEMONIC;
-//                    }
-//                    else { // Argument
-//                        if (l->argc == l->arg_buf_size) {
-//                            l->arg_buf_size += 2;
-//                            //srealloc(l->argv, sizeof(char *) * l->arg_buf_size);
-//                            l->argv = srealloc(l->argv, sizeof(LineArg) * l->arg_buf_size);
-//                        }
-//                        LineArg *la = &(l->argv[l->argc++]);
-//                        la->type = arg_type;
-//                        la->val.str = buffer;
-//                        arg_type = ARG_TYPE_UNPROCESSED;
-//                    }
-//
-//                    *c = '\0';
-//                    buffer = c;
-//                }
-//                buffer++;
-//            }
-//            break;
         case ':':
             if (l->line_state & FLAG(LINE_STATE_LABEL)) {
                 fail("Invalid label.\n");
@@ -547,7 +512,7 @@ static void parse_instruction_motorola(Line *l)
                 for (reg = &(configuration.arch->registers[1]); reg->name[0] != '\0'; reg++) {
                     if (streq(l->argv[j].val.str, reg->name)) {
                         l->argv[j].type = ARG_TYPE_REGISTER;
-                        l->argv[j].val.reg = reg;
+                        l->argv[j].val.indexed.reg = reg;
                         break;
                     }
                 }
@@ -572,7 +537,7 @@ static void parse_instruction_motorola(Line *l)
             goto next_instruction;
 
 evaluate_args:
-            if (l->argc != 1) {
+            if (l->argc < 1) {
                 goto next_instruction;
             }
             //for (j = 0; j < l->argc; j++) {

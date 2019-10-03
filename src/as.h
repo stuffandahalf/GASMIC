@@ -172,11 +172,15 @@ typedef struct {
     union {
         char *str;
         struct token *rpn_expr;
-        struct {
+        /*struct {
             const Register *reg;
             int16_t offset;
         } address;
-        const Register *reg;
+        const Register *reg;*/
+        struct {
+            const Register *reg;
+            int16_t offset;
+        } indexed;
     } val;
 } LineArg;
 
