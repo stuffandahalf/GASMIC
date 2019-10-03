@@ -112,6 +112,7 @@
                 </tr>
             </table>
 
+            <h4>Integer Constants</h4>
             <p>Integer constants can be expressed in either base 10 or base 16, with plans to support base 2 and base 8.</p>
             <table id="numeric-syntax">
                 <tr>
@@ -135,6 +136,33 @@
                     <td>[Tentative] 0b or %</td>
                 </tr>
             </table>
+
+            <h4>Symbols and Labels</h4>
+            <p>
+                Symbols can be global and local. A global symbol is an alphanumeric string ending with a colon.
+                This string will then have the value of the current address unless it is immediately followed by the equ pseudo instruction.
+            </p>
+            <p>
+                Local labels can be specified by prefixing a label with a period (.).
+                This label can then be referenced within the scope of the previous global label using the period notation,
+                and can be reached from the global scope by prefixing the preiod notaion with the last global symbol.
+            </p>
+            <p>Example</p>
+            <pre>
+    .ORG 0xC000
+print:
+    LDX data.str
+.loop:
+    LDA ,X+
+    BEQ .end
+    STA 0x8000 ; example serial data output
+    BRA .loop
+.end:
+    RTS
+
+data:
+.str: db 'Hello World', 10, 0
+            </pre>
         </div>
         <br />
         <div id="pseudo-instructions">
