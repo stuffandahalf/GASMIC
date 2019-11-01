@@ -10,8 +10,12 @@
 #endif
 #include <inttypes.h>
 #include <smem.h>
+#ifndef NDEBUG
+#include <stdarg.h> // used for printdf
+#endif
 
 #ifdef _WIN32
+// actually fail(msg, ...)
 #define fail(msg, ...) die("ERROR %ld: " msg, line_num, ##__VA_ARGS__)
 #else
 #include <ansistyle.h>
@@ -22,25 +26,25 @@
 // test the equality of 2 strings
 #define streq(__s1, __s2) !strcmp((const char *)(__s1), (const char *)(__s2))
 // print to stderr
-#define printef(fmt, ...) fprintf(stderr, fmt, ##__VA_ARGS__)
+#define printef(...) fprintf(stderr, __VA_ARGS__)
 
 // print if debug build
 #ifndef NDEBUG
-/*#include <stdarg.h>
-static inline int printdf(const char *fmt, ...) {
+//#define printdf(fmt, ...) printf("[%s:%d] >> " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+// helper debug printf
+static inline int hprintdf(const char *fname, const int linenum, const char *fmt, ...)
+{
     va_list args;
     va_start(args, fmt);
 
     int count = 0;
-
-    count += printf("[%s:%d] >> ", __FILE__, __LINE__);
+    count += printf("[%s:%d] >> ", fname, linenum);
     count += vprintf(fmt, args);
 
     va_end(args);
-
     return count;
-}*/
-#define printdf(fmt, ...) printf("[%s:%d] >> " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+}
+#define printdf(...) hprintdf(__FILE__, __LINE__, __VA_ARGS__)
 #else
 #define printdf(fmt, ...)
 #endif
