@@ -7,12 +7,12 @@
 
 #include <stdio.h>
 
-enum arithmetic_error {
+enum arithmetic_status {
     ARITHMETIC_SUCCESS,
     ARITHMETIC_ERROR_INSUFFICIENT_OPERANDS,
     ARITHMETIC_ERROR_UNMATCHED_PARENTHESIS
 };
-extern enum arithmetic_error arithmetic_status_code;
+extern enum arithmetic_status arithmetic_status_code;
 
 enum token_type {
     TOKEN_TYPE_END,

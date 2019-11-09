@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-enum arithmetic_error arithmetic_status_code;
+enum arithmetic_status arithmetic_status_code;
 
 static struct operator operators[] = {
     { '(', 0 },
