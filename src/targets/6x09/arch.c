@@ -1,36 +1,164 @@
 #include <targets/6x09/arch.h>
 
-static void parse_6809_instruction(Line *l);
-static void parse_6309_instruction(Line *l);
-extern const MC6x09_Instruction instructions[];
-extern const Register registers[];
-
 Architecture *ARCH_MC6809;
 Architecture *ARCH_HD6309;
 
-#define ARCH_INIT(arch_var, arch_name) { \
+static const Register registers[] = {
+    { "NONE", 0, MC6809 | HD6309 },
+    { "A", 1, MC6809 | HD6309 },
+    { "B", 1, MC6809 | HD6309 },
+    { "D", 2, MC6809 | HD6309 },
+    { "X", 2, MC6809 | HD6309 },
+    { "Y", 2, MC6809 | HD6309 },
+    { "U", 2, MC6809 | HD6309 },
+    { "S", 2, MC6809 | HD6309 },
+    { "PC", 2, MC6809 | HD6309 },
+    { "E", 1, HD6309 },
+    { "F", 1, HD6309 },
+    { "W", 2, HD6309 },
+    { "Q", 4, HD6309 },
+    { "V", 2, HD6309 },
+    { "Z", 2, HD6309 },
+    { "DP", 1, MC6809 | HD6309 },
+    { "CC", 1, MC6809 | HD6309 },
+    { "MD", 1, HD6309 },
+    { 0, 0, 0 }
+};
+#ifndef NDEBUG
+static const int regc = sizeof(registers) / sizeof(Register) - 1;
+#endif
+
+#define MC6809_REGISTER(reg) (((reg) >= 0 && (reg) < HD6309_REG_E) ? &(registers[reg]) : NULL)
+#define HD6309_REGISTER(reg) (((reg) >= 0 && (reg) <= HD6309_REG_MD) ? &(registers[reg]) : NULL)
+
+static const Instruction I_ABX = {
+    "ABX",
+    MC6809 | HD6309,
+    ARG_ORDER_NONE,
+    {
+        {
+            MC6809_REGISTER(MC6809_REG_NONE),
+            {
+                { ADDR_MODE_INHERENT, 1, 0x3A },
+                { ADDR_MODE_INVALID, 0, 0 }
+            }
+        },
+        { NULL, 0 }
+    }
+};
+
+static const Instruction I_ADC_ALL = {
+    "ADC",
+    MC6809 | HD6309,
+    ARG_ORDER_TO_REG,
+    {
+        {
+            MC6809_REGISTER(MC6809_REG_A),
+            {
+                { ADDR_MODE_IMMEDIATE, 1, 0x89 },
+                { ADDR_MODE_DIRECT, 1, 0x99 },
+                { ADDR_MODE_INDIRECT, 1, 0xA9 },
+                { ADDR_MODE_EXTENDED, 1, 0xB9 },
+                { ADDR_MODE_INVALID, 0, 0 }
+            }
+        },
+        {
+            MC6809_REGISTER(MC6809_REG_B),
+            {
+                { ADDR_MODE_IMMEDIATE, 1, 0xC9 },
+                { ADDR_MODE_DIRECT, 1, 0xD9 },
+                { ADDR_MODE_INDIRECT, 1, 0xE9 },
+                { ADDR_MODE_EXTENDED, 1, 0xF9 },
+                { ADDR_MODE_INVALID, 0, 0 }
+            }
+        },
+        { NULL, 0 }
+    }
+};
+
+static const Instruction I_ADC_HD6309 = {
+    "ADC",
+    HD6309,
+    ARG_ORDER_TO_REG,
+    {
+        {
+            MC6809_REGISTER(MC6809_REG_D),
+            {
+                { ADDR_MODE_IMMEDIATE, 2, 0x1089 },
+                { ADDR_MODE_DIRECT, 2, 0x1099 },
+                { ADDR_MODE_INDIRECT, 2, 0x10A9 },
+                { ADDR_MODE_EXTENDED, 2, 0x10B9 },
+                { ADDR_MODE_INVALID, 0, 0 }
+            }
+        },
+        { NULL, 0 }
+    }
+};
+
+static const Instruction I_ADCR_HD6309 = {
+    "ADCR",
+    HD6309,
+    ARG_ORDER_INTERREG,
+    {
+        {
+            HD6309_REGISTER(MC6809_REG_NONE),
+            {
+                { ADDR_MODE_IMMEDIATE, 2, 0x1031 },
+                { ADDR_MODE_INVALID, 0, 0 }
+            }
+        },
+        { NULL, 0 }
+    }
+};
+
+static const Instruction *instructions[] = {
+    &I_ABX,
+    &I_ADC_ALL,
+    &I_ADC_HD6309,
+    &I_ADCR_HD6309,
+    NULL
+};
+
+static void MC6809_process_line(Line *line, const struct instruction_register *instr_reg, Data *data)
+{
+    printdf("Hello MC6809\n");
+}
+
+static void HD6309_process_line(Line *line, const
+struct instruction_register *instr_reg, Data *data)
+{
+    printdf("Hello HD6309\n");
+}
+
+#define ARCH_INIT(arch_var) { \
     ARCH_##arch_var = salloc(sizeof(Architecture)); \
     ARCH_##arch_var->value = arch_var; \
-    strcpy(ARCH_##arch_var->name, arch_name); \
+    /*strcpy(ARCH_##arch_var->name, arch_name);*/ \
+    ARCH_##arch_var->name = #arch_var; \
     ARCH_##arch_var->byte_size = 8; \
     ARCH_##arch_var->bytes_per_address = 2; \
     ARCH_##arch_var->endianness = ARCH_ENDIAN_BIG; \
     ARCH_##arch_var->default_syntax = SYNTAX_MOTOROLA; \
+	ARCH_##arch_var->registers = registers; \
+	ARCH_##arch_var->instructions = instructions; \
+	ARCH_##arch_var->process_line = &arch_var##_process_line; \
 }
 
-void MC6809_init(void) {
-    ARCH_INIT(MC6809, "6809");
-    ARCH_MC6809->parse_instruction = &parse_6809_instruction;
+void MC6809_init(void)
+{
+    ARCH_INIT(MC6809);
 }
-void MC6809_destroy(void) {
+void MC6809_destroy(void)
+{
     sfree(ARCH_MC6809);
 }
 
-void HD6309_init(void) {
-    ARCH_INIT(HD6309, "6309");
-    ARCH_HD6309->parse_instruction = &parse_6309_instruction;
+void HD6309_init(void)
+{
+    ARCH_INIT(HD6309);
 }
-void HD6309_destroy(void) {
+void HD6309_destroy(void)
+{
     sfree(ARCH_HD6309);
 }
 
@@ -57,10 +185,10 @@ static MC6x09_Instruction *locate_instruction(Line *l, int arch) {
     return NULL;
 }*/
 
-static void process_instruction_motorola(Line *line, const struct MC6x09_instruction_register *instr, const Register *reg, Data *data) {
+//static void process_instruction_motorola(Line *line, const struct MC6x09_instruction_register *instr, const Register *reg, Data *data) {
     //data->type = DATA_TYPE_BYTES;
     //data->address = address;
-}
+//}
 
 //static void process_instruction_motorola(Line *line, MC6x09_Instruction *instr, Register *reg, Data *data) {
 //    if (instr->address_modes == MC6809_ADDR_MODE_INH) {
@@ -139,7 +267,7 @@ static void process_instruction_motorola(Line *line, const struct MC6x09_instruc
 //                Data *next = data->next;
 //                next->bytec = reg->width;
 //                next->address = address;
-//                next->type = DATA_TYPE_LABEL;
+//                next->type = DATA_TYPE_SYMBOL;
 //                if (*c == '.') {
 //                    next->contents.symbol = salloc(sizeof(char) * (strlen(symtab->last_parent->label) + strlen(c) + 1));
 //                    if (next->contents.symbol == NULL) {
@@ -193,7 +321,7 @@ static void process_instruction_motorola(Line *line, const struct MC6x09_instruc
 //    }
 //}
 
-static void process_instruction(Line *line, const struct MC6x09_instruction_register *instr, const Register *reg, Data *data) {
+/*static void process_instruction(Line *line, const struct MC6x09_instruction_register *instr, const Register *reg, Data *data) {
     switch (configuration.syntax) {
     case SYNTAX_MOTOROLA:
         process_instruction_motorola(line, instr, reg, data);
@@ -213,9 +341,9 @@ static void process_instruction(Line *line, const struct MC6x09_instruction_regi
     
     //sfree(data);
     add_data(data);
-}
+}*/
 
-static inline const struct MC6x09_instruction_register *instruction_supports_reg(const MC6x09_Instruction *instruction, const Register *reg) {
+/*static inline const struct MC6x09_instruction_register *instruction_supports_reg(const MC6x09_Instruction *instruction, const Register *reg) {
     const struct MC6x09_instruction_register *instruction_reg = NULL;
     for (instruction_reg = instruction->registers; instruction_reg->reg != NULL; instruction_reg++) {
         if (streq(reg->name, instruction_reg->reg->name)) {
@@ -223,152 +351,152 @@ static inline const struct MC6x09_instruction_register *instruction_supports_reg
         }
     }
     return NULL;
-}
+}*/
 
-static void parse_instruction(Line *l, int arch) {
-    const char *mnem = NULL;
-    const char *line = NULL;
-    const Register *reg = NULL;
-    const struct MC6x09_instruction_register *instruction_reg;
-    
-    const MC6x09_Instruction *i = NULL;
-    for (i = instructions; i->mnemonic[0] != '\0'; i++) {
-        if (!(i->architectures & arch)) {
-            goto next_instruction;
-        }
-        
-        switch (configuration.syntax) {
-        case SYNTAX_MOTOROLA:
-            mnem = i->mnemonic;
-            line = l->mnemonic;
-            while (*mnem != '\0' && *line != '\0') {
-                if (*mnem++ != *line++) {
-                    goto next_instruction;
-                }
-            }
-            
-            switch (i->arg_order) {
-            case ARG_ORDER_NONE:
-            case ARG_ORDER_INTERREG:
-                if (*line != '\0') {
-                    goto next_instruction;
-                }
-                goto instruction_found;
-                break;
-            case ARG_ORDER_FROM_REG:
-            case ARG_ORDER_TO_REG:
-                for (reg = registers; reg->name[0] != '\0'; reg++) {
-                    if (streq(line, reg->name) && (reg->arcs & configuration.arch->value) && (instruction_reg = instruction_supports_reg(i, reg)) != NULL) {
-                        goto instruction_found;
-                    }
-                }
-                break;
-            }
-            break;
-        case SYNTAX_INTEL:
-        case SYNTAX_ATT:
-            fail("Selected syntax is not yet implemented.\n");
-            break;
-        case SYNTAX_UNKNOWN:
-        default:
-            fail("Invalid syntax selected.\n");
-            break;
-        }
-        
-next_instruction:
-        continue;
-    }
-    
-    fail("Instruction not found.\n");
-    
-instruction_found:
-    while (0);
-    
-    Data *assembled = salloc(sizeof(Data));
-    assembled->next = NULL;
-    assembled->type = DATA_TYPE_NONE;
-    assembled->bytec = 0;
-    assembled->contents.bytes = NULL;
-    process_instruction(l, instruction_reg, reg, assembled);
+//static void parse_instruction(Line *l, int arch) {
+//    const char *mnem = NULL;
+//    const char *line = NULL;
+//    const Register *reg = NULL;
+//    const struct MC6x09_instruction_register *instruction_reg;
+//    
+//    const MC6x09_Instruction *i = NULL;
+//    for (i = instructions; i->mnemonic[0] != '\0'; i++) {
+//        if (!(i->architectures & arch)) {
+//            goto next_instruction;
+//        }
+//        
+//        switch (configuration.syntax) {
+//        case SYNTAX_MOTOROLA:
+//            mnem = i->mnemonic;
+//            line = l->mnemonic;
+//            while (*mnem != '\0' && *line != '\0') {
+//                if (*mnem++ != *line++) {
+//                    goto next_instruction;
+//                }
+//            }
+//            
+//            switch (i->arg_order) {
+//            case ARG_ORDER_NONE:
+//            case ARG_ORDER_INTERREG:
+//                if (*line != '\0') {
+//                    goto next_instruction;
+//                }
+//                goto instruction_found;
+//                break;
+//            case ARG_ORDER_FROM_REG:
+//            case ARG_ORDER_TO_REG:
+//                for (reg = registers; reg->name[0] != '\0'; reg++) {
+//                    if (streq(line, reg->name) && (reg->arcs & configuration.arch->value) && (instruction_reg = instruction_supports_reg(i, reg)) != NULL) {
+//                        goto instruction_found;
+//                    }
+//                }
+//                break;
+//            }
+//            break;
+//        case SYNTAX_INTEL:
+//        case SYNTAX_ATT:
+//            fail("Selected syntax is not yet implemented.\n");
+//            break;
+//        case SYNTAX_UNKNOWN:
+//        default:
+//            fail("Invalid syntax selected.\n");
+//            break;
+//        }
+//        
+//next_instruction:
+//        continue;
+//    }
+//    
+//    fail("Instruction not found.\n");
+//    
+//instruction_found:
+//    while (0);
+//    
+//    Data *assembled = salloc(sizeof(Data));
+//    assembled->next = NULL;
+//    assembled->type = DATA_TYPE_NONE;
+//    assembled->bytec = 0;
+//    assembled->contents.bytes = NULL;
+//    process_instruction(l, instruction_reg, reg, assembled);
+//
+//    /*char *mnem = NULL;
+//    char *line = NULL;
+//    Register *reg = NULL;
+//    
+//    MC6x09_Instruction *i = NULL;
+//    for (i = instructions; *i->mnemonic != 0; i++) {
+//        if (!(i->architectures & arch)) {
+//            goto next_instruction;
+//        }
+//        
+//        switch (configuration.syntax) {
+//        case SYNTAX_MOTOROLA:
+//            mnem = i->mnemonic;
+//            line = l->mnemonic;
+//            while (*mnem != '\0' && *line != '\0') {
+//                if (*mnem++ != *line++) {
+//                    goto next_instruction;
+//                }
+//            }
+//            switch (i->arg_order) {
+//            case ARG_ORDER_NONE:
+//            case ARG_ORDER_INTERREG:
+//                if (*line != '\0') {
+//                    goto next_instruction;
+//                }
+//                goto instruction_found;
+//            case ARG_ORDER_FROM_REG:
+//            case ARG_ORDER_TO_REG:
+//                for (reg = registers; reg != NULL; reg++) {
+//                    if (streq(line, reg->name) && (reg->arcs & configuration.arch->value)) {
+//                        goto instruction_found;
+//                    }
+//                }
+//            }
+//            
+//            //printf("not fail\n");
+//            //goto instruction_found;
+//            //if (argc - 1 == 
+//            //Register *get_register(line->arg
+//            break;
+//        case SYNTAX_INTEL:
+//            fail("Intel syntax is not yet implemented.\n");
+//            //goto instruction_found;
+//            break;
+//        case SYNTAX_ATT:
+//            fail("AT&T syntax is not yet implemented.\n");
+//            break;
+//        }
+//        
+//next_instruction:
+//        continue;
+//    }
+//    fail("Invalid instruction.\n");
+//    
+//instruction_found:
+//#ifndef NDEBUG
+//    printdf("%s\n", i->mnemonic);
+//    if (reg != NULL) {
+//        printdf("%s\n", reg->name);
+//    }
+//#else
+//    while(0);   //wtf
+//#endif
+//
+//    Data *assembled = salloc(sizeof(Data));
+//    assembled->next = NULL;
+//    assembled->address = address;
+//    
+//    process_instruction(l, i, (reg == NULL) ? NULL : reg, assembled);*/
+//}
 
-    /*char *mnem = NULL;
-    char *line = NULL;
-    Register *reg = NULL;
-    
-    MC6x09_Instruction *i = NULL;
-    for (i = instructions; *i->mnemonic != 0; i++) {
-        if (!(i->architectures & arch)) {
-            goto next_instruction;
-        }
-        
-        switch (configuration.syntax) {
-        case SYNTAX_MOTOROLA:
-            mnem = i->mnemonic;
-            line = l->mnemonic;
-            while (*mnem != '\0' && *line != '\0') {
-                if (*mnem++ != *line++) {
-                    goto next_instruction;
-                }
-            }
-            switch (i->arg_order) {
-            case ARG_ORDER_NONE:
-            case ARG_ORDER_INTERREG:
-                if (*line != '\0') {
-                    goto next_instruction;
-                }
-                goto instruction_found;
-            case ARG_ORDER_FROM_REG:
-            case ARG_ORDER_TO_REG:
-                for (reg = registers; reg != NULL; reg++) {
-                    if (streq(line, reg->name) && (reg->arcs & configuration.arch->value)) {
-                        goto instruction_found;
-                    }
-                }
-            }
-            
-            //printf("not fail\n");
-            //goto instruction_found;
-            //if (argc - 1 == 
-            //Register *get_register(line->arg
-            break;
-        case SYNTAX_INTEL:
-            fail("Intel syntax is not yet implemented.\n");
-            //goto instruction_found;
-            break;
-        case SYNTAX_ATT:
-            fail("AT&T syntax is not yet implemented.\n");
-            break;
-        }
-        
-next_instruction:
-        continue;
-    }
-    fail("Invalid instruction.\n");
-    
-instruction_found:
-#ifndef NDEBUG
-    printdf("%s\n", i->mnemonic);
-    if (reg != NULL) {
-        printdf("%s\n", reg->name);
-    }
-#else
-    while(0);   //wtf
-#endif
-
-    Data *assembled = salloc(sizeof(Data));
-    assembled->next = NULL;
-    assembled->address = address;
-    
-    process_instruction(l, i, (reg == NULL) ? NULL : reg, assembled);*/
-}
-
-static void parse_6809_instruction(Line *l) {
+/*static void parse_6809_instruction(Line *l) {
     parse_instruction(l, MC6809);
 }
 
 static void parse_6309_instruction(Line *l) {
     parse_instruction(l, HD6309);
-}
+}*/
 
 /*Architecture architectures[] = {
     { "6809", &parse_6809_instruction, MC6809 },
@@ -376,71 +504,9 @@ static void parse_6309_instruction(Line *l) {
     { "", NULL, 0 }
 };*/
 
-const Register registers[] = {
-    { "NONE", 0, MC6809 | HD6309 },
-    { "A", 1, MC6809 | HD6309 },
-    { "B", 1, MC6809 | HD6309 },
-    { "D", 2, MC6809 | HD6309 },
-    { "X", 2, MC6809 | HD6309 },
-    { "Y", 2, MC6809 | HD6309 },
-    { "U", 2, MC6809 | HD6309 },
-    { "S", 2, MC6809 | HD6309 },
-    { "PC", 2, MC6809 | HD6309 },
-    { "E", 1, HD6309 },
-    { "F", 1, HD6309 },
-    { "W", 2, HD6309 },
-    { "Q", 4, HD6309 },
-    { "V", 2, HD6309 },
-    { "Z", 2, HD6309 },
-    { "DP", 1, MC6809 | HD6309 },
-    { "CC", 1, MC6809 | HD6309 },
-    { "MD", 1, HD6309 },
-    { 0, 0, 0 }
-};
-#ifndef NDEBUG
-const int regc = sizeof(registers) / sizeof(Register) - 1;
-#endif
 
-#define MC6809_REGISTER(reg) ((reg > 0 && reg < HD6309_REG_E) ? &(registers[reg]) : NULL)
-#define HD6309_REGISTER(reg) ((reg > 0 && reg <= HD6309_REG_MD) ? &(registers[reg]) : NULL)
 
-const MC6x09_Instruction instructions[] = {
-    { "ABX", MC6809 | HD6309, ARG_ORDER_NONE, {
-        { MC6809_REGISTER(MC6809_REG_NONE), {
-            { MC6809_ADDR_MODE_INH, 0x3A },
-            { MC6809_ADDR_MODE_INVALID, 0 }
-        }},
-        { NULL, 0 }
-    }},
-    { "ADC", MC6809 | HD6309, ARG_ORDER_TO_REG, {
-        { MC6809_REGISTER(MC6809_REG_A), {
-            { MC6809_ADDR_MODE_IMM, 0x89 },
-            { MC6809_ADDR_MODE_DIR, 0x99 },
-            { MC6809_ADDR_MODE_IND, 0xA9 },
-            { MC6809_ADDR_MODE_EXT, 0xB9 },
-            { MC6809_ADDR_MODE_INVALID, 0 }
-        }},
-        { MC6809_REGISTER(MC6809_REG_B), {
-            { MC6809_ADDR_MODE_IMM, 0xC9 },
-            { MC6809_ADDR_MODE_DIR, 0xD9 },
-            { MC6809_ADDR_MODE_IND, 0xE9 },
-            { MC6809_ADDR_MODE_EXT, 0xF9 },
-            { MC6809_ADDR_MODE_INVALID, 0 }
-        }},
-        { NULL, 0 }
-    }},
-    { "ADC", HD6309, ARG_ORDER_TO_REG, {
-        { MC6809_REGISTER(MC6809_REG_D), {
-            { MC6809_ADDR_MODE_IMM, 0x1089 },
-            { MC6809_ADDR_MODE_DIR, 0x1099 },
-            { MC6809_ADDR_MODE_IND, 0x10A9 },
-            { MC6809_ADDR_MODE_EXT, 0x10B9 },
-            { MC6809_ADDR_MODE_INVALID, 0 }
-        }},
-        { NULL, 0 }
-    }},
-    { 0, 0, 0, 0 }
-};
+
 //static MC6x09_Instruction *instructions = _instructions;
 
 //static Instruction instructions[] = {

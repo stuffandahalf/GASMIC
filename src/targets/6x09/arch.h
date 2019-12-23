@@ -1,16 +1,12 @@
-#ifndef MC6x09_ARCH_H
-#define MC6x09_ARCH_H
+#ifndef GASMIC_MC6x09_ARCH_H
+#define GASMIC_MC6x09_ARCH_H
 
 #include <as.h>
 
-//#define ENDIANNESS ARCH_BIG_ENDIAN
+#define MC6809 (1u)
+#define HD6309 (2u)
 
-//#define DEFAULT_SYNTAX SYNTAX_MOTOROLA
-
-#define MC6809 (1)
-#define HD6309 (2)
-
-#define MC6809_REG_INVALID (-1)
+/*#define MC6809_REG_INVALID (-1)
 #define MC6809_REG_NONE    (0)
 #define MC6809_REG_A       (1)
 #define MC6809_REG_B       (2)
@@ -28,24 +24,30 @@
 #define HD6309_REG_Q       (14)
 #define HD6309_REG_V       (15)
 #define HD6309_REG_Z       (16)
-#define HD6309_REG_MD      (17)
+#define HD6309_REG_MD      (17)*/
+typedef enum {
+    MC6809_REG_INVALID = -1,
+    MC6809_REG_NONE,
+    MC6809_REG_A,
+    MC6809_REG_B,
+    MC6809_REG_D,
+    MC6809_REG_X,
+    MC6809_REG_Y,
+    MC6809_REG_U,
+    MC6809_REG_S,
+    MC6809_REG_PC,
+    MC6809_REG_DP,
+    MC6809_REG_CC,
+    HD6309_REG_E,
+    HD6309_REG_F,
+    HD6309_REG_W,
+    HD6309_REG_Q,
+    HD6309_REG_V,
+    HD6309_REG_Z,
+    HD6309_REG_MD
+} mc6x09_register_t;
 
-#define MC6809_ADDR_MODE_INVALID    (0)
-#define MC6809_ADDR_MODE_INH        (1)
-#define MC6809_ADDR_MODE_IMM        (2)
-#define MC6809_ADDR_MODE_DIR        (3)
-#define MC6809_ADDR_MODE_IND        (4)
-#define MC6809_ADDR_MODE_EXT        (5)
-#define MC6809_ADDR_MODE_INTER      (6)
-
-typedef ARCH_INSTRUCTION(MC6x09, uint16_t, 17, 6) MC6x09_Instruction;
-
-//typedef uint16_t addr_t;
-
-extern size_t address;
-//extern Architecture architectures[];
-//extern Register registers[];
-//extern Instruction instructions[];
+//extern size_t address;
 
 extern Architecture *ARCH_MC6809;
 extern Architecture *ARCH_HD6309;

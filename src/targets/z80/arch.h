@@ -1,11 +1,7 @@
-#ifndef Z80_ARCH_H
-#define Z80_ARCH_H
+#ifndef GASMIC_Z80_ARCH_H
+#define GASMIC_Z80_ARCH_H
 
 #include <as.h>
-
-//#define ENDIANNESS ARCH_LITTLE_ENDIAN
-
-//#define DEFAULT_SYNTAX INTEL_SYNTAX
 
 #define Z80 (1)
 
@@ -29,15 +25,6 @@
 #define Z80_REG_I       (16)
 #define Z80_REG_R       (17)
 #define Z80_REG_PC      (18)
-
-#define Z80_ADDR_INVALID    (0)
-
-typedef ARCH_INSTRUCTION(Z80, uint8_t, 18, 6) Z80_Instruction;
-
-extern size_t address;
-//extern Architecture architectures[];
-//extern Register registers[];
-//extern Instruction instructions[];
 
 extern Architecture *ARCH_Z80;
 
