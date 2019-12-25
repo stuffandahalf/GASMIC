@@ -269,7 +269,7 @@ static inline void fail(const char *msg, ...) {
 #ifndef _WIN32
     printef(ANSI_COLOR_RED);
 #endif
-    printef("{ERROR}");
+    printef("ERROR");
 #ifndef _WIN32
     printef(ANSI_COLOR_RESET);
 #endif

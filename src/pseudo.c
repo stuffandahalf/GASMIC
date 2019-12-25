@@ -204,6 +204,10 @@ static void pseudo_equ(Line *line)
 
 static void pseudo_include(Line *line)
 {
+    if (line->argv[0].type != ARG_TYPE_STRING) {
+        fail("File name is not a string. Did you forget to surround the file name in quotes?\n");
+    }
+
     struct context included_context;
     included_context.parent = g_context;
     //included_context.fptr = included_file;
