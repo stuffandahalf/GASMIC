@@ -16,15 +16,6 @@
 #include <ansistyle.h>
 #endif
 
-/*#ifdef _WIN32
-// actually fail(msg, ...)
-#define fail(msg, ...) die("ERROR %ld: " msg, line_num, ##__VA_ARGS__)
-#else
-#include <ansistyle.h>
-//#define fail(msg, ...) die("\033[0;31mERROR \033[0m%ld: " msg, line_num,  ##__VA_ARGS__)
-#define fail(cntxt, msg, ...) die(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET " %ld: " msg, line_num,  ##__VA_ARGS__)
-#endif*/
-
 // test the equality of 2 strings
 #define streq(__s1, __s2) !strcmp((const char *)(__s1), (const char *)(__s2))
 // print to stderr
@@ -32,9 +23,8 @@
 
 // print if debug build
 #ifndef NDEBUG
-//#define printdf(fmt, ...) printf("[%s:%d] >> " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
 // helper debug printf
-static inline int hprintdf(const char *fname, const int linenum, const char *fmt, ...)
+static inline int h_printdf(const char *fname, const int linenum, const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
@@ -46,12 +36,12 @@ static inline int hprintdf(const char *fname, const int linenum, const char *fmt
     va_end(args);
     return count;
 }
-#define printdf(...) hprintdf(__FILE__, __LINE__, __VA_ARGS__)
+#define printdf(...) h_printdf(__FILE__, __LINE__, __VA_ARGS__)
 #else
 #define printdf(fmt, ...)
 #endif
 
-// This is to stop clang-tidy from complaining abouot signed enum types
+// This is to stop clang-tidy from complaining about signed enum types
 #define FLAG(f) ((unsigned int)(f))
 
 enum endian {
