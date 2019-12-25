@@ -1,9 +1,9 @@
-.arch 6809
+;.arch 6809
 ;.syntax motorola
-.org 0
+;.org 0
 
 _start:
     adca 0x5
-    .include "test/include1.asm"
+    .include "test/include2.asm"
     ;.include "test3.asm"
 .data: .resb 1

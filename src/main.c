@@ -23,12 +23,12 @@ static void parse_instruction_att(Line *l);
 static void parse_instruction_intel(Line *l);
 
 Config configuration;
+struct context *g_context;
 
 //FILE *in;
 FILE *out;
 size_t address;
 size_t address_mask;    // bits to mask the address to;
-size_t line_num;
 void (*parse_instruction)(Line *l);
 //SymTab *undefined_symtab;
 
@@ -56,13 +56,17 @@ int main(int argc, char **argv)
     configuration.syntax = configuration.arch->default_syntax;
 	configuration.out_fname = "a.out";
     address = 0;
-    line_num = 1;
 
     configure(argc, argv);
 
     //out = fopen(out_fname, "w+");
     //free(configuration.out_fname);
     configuration.out_fname = NULL;
+
+    struct context init_cntxt;
+    g_context = &init_cntxt;
+    init_cntxt.line_num = 1;
+    init_cntxt.parent = NULL;
 
     init_address_mask();
     set_syntax_parser();
@@ -76,15 +80,19 @@ int main(int argc, char **argv)
         die("Invalid number of command line arguments.\n");
     }
     else if (configuration.in_fnamec == 0) {
-        assemble(stdin, l);
+        init_cntxt.fname = "stdin";
+        init_cntxt.fptr = stdin;
+        assemble(l);
     }
     else {
-        size_t i;
-        for (i = 0; i < configuration.in_fnamec; i++) {
+        for (size_t i = 0; i < configuration.in_fnamec; i++) {
             if ((in = fopen(configuration.in_fnames[i], "r")) == NULL) {
                 die("Failed to open input file %s\n", configuration.in_fnames[i]);
             }
-            assemble(in, l);
+            init_cntxt.fname = configuration.in_fnames[i];
+            init_cntxt.fptr = in;
+            init_cntxt.line_num = 1;
+            assemble(l);
             fclose(in);
         }
     }
@@ -123,8 +131,7 @@ int main(int argc, char **argv)
         case DATA_TYPE_BYTES:
 #ifndef NDEBUG
             printf("%" PRIu8 " bytes: ", data->bytec);
-            int i;
-            for (i = 0; i < data->bytec; i++) {
+            for (int i = 0; i < data->bytec; i++) {
                 if (i) {
                     printf(", ");
                 }
@@ -150,6 +157,8 @@ int main(int argc, char **argv)
     data = NULL;
     //fclose(out);
 
+    g_context = NULL;
+
     DESTROY_TARGETS();
 
 #if defined(_WIN32) && !defined(NDEBUG)
@@ -162,8 +171,7 @@ int main(int argc, char **argv)
 void init_address_mask()
 {
     address_mask = 0;
-    int i;
-    for (i = 0; i < configuration.arch->bytes_per_address * configuration.arch->byte_size; i++) {
+    for (int i = 0; i < configuration.arch->bytes_per_address * configuration.arch->byte_size; i++) {
         if (i) {
             address_mask <<= 1u;
         }
@@ -172,9 +180,9 @@ void init_address_mask()
     printdf("Address mask: %lX\n", address_mask);
 }
 
-void assemble(FILE *in, Line *l)
+void assemble(Line *l)
 {
-    while (fgets(buffer, LINEBUFFERSIZE, in) != NULL) {
+    while (fgets(buffer, LINEBUFFERSIZE, g_context->fptr) != NULL) {
         if (buffer[0] != '\0' && buffer[0] != '\n') {
             l->line_state = LINE_STATE_CLEAR;
             l->address_mode = ADDR_MODE_INVALID;
@@ -197,8 +205,7 @@ void assemble(FILE *in, Line *l)
                 }
                 printf("%s", l->mnemonic);
             }
-            size_t i;
-            for (i = 0; i < l->argc; i++) {
+            for (size_t i = 0; i < l->argc; i++) {
                 printf("\t%s", l->argv[i].val.str);
             }
             puts("");
@@ -213,7 +220,7 @@ void assemble(FILE *in, Line *l)
 
             sfree(l->argv);
         }
-        line_num++;
+        g_context->line_num++;
     }
 }
 
@@ -260,8 +267,7 @@ exit:
 
 Architecture *str_to_arch(const char arch_name[])
 {
-    Architecture ***a;
-    for (a = architectures; *a != NULL; a++) {
+    for (Architecture ***a = architectures; *a != NULL; a++) {
         if (streq(arch_name, (**a)->name)) {
             return **a;
         }
@@ -271,10 +277,9 @@ Architecture *str_to_arch(const char arch_name[])
 
 static void parse_line(Line *l, char *buffer)
 {
-    register char *c;
     LineArg *la = NULL;
     enum arg_type arg_type = ARG_TYPE_UNPROCESSED;
-    for (c = buffer; *c != '\0'; c++) {
+    for (register char *c = buffer; *c != '\0'; c++) {
         switch (*c) {
         case '"':
             if (l->line_state & FLAG(LINE_STATE_SINGLE_QUOTE)) {
@@ -439,8 +444,7 @@ static void resolve_mnemonic_type(Line *line)
 
 static inline const struct instruction_register *instruction_supports_reg(const Instruction *instruction, const Register *reg)
 {
-	const struct instruction_register *ir = NULL;
-	for (ir = instruction->opcodes; ir->reg != NULL; ir++) {
+	for (const struct instruction_register *ir = instruction->opcodes; ir->reg != NULL; ir++) {
 		if (streq(reg->name, ir->reg->name)) {
 			return ir;
 		}
@@ -473,12 +477,12 @@ static void parse_instruction_motorola(Line *l)
 	const Register *reg = NULL;
 	const struct instruction_register *instruction_reg = NULL;
 	struct LineArg *argcpy = NULL;  // store a copy of the arguments in case processing fails
-    size_t j;
+    //size_t j;
 
 	const Instruction **i = NULL;
 
 	//const MC6x09_Instruction *i = NULL;
-	for (i = configuration.arch->instructions; *i != NULL; i++) {
+	for (const Instruction **i = configuration.arch->instructions; *i != NULL; i++) {
 		if (!((*i)->architectures & FLAG(configuration.arch->value))) {
 			goto next_instruction;
 		}
@@ -505,7 +509,7 @@ static void parse_instruction_motorola(Line *l)
             if (l->argc != 2) {
                 goto next_instruction;
             }
-            for (j = 0; j < l->argc; j++) {
+            for (size_t j = 0; j < l->argc; j++) {
                 if (l->argv[j].type != ARG_TYPE_UNPROCESSED) {
                     goto next_instruction;
                 }
@@ -540,7 +544,6 @@ evaluate_args:
             if (l->argc < 1) {
                 goto next_instruction;
             }
-            //for (j = 0; j < l->argc; j++) {
             if (l->argv->type != ARG_TYPE_UNPROCESSED) {
                 goto next_instruction;
             }
@@ -577,7 +580,7 @@ evaluate_args:
 
                     }
                     if (l->address_mode != ADDR_MODE_INVALID) {
-                        fail("Cannot have indexed address mode")
+                        fail("Cannot have indexed address mode");
                     }
                     break;
                 //case ''

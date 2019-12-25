@@ -55,8 +55,7 @@ static struct pseudo_instruction pseudo_ops[] = {
 
 struct pseudo_instruction *get_pseudo_op(Line *line)
 {
-    struct pseudo_instruction *pseudo_op;
-    for (pseudo_op = pseudo_ops; pseudo_op->instruction != NULL; pseudo_op++) {
+    for (struct pseudo_instruction *pseudo_op = pseudo_ops; pseudo_op->instruction != NULL; pseudo_op++) {
         if ((pseudo_op->args == -1 || pseudo_ops->args == line->argc)
                 && streq(line->mnemonic, (*line->mnemonic == '.' ? pseudo_op->instruction : &pseudo_op->instruction[1]))) {
             return pseudo_op;
@@ -93,9 +92,7 @@ static void pseudo_set_arch(Line *line)
     char *endptr; \
     T number; \
     Data *data; \
-    size_t i; \
-    size_t j; \
-    for (i = 0; i < (line)->argc; i++) { \
+    for (size_t i = 0; i < (line)->argc; i++) { \
         data = init_data(salloc(sizeof(Data))); \
         data->address = address & address_mask; \
         if ((line)->argv[i].type == ARG_TYPE_STRING) { \
@@ -207,18 +204,27 @@ static void pseudo_equ(Line *line)
 
 static void pseudo_include(Line *line)
 {
-    FILE *included_file;
-    if ((included_file = fopen(line->argv[0].val.str, "r")) == NULL) {
-        fail("Failed to open included file \"%s\".\n", line->argv[0].val.str);
+    struct context included_context;
+    included_context.parent = g_context;
+    //included_context.fptr = included_file;
+    included_context.line_num = 1;
+    included_context.fname = strdup(line->argv[0].val.str);
+
+    //FILE *included_file;
+    if ((included_context.fptr = fopen(included_context.fname, "r")) == NULL) {
+        fail("Failed to open included file \"%s\".\n", included_context.fname);
     }
     
     Line *inc_line = salloc(sizeof(Line));
-    
-    //assemble(included_file, line);
-    assemble(included_file, inc_line);
-    fclose(included_file);
-    //sfree(new_line);
-    
+    g_context = &included_context;
+
+    assemble(inc_line);
+    fclose(included_context.fptr);
+
+    g_context = g_context->parent;
+    sfree(inc_line);
+    free(included_context.fname);
+
     // need to reassign argv because assemble frees it but we return back to assemble.
     //line->argc = 1;
     //line->argv = salloc(line->argc * sizeof(char *));

@@ -9,4 +9,4 @@
 #define ANSI_COLOR_CYAN    "\x1b[36m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
-#endif
+#endif /* ANSI_STYLE_H */

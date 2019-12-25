@@ -52,11 +52,10 @@ char *resolve_symbol(char *symbol)
     complete_symbol = salloc(sizeof(char) * (parent_len + local_len + 1));
 
     char *symbol_ptr = complete_symbol;
-    char *c;
-    for (c = symtab->last_parent->label; *c != '\0'; c++) {
+    for (char *c = symtab->last_parent->label; *c != '\0'; c++) {
         *symbol_ptr++ = *c;
     }
-    for (c = symbol; *c != '\0'; c++) {
+    for (char *c = symbol; *c != '\0'; c++) {
         *symbol_ptr++ = *c;
     }
     *symbol_ptr = '\0';
@@ -109,8 +108,7 @@ void add_label(Line *line)
 
     sym->value = address;
 
-    Symbol *test_sym;
-    for (test_sym = symtab->first; test_sym != NULL; test_sym = test_sym->next) {
+    for (Symbol *test_sym = symtab->first; test_sym != NULL; test_sym = test_sym->next) {
         if (streq(test_sym->label, sym->label)) {
             fail("Symbol \"%s\" is already defined.\n", test_sym->label);
         }
@@ -152,16 +150,14 @@ void add_data(Data *data)
 
 void prepare_line(Line *line)
 {
-    size_t i;
-    struct token *tok = NULL;
-    for (i = 0; i < line->argc; i++) {
+    for (size_t i = 0; i < line->argc; i++) {
         if (line->argv[i].type == ARG_TYPE_UNPROCESSED) {
             line->argv[i].type = ARG_TYPE_EXPRESSION;
             line->argv[i].val.rpn_expr = parse_expression(line->argv[i].val.str);
             if (arithmetic_status_code != ARITHMETIC_SUCCESS) {
                 fail("Failed to parse expression.");
             }
-            for (tok = line->argv[i].val.rpn_expr; tok != NULL; tok = tok->next) {
+            for (struct token *tok = line->argv[i].val.rpn_expr; tok != NULL; tok = tok->next) {
                 if (tok->type == TOKEN_TYPE_SYMBOL && tok->value.symbol[0] == '.') {
                     size_t parent_size = strlen(symtab->last_parent->label);
                     size_t child_size = strlen(tok->value.symbol);

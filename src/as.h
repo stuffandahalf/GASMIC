@@ -1,6 +1,7 @@
 #ifndef GASMIC_AS_H
 #define GASMIC_AS_H
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,18 +11,19 @@
 #endif
 #include <inttypes.h>
 #include <smem.h>
-#ifndef NDEBUG
-#include <stdarg.h> // used for printdf
+
+#ifndef _WIN32
+#include <ansistyle.h>
 #endif
 
-#ifdef _WIN32
+/*#ifdef _WIN32
 // actually fail(msg, ...)
 #define fail(msg, ...) die("ERROR %ld: " msg, line_num, ##__VA_ARGS__)
 #else
 #include <ansistyle.h>
 //#define fail(msg, ...) die("\033[0;31mERROR \033[0m%ld: " msg, line_num,  ##__VA_ARGS__)
-#define fail(msg, ...) die(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET " %ld: " msg, line_num,  ##__VA_ARGS__)
-#endif
+#define fail(cntxt, msg, ...) die(ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET " %ld: " msg, line_num,  ##__VA_ARGS__)
+#endif*/
 
 // test the equality of 2 strings
 #define streq(__s1, __s2) !strcmp((const char *)(__s1), (const char *)(__s2))
@@ -236,21 +238,51 @@ typedef struct {
     Architecture *arch;
 } Config;
 
-extern size_t line_num;
+struct context {
+    FILE *fptr;
+    char *fname;
+    struct context *parent;
+    size_t line_num;
+};
+
 extern size_t address;
 extern size_t address_mask;
 extern Config configuration;
+extern struct context *g_context;
 
 void init_address_mask();
-void assemble(FILE *in, Line *l);
+void assemble(Line *l);
 Architecture *str_to_arch(const char arch_name[]);
 
 static inline char *str_to_upper(char str[]) {
-    char *c;
-    for (c = str; *c != '\0'; c++) {
+    for (char *c = str; *c != '\0'; c++) {
         *c = (char)toupper(*c);
     }
     return str;
 }
 
+static inline void fail(const char *msg, ...) {
+    va_list args;
+    va_start(args, msg);
+    printef("[%s:%ld]\t", g_context->fname, g_context->line_num);
+
+#ifndef _WIN32
+    printef(ANSI_COLOR_RED);
 #endif
+    printef("{ERROR}");
+#ifndef _WIN32
+    printef(ANSI_COLOR_RESET);
+#endif
+    printef(" ");
+
+    vfprintf(stderr, msg, args);
+    va_end(args);
+
+    for (struct context *cntxt = g_context->parent; cntxt != NULL; cntxt = cntxt->parent) {
+        printef("\tIn file included from \"%s\", line %ld\n", cntxt->fname, cntxt->line_num);
+    }
+
+    die("\n");
+}
+
+#endif /* GASMIC_AS_H */

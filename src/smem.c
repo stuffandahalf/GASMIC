@@ -32,8 +32,7 @@ void release(void)
 
 static struct alloced *find_memory(void *ptr)
 {
-    struct alloced *mem;
-    for (mem = alloced_mem.last; mem != NULL; mem = mem->prev) {
+    for (struct alloced *mem = alloced_mem.last; mem != NULL; mem = mem->prev) {
         if (mem->address == ptr) {
             return mem;
         }
