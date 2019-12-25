@@ -2,23 +2,27 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include "arithmetic.h"
 
-enum arithmetic_error arithmetic_status_code;
+enum arithmetic_status arithmetic_status_code;
 
 static struct operator operators[] = {
     { '(', 0 },
     { ')', 0 },
     { '/', 1 },
     { '*', 1 },
+    { '%', 1 },
     { '+', 2 },
     { '-', 2 },
+    { '^', 3 },
+    { '&', 4 },
+    { '|', 5 },
     { 0, 0 }
 };
 
 static struct operator *find_operator(char c)
 {
-    for (struct operator *op = operators; op->operator != 0; op++) {
+    struct operator *op;
+    for (op = operators; op->operator != 0; op++) {
         if (c == op->operator) {
             return op;
         }
@@ -58,7 +62,8 @@ struct token *parse_expression(char *expr)
     size_t buffer_size = 0;
     bool stop = false;
 
-    for (char *c = expr; !stop/* *c != '\0'*/; c++) {
+    char *c;
+    for (c = expr; !stop/* *c != '\0'*/; c++) {
         bool changed = false;
 
         double val = 0;
@@ -175,7 +180,8 @@ void free_token_chain(struct token *stack_top)
 
 void fprint_token_stack(FILE *fptr, struct token *stack_top)
 {
-    for (struct token *tok = stack_top; tok != NULL; tok = tok->next) {
+    struct token *tok;
+    for (tok = stack_top; tok != NULL; tok = tok->next) {
         switch (tok->type) {
         case TOKEN_TYPE_LITERAL:
             fprintf(fptr, "%lf\n", tok->value.number);
@@ -197,7 +203,8 @@ void print_token_stack(struct token *stack_top)
 
 void fprint_token_list(FILE *fptr, struct token *list)
 {
-    for (struct token *tok = list; tok != NULL; tok = tok->next) {
+    struct token *tok;
+    for (tok = list; tok != NULL; tok = tok->next) {
         switch (tok->type) {
         case TOKEN_TYPE_LITERAL:
             fprintf(fptr, "%lf ", tok->value.number);

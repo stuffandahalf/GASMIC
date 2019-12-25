@@ -19,8 +19,8 @@ void smem_diagnostic(void);
 #define AWAIT_WINDOWS
 #endif
 
-#define die(fmt, ...) { \
-    fprintf(stderr, fmt, ##__VA_ARGS__); \
+#define die(...) { \
+    fprintf(stderr, __VA_ARGS__); \
     release(); \
 	AWAIT_WINDOWS; \
     exit(1); \

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>GASMIC Manual</title>
+
+        <style>
+            body > * {
+                margin-left: 10%;
+                margin-right: 10%;
+            }
+
+            pre {
+                display: inline;
+            }
+
+            th {
+                text-align: left;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>GASMIC</h1>
+        <h2>Greg's Assembler (in C)</h2>
+        <div id="table-of-contents">
+            <h3>Table of Contents</h3>
+            <ol>
+                <li><a href="#introduction">Introduction</a></li>
+                <li><a href="#syntax">General Syntax</a></li>
+                <li><a href="#pseudo-instructions">Pseudo Instructions</a></li>
+                <li><a href="#code-layout">Code Walkthrough</a></li>
+                <li><a href="#retargetting">Retargetting</a></li>
+                <li><a href="#contact">Contact Information</a></li>
+            </ol>
+        </div>
+        <br />
+        <div id="introduction">
+            <h3>Introduction</h3>
+            <p>
+                This assembler is designed to address some of the syntactic quirks of conventional assembler for vintage architectures.
+                This project sprung from my desire for truly local labels and a consistent label syntax, but evolved into an educational tool, used to further my knowledge of low level programming.
+            </p>
+        </div>
+        <br />
+        <div id="syntax">
+            <h3>General Syntax</h3>
+            <p>This assembler follows a very uniform syntax akin to that of other assemblers.</p>
+            <pre>[label:] [mnemonic [arguments]] [;comment]</pre>
+
+            <p>
+                GASMIC also supports various different instruction syntaxes.
+                Namely, GASMIC aims to support Motorola, AT&T, and Intel syntaxes, and provides a pseudo instruction to select the correct syntax.
+            </p>
+            <h4>Motorola Syntax</h4>
+            <ul>
+                <li>Instructions logically support single arguments but are usually split to allow for simpler processing.</li>
+                <li>Registers are generally appended to the end of the instruction with few exceptions. (Example: <pre>LDA</pre>, <pre>MOVEAX</pre>)</li>
+                <li>Indexed addressing uses <pre>[</pre> and <pre>]</pre>.</li>
+            </ul>
+            <h4>AT&T Syntax</h4>
+            <ul>
+                <li>Instructions support multiple arguments.</li>
+                <h4>Intel Syntax</h4>
+                <ul>
+                    <li>Instructions support multiple arguments.</li>
+                    <li>Registers have no prefix. (Example: eax, A)</li>
+                    <li>Indexed addressing uses <pre>[</pre> and <pre>]</pre>.</li>
+                </ul>
+                <li>Registers are prefixed by <pre>%</pre>. (Example: %eax, %A)</li>
+                <li>Indexed addressing uses <pre>(</pre> and <pre>)</pre>.</li>
+            </ul>
+
+            <h4>Expression Parsing</h4>
+            <p>GASMIC supports arithmetic arguments. Calculations can be performed on a mix of integer constants and symbols. Evaluation follows the order of precedence as given in the following table. (higher in table means higher precedence).</p>
+            <table id="operators">
+                <tr>
+                    <th>Operation</th>
+                    <th>Operator</th>
+                </tr>
+                <tr>
+                    <td>Brackets</td>
+                    <td><pre>( )</pre></td>
+                </tr>
+                <tr>
+                    <td>Multiplication</td>
+                    <td><pre>*</pre></td>
+                </tr>
+                <tr>
+                    <td>Division</td>
+                    <td><pre>/</pre></td>
+                </tr>
+                <tr>
+                    <td>Addition</td>
+                    <td><pre>+</pre></td>
+                </tr>
+                <tr>
+                    <td>Subtraction</td>
+                    <td><pre>-</pre></td>
+                </tr>
+                <tr>
+                    <td>Bitwise XOR</td>
+                    <td>^</td>
+                </tr>
+                <tr>
+                    <td>Bitwise AND</td>
+                    <td>&</td>
+                </tr>
+                <tr>
+                    <td>Bitwise OR</td>
+                    <td>|</td>
+                </tr>
+            </table>
+
+            <h4>Integer Constants</h4>
+            <p>Integer constants can be expressed in either base 10 or base 16, with plans to support base 2 and base 8.</p>
+            <table id="numeric-syntax">
+                <tr>
+                    <th>Base</th>
+                    <th>Prefix</th>
+                </tr>
+                <tr>
+                    <td>10</td>
+                    <td>No prefix</td>
+                </tr>
+                <tr>
+                    <td>16</td>
+                    <td>0x OR $</td>
+                </tr>
+                <tr>
+                    <td>8</td>
+                    <td>[Tentative] @</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>[Tentative] 0b or %</td>
+                </tr>
+            </table>
+
+            <h4>Symbols and Labels</h4>
+            <p>
+                Symbols can be global and local. A global symbol is an alphanumeric string ending with a colon.
+                This string will then have the value of the current address unless it is immediately followed by the equ pseudo instruction.
+            </p>
+            <p>
+                Local labels can be specified by prefixing a label with a period (.).
+                This label can then be referenced within the scope of the previous global label using the period notation,
+                and can be reached from the global scope by prefixing the preiod notaion with the last global symbol.
+            </p>
+            <p>Example</p>
+            <pre>
+    .ORG 0xC000
+print:
+    LDX data.str
+.loop:
+    LDA ,X+
+    BEQ .end
+    STA 0x8000 ; example serial data output
+    BRA .loop
+.end:
+    RTS
+
+data:
+.str: db 'Hello World', 10, 0
+            </pre>
+        </div>
+        <br />
+        <div id="pseudo-instructions">
+            <h3>Pseudo Instructions</h3>
+            <p>GASMIC supports several pseudo instructions to control metadata about the application. These instructions should be prefixed with a <strong>.</strong>, but to maintain compatibility, it is not required.</p>
+            <p>The list of available pseudo instructions and their purpose is described in the table below.</p>
+            <table id="pseudo-instruction-description">
+                <tr>
+                    <th>Pseudo Instruction</th>
+                    <th>Description</th>
+                    <th>Examples</th>
+                </tr>
+                <tr>
+                    <td>ARCH</td>
+                    <td>
+                        Set the <strong>arch</strong>itecture this application is targetting.
+                        Overrides the command line <pre>-m</pre> parameter.
+                        This pseudo instruction must come before any code.
+                    </td>
+                    <td>
+                        <pre>.ARCH 6309</pre><br />
+                        <pre>.ARCH z80</pre>
+                    </td>
+                </tr>
+                <tr>
+                    <td>DB</td>
+                    <td>
+                        <strong>D</strong>esignate <strong>B</strong>yte. Assigns the following bytes in memory to the values passed as arguments.
+                        When a string is provided, sets the bytes to the ascii values of the characters.
+                        No escape characters are currently supported. numbers and strings can be mixed and matched.
+                    </td>
+                    <td>
+                        <pre>.DB 0, 3, 2</pre><br />
+                        <pre>.DB 'Hello'</pre><br />
+                        <pre>.DB 'Hello World', 10, 0</pre>
+                    </td>
+                </tr>
+                <tr>
+                    <td>DW</td>
+                    <td><strong>D</strong>esignate <strong>W</strong>ord, Like <pre>DB</pre>, saves every number as a 16-bit word in the endianness of the selected architecture.. Strings are saved the same as if they were passed to <pre>DB</pre>.</td>
+                    <td><pre>.DW 0x1234</pre></td>
+                </tr>
+                <tr>
+                    <td>DD</td>
+                    <td><strong>D</strong>esignate <strong>D</strong>ouble-word. Like <pre>DW</pre>, but for 32-bit double-words.</td>
+                    <td><pre>.DD 0x12345678</pre></td>
+                </tr>
+                <tr>
+                    <td>DQ</td>
+                    <td><strong>D</strong>esignate <strong>Q</strong>uad-word. Like <pre>DW</pre> and <pre>DD</pre>, but for 64-bit quad-words.</td>
+                    <td><pre>.DQ 0x1122334455667788</pre></td>
+                </tr>
+                <tr>
+                    <td>RESB</td>
+                    <td><strong>Res</strong>erve <strong>B</strong>ytes. Reserves n bytes.</td>
+                    <td><pre>.RESB 3 ; reserve 3 bytes</pre></td>
+                </tr>
+                <tr>
+                    <td>RESW</td>
+                    <td><strong>Res</strong>erve <strong>W</strong>ords. Reserve n words, n * 2 bytes.</td>
+                    <td><pre>.RESW 5 ; reserve 5 words, 10 bytes</pre></td>
+                </tr>
+                <tr>
+                    <td>RESD</td>
+                    <td><strong>Res</strong>erve <strong>D</strong>ouble-words. Reserve n double-words, n * 4 bytes.</td>
+                    <td><pre>.RESD 2 ; reserve 2 double-words, 8 bytes</pre></td>
+                </tr>
+                <tr>
+                    <td>RESQ</td>
+                    <td><strong>Res</strong>erve <strong>Q</strong>uad-words. Reserve n quad-words, n * 8 bytes.</td>
+                    <td><pre>.RESQ 1 ; reserve 1 quad-word, 8 bytes</pre></td>
+                </tr>
+                <tr>
+                    <td>EQU</td>
+                    <td><strong>Equ</strong>ate a label with an expression. The label will then have the value of the expression.</td>
+                    <td>
+                        <pre>l1: .EQU 0x12</pre><br />
+                        <pre>l2: .EQU l1 + 3</pre><br />
+                        <pre>l3: .EQU 0xAA | 0x55</pre>
+                    </td>
+                </tr>
+                <tr>
+                    <td>INCLUDE</td>
+                    <td><strong>Include</strong> the file at the path provided as a string argument and assemble it as though it was inline.</td>
+                    <td><pre>.INCLUDE "path/to/file.inc"</pre></td>
+                </tr>
+                <tr>
+                    <td>INSERT</td>
+                    <td><strong>Insert</strong>s the raw bytes of the file at the path given as the string argument into the output file.</td>
+                    <td><pre>.INSERT "/path/to/some/file.jpg"</pre></td>
+                </tr>
+                <tr>
+                    <td>ORG</td>
+                    <td><strong>Or</strong>i<strong>g</strong>in of the program. The address where the program is intended to be loaded to.</td>
+                    <td><pre>.ORG 0x1234 ; all addresses will be relative to this point</pre></td>
+                </tr>
+            </table>
+        </div>
+        <br />
+        <div id="code-layout">
+            <h3>Code Layout</h3>
+        </div>
+        <br />
+        <div id="retargetting">
+            <h3>Retargetting</h3>
+        </div>
+        <br />
+        <div id="contact-info">
+            <h3>Contact Me</h3>
+        </div>
+    </body>
+</html>
