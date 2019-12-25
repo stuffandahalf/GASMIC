@@ -13,7 +13,7 @@
 #define LINEBUFFERSIZE (256)
 char buffer[LINEBUFFERSIZE];
 
-static void configure(int argc, char *argv[]);
+static int configure(int argc, char *argv[]);
 //static void trim_str(char str[]);
 static void parse_line(Line *l, char *buffer);
 static void resolve_mnemonic_type(Line *l);
@@ -57,7 +57,9 @@ int main(int argc, char **argv)
 	configuration.out_fname = "a.out";
     address = 0;
 
-    configure(argc, argv);
+    if (!configure(argc, argv)) {
+        goto early_exit;
+    }
 
     //out = fopen(out_fname, "w+");
     //free(configuration.out_fname);
@@ -159,6 +161,7 @@ int main(int argc, char **argv)
 
     g_context = NULL;
 
+early_exit:
     DESTROY_TARGETS();
 
 #if defined(_WIN32) && !defined(NDEBUG)
@@ -224,8 +227,9 @@ void assemble(Line *l)
     }
 }
 
-static void configure(int argc, char *argv[])
+static int configure(int argc, char *argv[])
 {
+    const char *help_str = "Usage: %s [-m arch] [-o outfile] [-f outformat]\n";
     int c;
 
     while ((c = getopt(argc, argv, "hm:o:f:")) != -1) {
@@ -245,24 +249,21 @@ static void configure(int argc, char *argv[])
             break;
         case 'f':	// output file format
             break;
+        case '?':
         case 'h':
-            die("Usage: %s [-m arch] [-o outfile] [-f outformat]\n", argv[0]);
-            break;
+            printf(help_str, argv[0]);
+            return 0;
         default:
-            goto exit;
-            break;
-        /*case '?':
-        default:
-            die("Usage: %s [-m arch] [-o outfile] [-f outformat]\n", argv[0]);
-            break;*/
+            die(help_str, argv[0]);
         }
     }
-exit:
 
     printdf("argcount = %d\n", argc - optind);
 
     configuration.in_fnames = argv + sizeof(char) * optind;
     configuration.in_fnamec = argc - optind;
+
+    return 1;
 }
 
 Architecture *str_to_arch(const char arch_name[])
