@@ -237,15 +237,16 @@ static int configure(int argc, char *argv[])
         case 'm':	// architecture
             configuration.arch = str_to_arch(optarg);
             if (configuration.arch == NULL) {
-                free(configuration.out_fname);
+                //free(configuration.out_fname);
                 die("Unsupported architecture: %s\n", optarg);
             }
             break;
         case 'o':	// output file
-            free(configuration.out_fname);
-            if ((configuration.out_fname = strdup(optarg)) == NULL) {
+            //free(configuration.out_fname);
+            /*if ((configuration.out_fname = strdup(optarg)) == NULL) {
                 die("Failed to allocate new output file name");
-            }
+            }*/
+            configuration.out_fname = optarg;
             break;
         case 'f':	// output file format
             break;
