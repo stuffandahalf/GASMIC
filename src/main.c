@@ -48,7 +48,7 @@ int main(int argc, char **argv)
 
     INIT_TARGETS();
 
-    FILE *in;
+    //FILE *in;
     //out = stdout;
     configuration.arch = *architectures[0];
     configuration.in_fnames = NULL;
@@ -82,20 +82,25 @@ int main(int argc, char **argv)
         die("Invalid number of command line arguments.\n");
     }
     else if (configuration.in_fnamec == 0) {
-        init_cntxt.fname = "stdin";
+        if ((init_cntxt.fname = strdup("stdin")) == NULL) {
+            die("Failed to duplicate file name \"stdin\"\n");
+        }
         init_cntxt.fptr = stdin;
         assemble(l);
+        free(init_cntxt.fname);
     }
     else {
         for (size_t i = 0; i < configuration.in_fnamec; i++) {
-            if ((in = fopen(configuration.in_fnames[i], "r")) == NULL) {
+            if ((init_cntxt.fname = strdup(configuration.in_fnames[i])) == NULL) {
+                die("Failed to duplicate file name \"%s\"\n", configuration.in_fnames[i]);
+            }
+            if ((init_cntxt.fptr = fopen(init_cntxt.fname, "r")) == NULL) {
                 die("Failed to open input file %s\n", configuration.in_fnames[i]);
             }
-            init_cntxt.fname = configuration.in_fnames[i];
-            init_cntxt.fptr = in;
             init_cntxt.line_num = 1;
             assemble(l);
-            fclose(in);
+            fclose(init_cntxt.fptr);
+            free(init_cntxt.fname);
         }
     }
     sfree(l);
@@ -103,7 +108,7 @@ int main(int argc, char **argv)
     printdf("SYMBOLS\n");
     Symbol *sym = symtab->first;
     while (sym != NULL) {
-        printdf("label: %s = %ld\n", sym->label, sym->value);
+        printdf("label: %s = %zu\n", sym->label, sym->value);
 
         sfree(sym->label);
         sym->label = NULL;
@@ -119,7 +124,7 @@ int main(int argc, char **argv)
     printdf("DATATAB\n");
     Data *data = datatab->first;
     while (data != NULL) {
-        printdf("data address: %lX,  ", data->address);
+        printdf("data address: %zX,  ", data->address);
         switch (data->type) {
         case DATA_TYPE_EXPRESSION:
             //printdf("%" PRIu8 " bytes label \"%s\"\n", data->bytec, data->contents.symbol);
@@ -180,7 +185,7 @@ void init_address_mask()
         }
         address_mask |= 1u;
     }
-    printdf("Address mask: %lX\n", address_mask);
+    printdf("Address mask: %zX\n", address_mask);
 }
 
 void assemble(Line *l)
@@ -418,7 +423,6 @@ static void parse_line(Line *l, char *buffer)
         fail("Unmatched quote.\n");
     }
     if (l->line_state & FLAG(LINE_STATE_BRACKET)) {
-        //die("Error on line %ld. Unmatched bracket\n", line_num);
         fail("Unmatched bracket.\n");
     }
 }

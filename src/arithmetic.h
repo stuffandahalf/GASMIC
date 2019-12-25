@@ -1,7 +1,3 @@
-//
-// Created by ubuntu on 2019-09-03.
-//
-
 #ifndef GASMIC_ARITHMETIC_H
 #define GASMIC_ARITHMETIC_H
 
@@ -43,4 +39,4 @@ void fprint_token_list(FILE *fptr, struct token *list);
 void print_token_stack(struct token *stack_top);
 void print_token_list(struct token *list);
 
-#endif //GASMIC_ARITHMETIC_H
+#endif /* GASMIC_ARITHMETIC_H */

@@ -24,4 +24,4 @@
 
 //extern Architecture **architectures[];
 
-#endif
+#endif /* GASMIC_TARGETS_H */

@@ -13,4 +13,4 @@ struct pseudo_instruction {
 struct pseudo_instruction *get_pseudo_op(Line *line);
 void parse_pseudo_op(Line *line);
 
-#endif //GASMIC_PSEUDO_H
+#endif /* GASMIC_PSEUDO_H */

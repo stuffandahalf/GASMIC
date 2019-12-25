@@ -3,7 +3,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
-#include <stdlib.h>
+//#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #ifdef __cplusplus
@@ -254,7 +254,7 @@ static inline char *str_to_upper(char str[]) {
 static inline void fail(const char *msg, ...) {
     va_list args;
     va_start(args, msg);
-    printef("[%s:%ld]\t", g_context->fname, g_context->line_num);
+    printef("[%s:%zu]\t", g_context->fname, g_context->line_num);
 
 #ifndef _WIN32
     printef(ANSI_COLOR_RED);
@@ -269,7 +269,7 @@ static inline void fail(const char *msg, ...) {
     va_end(args);
 
     for (struct context *cntxt = g_context->parent; cntxt != NULL; cntxt = cntxt->parent) {
-        printef("\tIn file included from \"%s\", line %ld\n", cntxt->fname, cntxt->line_num);
+        printef("\tIn file included from \"%s\", line %zu\n", cntxt->fname, cntxt->line_num);
     }
 
     die("\n");

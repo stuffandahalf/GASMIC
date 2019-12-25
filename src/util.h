@@ -14,4 +14,4 @@ void add_data(Data *data);
 
 void prepare_line(Line *line);
 
-#endif //GASMIC_UTIL_H
+#endif /* GASMIC_UTIL_H */

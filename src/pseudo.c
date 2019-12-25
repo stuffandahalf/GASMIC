@@ -18,6 +18,7 @@
  * .global
  */
 
+static void pseudo_set_file(Line *line);
 static void pseudo_set_arch(Line *line);
 static void pseudo_set_byte(Line *line);
 static void pseudo_set_word(Line *line);
@@ -34,6 +35,7 @@ static void pseudo_org(Line *line);
 
 static struct pseudo_instruction pseudo_ops[] = {
     { ".ARCH", &pseudo_set_arch,        1 },
+    { ".FILE", &pseudo_set_file,        1 },
 
     { ".DB", &pseudo_set_byte,          -1 },
     { ".DW", &pseudo_set_word,          -1 },
@@ -86,6 +88,15 @@ static void pseudo_set_arch(Line *line)
     configuration.arch = arch;
     init_address_mask();
     printdf("%s\n", configuration.arch->name);
+}
+
+static void pseudo_set_file(Line *line)
+{
+    if (line->argv[0].type != ARG_TYPE_STRING) {
+        die("File name must be a string.");
+    }
+    free(g_context->fname);
+    g_context->fname = strdup(line->argv[0].val.str);
 }
 
 #define pseudo_set_data(T, line) { \
@@ -212,7 +223,9 @@ static void pseudo_include(Line *line)
     included_context.parent = g_context;
     //included_context.fptr = included_file;
     included_context.line_num = 1;
-    included_context.fname = strdup(line->argv[0].val.str);
+    if ((included_context.fname = strdup(line->argv[0].val.str)) == NULL) {
+        fail("Failed to duplicate file name \"%s\"\n", line->argv[0].val.str);
+    }
 
     //FILE *included_file;
     if ((included_context.fptr = fopen(included_context.fname, "r")) == NULL) {
@@ -247,7 +260,7 @@ static void pseudo_org(Line *line)
     char *lend;
     size_t new_address = strtoul(line->argv[0].val.str, &lend, 0) & address_mask;
     if (*lend == '\0') {
-        printdf("new address is 0x%lX\n", new_address);
+        printdf("new address is 0xzX\n", new_address);
         address = new_address;
     }
     else {

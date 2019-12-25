@@ -26,4 +26,4 @@ void smem_diagnostic(void);
     exit(1); \
 }
 
-#endif
+#endif /* GASMIC_SMEM_H */

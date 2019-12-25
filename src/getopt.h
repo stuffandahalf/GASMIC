@@ -22,4 +22,4 @@ int getopt_stateless(int argc, char **argv, getopt_t *optstruct);
 extern int optind;
 extern char *optarg;
 
-#endif
+#endif /* GASMIC_GETOPT_H */
