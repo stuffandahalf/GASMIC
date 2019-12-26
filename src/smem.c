@@ -64,6 +64,10 @@ void *salloc(size_t size)
 
 void *saquire(void *ptr)
 {
+    if (ptr == NULL) {
+        return NULL;
+    }
+
 	struct alloced *a;
 	if ((a = malloc(sizeof(struct alloced))) == NULL) {
 		die("Failed to allocate storage for allocated memory\n");
@@ -99,6 +103,10 @@ void *srealloc(void *ptr, size_t size)
 
 void sfree(void *ptr)
 {
+    if (ptr == NULL) {
+        return;
+    }
+
 	struct alloced *a = find_memory(ptr);
 
 	struct alloced *prev = a->prev;

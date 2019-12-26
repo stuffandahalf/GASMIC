@@ -255,7 +255,6 @@ static inline void fail(const char *msg, ...) {
     va_list args;
     va_start(args, msg);
     printef("[%s:%zu]\t", g_context->fname, g_context->line_num);
-    free(g_context->fname);
 
 #ifndef _WIN32
     printef(ANSI_COLOR_RED);
@@ -271,7 +270,6 @@ static inline void fail(const char *msg, ...) {
 
     for (struct context *cntxt = g_context->parent; cntxt != NULL; cntxt = cntxt->parent) {
         printef("\tIn file included from \"%s\", line %zu\n", cntxt->fname, cntxt->line_num);
-        free(cntxt->fname);
     }
 
     die("\n");

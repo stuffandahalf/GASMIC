@@ -58,8 +58,8 @@ static struct pseudo_instruction pseudo_ops[] = {
 struct pseudo_instruction *get_pseudo_op(Line *line)
 {
     for (struct pseudo_instruction *pseudo_op = pseudo_ops; pseudo_op->instruction != NULL; pseudo_op++) {
-        if ((pseudo_op->args == -1 || pseudo_ops->args == line->argc)
-                && streq(line->mnemonic, (*line->mnemonic == '.' ? pseudo_op->instruction : &pseudo_op->instruction[1]))) {
+        if ((pseudo_op->args == -1 || pseudo_ops->args == line->argc) &&
+            streq(line->mnemonic, (*line->mnemonic == '.' ? pseudo_op->instruction : &pseudo_op->instruction[1]))) {
             return pseudo_op;
         }
     }
@@ -95,8 +95,8 @@ static void pseudo_set_file(Line *line)
     if (line->argv[0].type != ARG_TYPE_STRING) {
         die("File name must be a string.");
     }
-    free(g_context->fname);
-    if ((g_context->fname = strdup(line->argv[0].val.str)) == NULL) {
+    sfree(g_context->fname);
+    if ((g_context->fname = saquire(strdup(line->argv[0].val.str))) == NULL) {
         fail("Failed to copy substitute file name.\n");
     }
 }
@@ -225,7 +225,7 @@ static void pseudo_include(Line *line)
     included_context.parent = g_context;
     //included_context.fptr = included_file;
     included_context.line_num = 1;
-    if ((included_context.fname = strdup(line->argv[0].val.str)) == NULL) {
+    if ((included_context.fname = saquire(strdup(line->argv[0].val.str))) == NULL) {
         fail("Failed to duplicate file name \"%s\"\n", line->argv[0].val.str);
     }
 
@@ -242,7 +242,7 @@ static void pseudo_include(Line *line)
 
     g_context = g_context->parent;
     sfree(inc_line);
-    free(included_context.fname);
+    sfree(included_context.fname);
 
     // need to reassign argv because assemble frees it but we return back to assemble.
     //line->argc = 1;

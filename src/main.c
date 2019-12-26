@@ -83,16 +83,16 @@ int main(int argc, char **argv)
         die("Invalid number of command line arguments.\n");
     }
     else if (configuration.in_fnamec == 0) {
-        if ((init_cntxt.fname = strdup("stdin")) == NULL) {
+        if ((init_cntxt.fname = saquire(strdup("stdin"))) == NULL) {
             die("Failed to duplicate file name \"stdin\"\n");
         }
         init_cntxt.fptr = stdin;
         assemble(l);
-        free(init_cntxt.fname);
+        sfree(init_cntxt.fname);
     }
     else {
         for (size_t i = 0; i < configuration.in_fnamec; i++) {
-            if ((init_cntxt.fname = strdup(configuration.in_fnames[i])) == NULL) {
+            if ((init_cntxt.fname = saquire(strdup(configuration.in_fnames[i]))) == NULL) {
                 die("Failed to duplicate file name \"%s\"\n", configuration.in_fnames[i]);
             }
             if ((init_cntxt.fptr = fopen(init_cntxt.fname, "r")) == NULL) {
@@ -101,7 +101,7 @@ int main(int argc, char **argv)
             init_cntxt.line_num = 1;
             assemble(l);
             fclose(init_cntxt.fptr);
-            free(init_cntxt.fname);
+            sfree(init_cntxt.fname);
         }
     }
     sfree(l);
