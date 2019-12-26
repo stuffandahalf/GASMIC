@@ -1,9 +1,10 @@
 #include <stdio.h>
-#ifdef _WIN32
+/*#ifdef _WIN32
 #include <getopt.h>
 #else
 #include <unistd.h>
-#endif
+#endif*/
+#include <getopt.h>
 #include <as.h>
 #include <targets.h>
 #include <pseudo.h>
@@ -82,18 +83,23 @@ int main(int argc, char **argv)
         die("Invalid number of command line arguments.\n");
     }
     else if (configuration.in_fnamec == 0) {
-        if ((init_cntxt.fname = strdup("stdin")) == NULL) {
+        //if ((init_cntxt.fname = strdup("stdin")) == NULL) {
+
+        if ((init_cntxt.fname = malloc(sizeof(char) * 6)) == NULL) {
             die("Failed to duplicate file name \"stdin\"\n");
         }
+        strcpy(init_cntxt.fname, "stdin");
         init_cntxt.fptr = stdin;
         assemble(l);
         free(init_cntxt.fname);
     }
     else {
         for (size_t i = 0; i < configuration.in_fnamec; i++) {
-            if ((init_cntxt.fname = strdup(configuration.in_fnames[i])) == NULL) {
+            //if ((init_cntxt.fname = strdup(configuration.in_fnames[i])) == NULL) {
+            if ((init_cntxt.fname = malloc(sizeof(char) * (strlen(configuration.in_fnames[i]) + 1))) == NULL) {
                 die("Failed to duplicate file name \"%s\"\n", configuration.in_fnames[i]);
             }
+            strcpy(init_cntxt.fname, configuration.in_fnames[i]);
             if ((init_cntxt.fptr = fopen(init_cntxt.fname, "r")) == NULL) {
                 die("Failed to open input file %s\n", configuration.in_fnames[i]);
             }
