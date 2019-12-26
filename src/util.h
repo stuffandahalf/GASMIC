@@ -14,4 +14,6 @@ void add_data(Data *data);
 
 void prepare_line(Line *line);
 
+char *strdup(const char *src);
+
 #endif /* GASMIC_UTIL_H */

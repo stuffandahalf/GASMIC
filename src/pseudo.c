@@ -96,11 +96,9 @@ static void pseudo_set_file(Line *line)
         die("File name must be a string.");
     }
     free(g_context->fname);
-    //g_context->fname = strdup(line->argv[0].val.str);
-    if ((g_context->fname = malloc(sizeof(char) * (strlen(line->argv[0].val.str) + 1))) == NULL) {
+    if ((g_context->fname = strdup(line->argv[0].val.str)) == NULL) {
         fail("Failed to copy substitute file name.\n");
     }
-    strcpy(g_context->fname, line->argv[0].val.str);
 }
 
 #define pseudo_set_data(T, line) { \
@@ -227,11 +225,9 @@ static void pseudo_include(Line *line)
     included_context.parent = g_context;
     //included_context.fptr = included_file;
     included_context.line_num = 1;
-    //if ((included_context.fname = strdup(line->argv[0].val.str)) == NULL) {
-    if ((included_context.fname = malloc(sizeof(char) * (strlen(line->argv[0].val.str) + 1))) == NULL) {
+    if ((included_context.fname = strdup(line->argv[0].val.str)) == NULL) {
         fail("Failed to duplicate file name \"%s\"\n", line->argv[0].val.str);
     }
-    strcpy(included_context.fname, line->argv[0].val.str);
 
     //FILE *included_file;
     if ((included_context.fptr = fopen(included_context.fname, "r")) == NULL) {

@@ -175,3 +175,13 @@ void prepare_line(Line *line)
         }
     }
 }
+
+char *strdup(const char *src)
+{
+    char *new = malloc(sizeof(char) * (strlen(src) + 1));
+    if (new == NULL) {
+        return NULL;
+    }
+    strcpy(new, src);
+    return new;
+}
