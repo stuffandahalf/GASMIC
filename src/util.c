@@ -168,7 +168,7 @@ void prepare_line(Line *line)
                         fail("Failed to reallocate buffer for local symbol in expression.\n");
                     }
                     strncpy(tok->value.symbol, symtab->last_parent->label, parent_size);
-                    strncpy(&(tok->value.symbol[parent_size]), child, child_size + 1);
+                    strncpy(&tok->value.symbol[parent_size], child, child_size + 1);
                     free(child);
                 }
             }

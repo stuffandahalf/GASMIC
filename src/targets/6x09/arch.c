@@ -22,7 +22,8 @@ static const Register registers[] = {
     { "DP", 1, MC6809 | HD6309 },
     { "CC", 1, MC6809 | HD6309 },
     { "MD", 1, HD6309 },
-    { 0, 0, 0 }
+    { "", 0, 0 }
+    //{ NULL, 0, 0 }
 };
 #ifndef NDEBUG
 static const int regc = sizeof(registers) / sizeof(Register) - 1;
@@ -124,8 +125,7 @@ static void MC6809_process_line(Line *line, const struct instruction_register *i
     printdf("Hello MC6809\n");
 }
 
-static void HD6309_process_line(Line *line, const
-struct instruction_register *instr_reg, Data *data)
+static void HD6309_process_line(Line *line, const struct instruction_register *instr_reg, Data *data)
 {
     printdf("Hello HD6309\n");
 }
