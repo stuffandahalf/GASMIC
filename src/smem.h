@@ -9,6 +9,7 @@ void *salloc(size_t size);
 void *srealloc(void *ptr, size_t size);
 void *saquire(void *ptr);
 void sfree(void *ptr);
+void die(const char *msg, ...);
 #ifndef NDEBUG
 void smem_diagnostic(void);
 #endif
@@ -18,12 +19,5 @@ void smem_diagnostic(void);
 #else
 #define AWAIT_WINDOWS
 #endif
-
-#define die(...) { \
-    fprintf(stderr, __VA_ARGS__); \
-    release(); \
-	AWAIT_WINDOWS; \
-    exit(1); \
-}
 
 #endif /* GASMIC_SMEM_H */

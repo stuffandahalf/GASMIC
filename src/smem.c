@@ -2,6 +2,7 @@
 // Useful for clearing all allocated memory in the event of a failure
 
 #include <smem.h>
+#include <stdarg.h>
 
 struct alloced {
     void *address;
@@ -128,4 +129,15 @@ void sfree(void *ptr)
     
     free(a->address);
     free(a);
+}
+
+void die(const char *msg, ...)
+{
+    va_list args;
+    va_start(args, msg);
+    vfprintf(stderr, msg, args);
+    va_end(args);
+    release();
+	AWAIT_WINDOWS;
+    exit(1);
 }

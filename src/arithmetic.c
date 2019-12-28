@@ -1,7 +1,8 @@
 #include <arithmetic.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
+#include <lang.h>
+/*#include <stdbool.h>*/
 
 enum arithmetic_status arithmetic_status_code;
 
@@ -21,7 +22,8 @@ static struct operator operators[] = {
 
 static struct operator *find_operator(char c)
 {
-    for (struct operator *op = operators; op->operator != 0; op++) {
+    struct operator *op = NULL;
+    for (op = operators; op->operator != 0; op++) {
         if (c == op->operator) {
             return op;
         }
@@ -29,7 +31,7 @@ static struct operator *find_operator(char c)
     return NULL;
 }
 
-// Reverses a stack to become a linked list from bottom to top
+/* Reverses a stack to become a linked list from bottom to top */
 static struct token *stack_to_list(struct token *stack_top)
 {
     struct token *prev = NULL;
@@ -45,23 +47,26 @@ static struct token *stack_to_list(struct token *stack_top)
     return prev;
 }
 
-static inline bool is_whitespace(char c)
+static /*inline*/ bool is_whitespace(char c)
 {
     return c == ' ' || c == '\t' || c == '\n';
 }
 
-// Implements the shunting yard algorithm
+/* Implements the shunting yard algorithm */
 struct token *parse_expression(char *expr)
 {
-    arithmetic_status_code = ARITHMETIC_SUCCESS;
-
     struct token *out_stack_top = NULL;
     struct token *op_stack_top = NULL;
+    struct token *tok;
+    struct token *top;
     const char *buffer = expr;
     size_t buffer_size = 0;
     bool stop = false;
+    char *c;
 
-    for (char *c = expr; !stop/* *c != '\0'*/; c++) {
+    arithmetic_status_code = ARITHMETIC_SUCCESS;
+
+    for (c = expr; !stop/* *c != '\0'*/; c++) {
         bool changed = false;
 
         double val = 0;
@@ -70,7 +75,7 @@ struct token *parse_expression(char *expr)
         struct operator *op = find_operator(*c);
         if (buffer_size > 0 && (op != NULL || is_whitespace(*c) || *c == '\0')) {
             changed = true;
-            struct token *tok = malloc(sizeof(struct token));
+            tok = malloc(sizeof(struct token));
             val = strtod(buffer, &endptr);
             if (endptr == buffer) {
                 tok->type = TOKEN_TYPE_SYMBOL;
@@ -96,7 +101,7 @@ struct token *parse_expression(char *expr)
 
         if (op != NULL) {
             changed = true;
-            struct token *tok = malloc(sizeof(struct token));
+            tok = malloc(sizeof(struct token));
             tok->type = TOKEN_TYPE_OPERATOR;
             tok->value.operator = op;
 
@@ -154,7 +159,7 @@ struct token *parse_expression(char *expr)
             return NULL;
         }
 
-        struct token *top = op_stack_top;
+        top = op_stack_top;
         op_stack_top = op_stack_top->next;
         top->next = out_stack_top;
         out_stack_top = top;
@@ -178,10 +183,11 @@ void free_token_chain(struct token *stack_top)
 
 void fprint_token_stack(FILE *fptr, struct token *stack_top)
 {
-    for (struct token *tok = stack_top; tok != NULL; tok = tok->next) {
+    struct token *tok;
+    for (tok = stack_top; tok != NULL; tok = tok->next) {
         switch (tok->type) {
         case TOKEN_TYPE_LITERAL:
-            fprintf(fptr, "%lf\n", tok->value.number);
+            fprintf(fptr, "%f\n", tok->value.number);
             break;
         case TOKEN_TYPE_SYMBOL:
             fprintf(fptr, "%s\n", tok->value.symbol);
@@ -200,10 +206,11 @@ void print_token_stack(struct token *stack_top)
 
 void fprint_token_list(FILE *fptr, struct token *list)
 {
-    for (struct token *tok = list; tok != NULL; tok = tok->next) {
+    struct token *tok;
+    for (tok = list; tok != NULL; tok = tok->next) {
         switch (tok->type) {
         case TOKEN_TYPE_LITERAL:
-            fprintf(fptr, "%lf ", tok->value.number);
+            fprintf(fptr, "%f ", tok->value.number);
             break;
         case TOKEN_TYPE_SYMBOL:
             fprintf(fptr, "%s ", tok->value.symbol);

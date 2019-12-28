@@ -3,40 +3,40 @@
 
 #include <stdarg.h>
 #include <stdio.h>
-//#include <stdlib.h>
+/*#include <stdlib.h>*/
 #include <string.h>
 #include <ctype.h>
 #ifdef __cplusplus
 #define __STDC_FORMAT_MACROS
 #endif
 #include <inttypes.h>
+#include <lang.h>
 #include <smem.h>
 
 #ifndef _WIN32
 #include <ansistyle.h>
 #endif
 
-// test the equality of 2 strings
+/* test the equality of 2 strings */
 #define streq(__s1, __s2) !strcmp((const char *)(__s1), (const char *)(__s2))
-// print to stderr
-#define printef(...) fprintf(stderr, __VA_ARGS__)
 
-// print if debug build
+/* print if debug build */
 #ifndef NDEBUG
-// helper debug printf
-static inline int h_printdf(const char *fname, const int linenum, const char *fmt, ...)
+/* helper debug printf */
+static INLINE int h_printdf(const char *fname, const int linenum, const char *fmt, ...)
 {
+    int count = 0;
     va_list args;
     va_start(args, fmt);
 
-    int count = 0;
     count += printf("[%s:%d] >> ", fname, linenum);
     count += vprintf(fmt, args);
 
     va_end(args);
     return count;
 }
-#define printdf(...) h_printdf(__FILE__, __LINE__, __VA_ARGS__)
+/*#define printdf(...) h_printdf(__FILE__, __LINE__, __VA_ARGS__)*/
+
 #else
 #define printdf(fmt, ...)
 #endif
