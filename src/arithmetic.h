@@ -17,6 +17,11 @@ enum token_type {
     TOKEN_TYPE_SYMBOL
 };
 
+struct operator {
+    char operator;
+    unsigned char precedence;
+};
+
 struct token {
     enum token_type type;
     struct token *next;
@@ -25,11 +30,6 @@ struct token {
         double number;
         char *symbol;
     } value;
-};
-
-struct operator {
-    char operator;
-    unsigned char precedence;
 };
 
 struct token *parse_expression(char *expr);
