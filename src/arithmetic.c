@@ -181,7 +181,7 @@ void fprint_token_stack(FILE *fptr, struct token *stack_top)
     for (struct token *tok = stack_top; tok != NULL; tok = tok->next) {
         switch (tok->type) {
         case TOKEN_TYPE_LITERAL:
-            fprintf(fptr, "%lf\n", tok->value.number);
+            fprintf(fptr, "%f\n", tok->value.number);
             break;
         case TOKEN_TYPE_SYMBOL:
             fprintf(fptr, "%s\n", tok->value.symbol);
@@ -203,7 +203,7 @@ void fprint_token_list(FILE *fptr, struct token *list)
     for (struct token *tok = list; tok != NULL; tok = tok->next) {
         switch (tok->type) {
         case TOKEN_TYPE_LITERAL:
-            fprintf(fptr, "%lf ", tok->value.number);
+            fprintf(fptr, "%f ", tok->value.number);
             break;
         case TOKEN_TYPE_SYMBOL:
             fprintf(fptr, "%s ", tok->value.symbol);
