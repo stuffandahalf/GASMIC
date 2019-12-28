@@ -52,14 +52,14 @@ static const Instruction *instructions[] = {
 
 void Z80_process_line(Line *line, const struct instruction_register *instr_reg, Data *data)
 {
-    printdf("Hello from Z80 line processor.\n");
+    printdf(("Hello from Z80 line processor.\n"));
 }
 
 void Z80_init(void)
 {
     ARCH_Z80 = salloc(sizeof(Architecture));
     ARCH_Z80->value = Z80;
-    //strcpy(ARCH_Z80->name, "z80");
+    /*strcpy(ARCH_Z80->name, "z80");*/
     ARCH_Z80->name = "Z80";
     ARCH_Z80->byte_size = 8;
     ARCH_Z80->bytes_per_address = 2;

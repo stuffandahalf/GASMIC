@@ -1,5 +1,5 @@
-// Wrapper for memory allocation functions
-// Useful for clearing all allocated memory in the event of a failure
+/* Wrapper for memory allocation functions */
+/* Useful for clearing all allocated memory in the event of a failure */
 
 #include <smem.h>
 #include <stdarg.h>
@@ -13,10 +13,7 @@ struct alloced {
 static struct {
     struct alloced *first;
     struct alloced *last;
-} alloced_mem = {
-    .first = NULL,
-    .last = NULL
-};
+} alloced_mem = {NULL, NULL };
 
 void release(void)
 {
@@ -33,7 +30,8 @@ void release(void)
 
 static struct alloced *find_memory(void *ptr)
 {
-    for (struct alloced *mem = alloced_mem.last; mem != NULL; mem = mem->prev) {
+    struct alloced *mem;
+    for (mem = alloced_mem.last; mem != NULL; mem = mem->prev) {
         if (mem->address == ptr) {
             return mem;
         }
@@ -65,11 +63,12 @@ void *salloc(size_t size)
 
 void *saquire(void *ptr)
 {
+    struct alloced *a;
+
     if (ptr == NULL) {
         return NULL;
     }
 
-	struct alloced *a;
 	if ((a = malloc(sizeof(struct alloced))) == NULL) {
 		die("Failed to allocate storage for allocated memory\n");
 	}
@@ -104,14 +103,15 @@ void *srealloc(void *ptr, size_t size)
 
 void sfree(void *ptr)
 {
+    struct alloced *a, *prev, *next;
+
     if (ptr == NULL) {
         return;
     }
 
-	struct alloced *a = find_memory(ptr);
-
-	struct alloced *prev = a->prev;
-	struct alloced *next = a->next;
+	a = find_memory(ptr);
+    prev = a->prev;
+	next = a->next;
 
     if (prev != NULL) {
 	    prev->next = next;
