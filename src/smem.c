@@ -37,6 +37,7 @@ static struct alloced *find_memory(void *ptr)
         }
     }
     die("Failed to locate provided address, are you sure you salloced it?\n");
+    return NULL; /* not reachable */
 }
 
 void smem_diagnostic(void)
