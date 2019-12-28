@@ -15,7 +15,7 @@
 char buffer[LINEBUFFERSIZE];
 
 static int configure(int argc, char *argv[]);
-//static void trim_str(char str[]);
+/*static void trim_str(char str[]);*/
 static void parse_line(Line *l, char *buffer);
 static void resolve_mnemonic_type(Line *l);
 static void set_syntax_parser();
@@ -26,12 +26,12 @@ static void parse_instruction_intel(Line *l);
 Config configuration;
 struct context *g_context;
 
-//FILE *in;
+/*FILE *in;*/
 FILE *out;
 size_t address;
-size_t address_mask;    // bits to mask the address to;
+size_t address_mask;    /* bits to mask the address to;*/
 void (*parse_instruction)(Line *l);
-//SymTab *undefined_symtab;
+/*SymTab *undefined_symtab;*/
 
 Architecture **architectures[] = { TARGETS };
 
@@ -47,10 +47,16 @@ int main(int argc, char **argv)
     return 0;
 #endif
 
+    size_t i;
+    struct context init_cntxt;
+    Line *l;
+    Symbol *sym, *tmp_sym;
+    Data *data, *tmp_data;
+
     INIT_TARGETS();
 
-    //FILE *in;
-    //out = stdout;
+    /*FILE *in;*/
+    /*out = stdout;*/
     configuration.arch = *architectures[0];
     configuration.in_fnames = NULL;
     configuration.in_fnamec = 0;
@@ -62,11 +68,11 @@ int main(int argc, char **argv)
         goto early_exit;
     }
 
-    //out = fopen(out_fname, "w+");
-    //free(configuration.out_fname);
+    /*out = fopen(out_fname, "w+");*/
+    /*free(configuration.out_fname);*/
     configuration.out_fname = NULL;
 
-    struct context init_cntxt;
+    /*struct context init_cntxt;*/
     g_context = &init_cntxt;
     init_cntxt.line_num = 1;
     init_cntxt.parent = NULL;
@@ -77,7 +83,7 @@ int main(int argc, char **argv)
     init_data_table();
     init_symbol_table();
 
-    Line *l = salloc(sizeof(Line));
+    l = salloc(sizeof(Line));
 
     if (configuration.in_fnamec < 0) {
         die("Invalid number of command line arguments.\n");
@@ -91,7 +97,7 @@ int main(int argc, char **argv)
         sfree(init_cntxt.fname);
     }
     else {
-        for (size_t i = 0; i < configuration.in_fnamec; i++) {
+        for (i = 0; i < configuration.in_fnamec; i++) {
             if ((init_cntxt.fname = saquire(strdup(configuration.in_fnames[i]))) == NULL) {
                 die("Failed to duplicate file name \"%s\"\n", configuration.in_fnames[i]);
             }
@@ -106,30 +112,30 @@ int main(int argc, char **argv)
     }
     sfree(l);
 
-    printdf("SYMBOLS\n");
-    Symbol *sym = symtab->first;
+    printdf(("SYMBOLS\n"));
+    sym = symtab->first;
     while (sym != NULL) {
-        printdf("label: %s = %zu\n", sym->label, sym->value);
+        printdf(("label: %s = %zu\n", sym->label, sym->value));
 
         sfree(sym->label);
         sym->label = NULL;
-        Symbol *tmp = sym;
+        tmp_sym = sym;
         sym = sym->next;
-        sfree(tmp);
+        sfree(tmp_sym);
     }
-    //sfree(symtab->first->label);
+    /*sfree(symtab->first->label)*/;
     sfree(symtab);
     symtab = NULL;
     sym = NULL;
 
-    printdf("DATATAB\n");
-    Data *data = datatab->first;
+    printdf(("DATATAB\n"));
+    data = datatab->first;
     while (data != NULL) {
-        printdf("data address: %zX,  ", data->address);
+        printdf(("data address: %zX,  ", data->address));
         switch (data->type) {
         case DATA_TYPE_EXPRESSION:
-            //printdf("%" PRIu8 " bytes label \"%s\"\n", data->bytec, data->contents.symbol);
-            //sfree(data->contents.symbol);
+            /*printdf("%" PRIu8 " bytes label \"%s\"\n", data->bytec, data->contents.symbol);*/
+            /*sfree(data->contents.symbol);*/
 #ifndef NDEBUG
             printf("RPN expression: ");
             print_token_list(data->contents.rpn_expr);
@@ -139,7 +145,7 @@ int main(int argc, char **argv)
         case DATA_TYPE_BYTES:
 #ifndef NDEBUG
             printf("%" PRIu8 " bytes: ", data->bytec);
-            for (int i = 0; i < data->bytec; i++) {
+            for (i = 0; i < data->bytec; i++) {
                 if (i) {
                     printf(", ");
                 }
@@ -150,20 +156,20 @@ int main(int argc, char **argv)
             sfree(data->contents.bytes);
             break;
         case DATA_TYPE_NONE:
-            printdf("Empty data.\n");
+            printdf(("Empty data.\n"));
             break;
         default:
-            printdf("Garbage data.\n");
+            printdf(("Garbage data.\n"));
             break;
         }
-        Data *tmp = data;
+        tmp_data = data;
         data = data->next;
-        sfree(tmp);
+        sfree(tmp_data);
     }
     sfree(datatab);
     datatab = NULL;
     data = NULL;
-    //fclose(out);
+    /*close(out);*/
 
     g_context = NULL;
 
@@ -179,32 +185,35 @@ early_exit:
 
 void init_address_mask()
 {
+    int i;
     address_mask = 0;
-    for (int i = 0; i < configuration.arch->bytes_per_address * configuration.arch->byte_size; i++) {
+    for (i = 0; i < configuration.arch->bytes_per_address * configuration.arch->byte_size; i++) {
         if (i) {
             address_mask <<= 1u;
         }
         address_mask |= 1u;
     }
-    printdf("Address mask: %zX\n", address_mask);
+    printdf(("Address mask: %zX\n", address_mask));
 }
 
 void assemble(Line *l)
 {
+    size_t i;
+
     while (fgets(buffer, LINEBUFFERSIZE, g_context->fptr) != NULL) {
         if (buffer[0] != '\0' && buffer[0] != '\n') {
             l->line_state = LINE_STATE_CLEAR;
             l->address_mode = ADDR_MODE_INVALID;
             l->addr_mode_post_op = POST_OP_NONE;
             l->arg_buf_size = 2;
-            //l->argv = salloc(sizeof(char *) * l->arg_buf_size);
+            /*l->argv = salloc(sizeof(char *) * l->arg_buf_size);*/
             l->argv = salloc(sizeof(LineArg) * l->arg_buf_size);
             l->argc = 0;
 
             parse_line(l, buffer);
 
 #ifndef NDEBUG
-            //printf("%s\t%s", l->label, l->mnemonic);
+            /*printf("%s\t%s", l->label, l->mnemonic);*/
             if (l->line_state & FLAG(LINE_STATE_LABEL)) {
                 printf("%s", l->label);
             }
@@ -214,15 +223,15 @@ void assemble(Line *l)
                 }
                 printf("%s", l->mnemonic);
             }
-            for (size_t i = 0; i < l->argc; i++) {
+            for (i = 0; i < l->argc; i++) {
                 printf("\t%s", l->argv[i].val.str);
             }
             puts("");
 #endif
-            if (l->line_state & FLAG(LINE_STATE_LABEL)) {      // If current line has a label
+            if (l->line_state & FLAG(LINE_STATE_LABEL)) {      /* If current line has a label */
                 add_label(l);
             }
-            if (l->line_state & FLAG(LINE_STATE_MNEMONIC)) {   // If current line has a mnemonic
+            if (l->line_state & FLAG(LINE_STATE_MNEMONIC)) {   /* If current line has a mnemonic */
                 str_to_upper(l->mnemonic);
                 resolve_mnemonic_type(l);
             }
@@ -240,21 +249,21 @@ static int configure(int argc, char *argv[])
 
     while ((c = getopt(argc, argv, "hm:o:f:")) != -1) {
         switch (c) {
-        case 'm':	// architecture
+        case 'm':	/* architecture */
             configuration.arch = str_to_arch(optarg);
             if (configuration.arch == NULL) {
-                //free(configuration.out_fname);
+                /*free(configuration.out_fname);*/
                 die("Unsupported architecture: %s\n", optarg);
             }
             break;
-        case 'o':	// output file
-            //free(configuration.out_fname);
+        case 'o':	/* output file */
+            /*free(configuration.out_fname);*/
             /*if ((configuration.out_fname = strdup(optarg)) == NULL) {
                 die("Failed to allocate new output file name");
             }*/
             configuration.out_fname = optarg;
             break;
-        case 'f':	// output file format
+        case 'f':	/* output file format */
             break;
         case '?':
         case 'h':
@@ -265,7 +274,7 @@ static int configure(int argc, char *argv[])
         }
     }
 
-    printdf("argcount = %d\n", argc - optind);
+    printdf(("argcount = %d\n", argc - optind));
 
     configuration.in_fnames = argv + sizeof(char) * optind;
     configuration.in_fnamec = argc - optind;
@@ -275,7 +284,8 @@ static int configure(int argc, char *argv[])
 
 Architecture *str_to_arch(const char arch_name[])
 {
-    for (Architecture ***a = architectures; *a != NULL; a++) {
+    Architecture ***a;
+    for (a = architectures; *a != NULL; a++) {
         if (streq(arch_name, (**a)->name)) {
             return **a;
         }
@@ -285,9 +295,10 @@ Architecture *str_to_arch(const char arch_name[])
 
 static void parse_line(Line *l, char *buffer)
 {
+    register char *c;
     LineArg *la = NULL;
     enum arg_type arg_type = ARG_TYPE_UNPROCESSED;
-    for (register char *c = buffer; *c != '\0'; c++) {
+    for (c = buffer; *c != '\0'; c++) {
         switch (*c) {
         case '"':
             if (l->line_state & FLAG(LINE_STATE_SINGLE_QUOTE)) {
@@ -392,7 +403,7 @@ static void parse_line(Line *l, char *buffer)
                 la->type = arg_type;
                 la->val.str = buffer;
                 arg_type = ARG_TYPE_UNPROCESSED;
-                //*c = '\0';
+                /* *c = '\0';*/
             }
             buffer = c;
             buffer++;
@@ -412,13 +423,13 @@ static void parse_line(Line *l, char *buffer)
             buffer = c;
             buffer++;
 
-            //printdf("parsed literal label = %s\n", l->label);
+            /*printdf("parsed literal label = %s\n", l->label);*/
             l->line_state |= FLAG(LINE_STATE_LABEL);
             break;
         case ';':
             return;
         }
-        //buffer++;     // Why doesnt this work?
+        /*buffer++;     // Why doesnt this work?*/
     }
     if (l->line_state & (FLAG(LINE_STATE_SINGLE_QUOTE) | FLAG(LINE_STATE_DOUBLE_QUOTE))) {
         fail("Unmatched quote.\n");
@@ -444,14 +455,15 @@ static void resolve_mnemonic_type(Line *line)
         pseudo_op->process(line);
     }
     else {
-        //configuration.arch->parse_instruction(line);
+        /*configuration.arch->parse_instruction(line);*/
 		parse_instruction(line);
     }
 }
 
-static inline const struct instruction_register *instruction_supports_reg(const Instruction *instruction, const Register *reg)
+static INLINE const struct instruction_register *instruction_supports_reg(const Instruction *instruction, const Register *reg)
 {
-	for (const struct instruction_register *ir = instruction->opcodes; ir->reg != NULL; ir++) {
+    const struct instruction_register *ir;
+	for (ir = instruction->opcodes; ir->reg != NULL; ir++) {
 		if (streq(reg->name, ir->reg->name)) {
 			return ir;
 		}
@@ -481,15 +493,16 @@ static void parse_instruction_motorola(Line *l)
 {
 	const char *instr_mnem = NULL;
 	const char *line_mnemonic = NULL;
+	const char *c;
 	const Register *reg = NULL;
 	const struct instruction_register *instruction_reg = NULL;
-	struct LineArg *argcpy = NULL;  // store a copy of the arguments in case processing fails
-    //size_t j;
+	struct LineArg *argcpy = NULL;  /* store a copy of the arguments in case processing fails */
+    size_t j;
+	const Instruction **i;
+    Data *data;
 
-	const Instruction **i = NULL;
-
-	//const MC6x09_Instruction *i = NULL;
-	for (const Instruction **i = configuration.arch->instructions; *i != NULL; i++) {
+	/*const MC6x09_Instruction *i = NULL;*/
+	for (i = configuration.arch->instructions; *i != NULL; i++) {
 		if (!((*i)->architectures & FLAG(configuration.arch->value))) {
 			goto next_instruction;
 		}
@@ -512,11 +525,11 @@ static void parse_instruction_motorola(Line *l)
                 goto instruction_found;
             }
 
-            // check that the two arguments are registers and assign the argument
+            /* check that the two arguments are registers and assign the argument */
             if (l->argc != 2) {
                 goto next_instruction;
             }
-            for (size_t j = 0; j < l->argc; j++) {
+            for (j = 0; j < l->argc; j++) {
                 if (l->argv[j].type != ARG_TYPE_UNPROCESSED) {
                     goto next_instruction;
                 }
@@ -542,7 +555,7 @@ static void parse_instruction_motorola(Line *l)
                     (reg->arcs & FLAG(configuration.arch->value)) &&
                     ((instruction_reg = instruction_supports_reg(*i, reg)) != NULL)) {
                     goto evaluate_args;
-                    //goto instruction_found;
+                    /*goto instruction_found;*/
                 }
             }
             goto next_instruction;
@@ -557,7 +570,7 @@ evaluate_args:
             argcpy = salloc(sizeof(LineArg));
             memcpy(argcpy, l->argv, sizeof(LineArg));
 
-            const char *c = l->argv->val.str;
+            c = l->argv->val.str;
             switch (*c) {
             case '>':
                 l->address_mode = ADDR_MODE_EXTENDED;
@@ -579,7 +592,7 @@ evaluate_args:
                 break;
             }
 
-            printdf("%s\n", c);
+            printdf(("%s\n", c));
             for (; *c != '\0'; c++) {
                 switch (*c) {
                 case ',':
@@ -590,10 +603,10 @@ evaluate_args:
                         fail("Cannot have indexed address mode");
                     }
                     break;
-                //case ''
+                /*case ''*/
                 }
             }
-            //}
+            /*}*/
             goto instruction_found;
             break;
         }
@@ -606,17 +619,17 @@ next_instruction:
 
 instruction_found:
     ;
-	//while (0);
+	/*while (0);*/
 
     prepare_line(l);
 
-	Data *data = init_data(salloc(sizeof(Data)));
+	data = init_data(salloc(sizeof(Data)));
 	/*assembled->next = NULL;
 	assembled->type = DATA_TYPE_NONE;
 	assembled->bytec = 0;
 	assembled->contents.bytes = NULL;*/
-	//process_instruction(l, instruction_reg, reg, assembled);
-	printdf("Instruction Register is %s\n", instruction_reg ? instruction_reg->reg->name : "NONE");
+	/*process_instruction(l, instruction_reg, reg, assembled);*/
+	printdf(("Instruction Register is %s\n", instruction_reg ? instruction_reg->reg->name : "NONE"));
 
 	configuration.arch->process_line(l, instruction_reg, data);
 

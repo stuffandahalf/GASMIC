@@ -20,9 +20,9 @@
 /* test the equality of 2 strings */
 #define streq(__s1, __s2) !strcmp((const char *)(__s1), (const char *)(__s2))
 
-/* print if debug build */
+/* print if debug build *//*
 #ifndef NDEBUG
-/* helper debug printf */
+*//* helper debug printf *//*
 static INLINE int h_printdf(const char *fname, const int linenum, const char *fmt, ...)
 {
     int count = 0;
@@ -35,13 +35,13 @@ static INLINE int h_printdf(const char *fname, const int linenum, const char *fm
     va_end(args);
     return count;
 }
-/*#define printdf(...) h_printdf(__FILE__, __LINE__, __VA_ARGS__)*/
+*//*#define printdf(...) h_printdf(__FILE__, __LINE__, __VA_ARGS__)*//*
 
 #else
 #define printdf(fmt, ...)
-#endif
+#endif*/
 
-// This is to stop clang-tidy from complaining about signed enum types
+/* This is to stop clang-tidy from complaining about signed enum types */
 #define FLAG(f) ((unsigned int)(f))
 
 enum endian {
@@ -54,7 +54,7 @@ enum syntax {
     SYNTAX_UNKNOWN,
     SYNTAX_MOTOROLA,
     SYNTAX_INTEL,
-    SYNTAX_ATT,
+    SYNTAX_ATT
 };
 
 enum arg_order {
@@ -134,6 +134,7 @@ enum address_mode {
 	ADDR_MODE_INTERREGISTER
 };
 
+#define ADDRESS_MODE_COUNT (8)
 typedef struct {
     char mnemonic[MAX_MNEMONIC_LEN];
     uint8_t architectures;
@@ -142,10 +143,10 @@ typedef struct {
         const Register *reg;
         struct {
             enum address_mode mode;
-			uint8_t opcode_size;	// in bytes
+			uint8_t opcode_size;	/* in bytes */
             uint64_t opcode;
         } addressing_modes[10];
-    } opcodes[];
+    } opcodes[ADDRESS_MODE_COUNT];
 } Instruction;
 
 enum arg_type {
@@ -211,7 +212,7 @@ typedef struct {
 typedef struct {
     char *name;
     int value;
-    uint8_t byte_size;  // bits per byte
+    uint8_t byte_size;  /* bits per byte */
     uint8_t bytes_per_address;
     enum endian endianness;
     enum syntax default_syntax;
@@ -244,14 +245,17 @@ void init_address_mask();
 void assemble(Line *l);
 Architecture *str_to_arch(const char arch_name[]);
 
-static inline char *str_to_upper(char str[]) {
-    for (char *c = str; *c != '\0'; c++) {
+static INLINE char *str_to_upper(char str[]) {
+    char *c;
+
+    for (c = str; *c != '\0'; c++) {
         *c = (char)toupper(*c);
     }
     return str;
 }
 
-static inline void fail(const char *msg, ...) {
+static INLINE void fail(const char *msg, ...) {
+    struct context *cntxt;
     va_list args;
     va_start(args, msg);
     printef("[%s:%zu]\t", g_context->fname, g_context->line_num);
@@ -268,7 +272,7 @@ static inline void fail(const char *msg, ...) {
     vfprintf(stderr, msg, args);
     va_end(args);
 
-    for (struct context *cntxt = g_context->parent; cntxt != NULL; cntxt = cntxt->parent) {
+    for (cntxt = g_context->parent; cntxt != NULL; cntxt = cntxt->parent) {
         printef("\tIn file included from \"%s\", line %zu\n", cntxt->fname, cntxt->line_num);
     }
 

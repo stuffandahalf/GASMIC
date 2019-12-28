@@ -1,7 +1,8 @@
 #ifndef GASMIC_GETOPT_H
 #define GASMIC_GETOPT_H
 
-#include <stdbool.h>
+/*#include <stdbool.h>*/
+#include <lang.h>
 #include <string.h>
 
 typedef struct {

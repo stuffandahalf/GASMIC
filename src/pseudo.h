@@ -4,7 +4,7 @@
 #include <as.h>
 
 struct pseudo_instruction {
-    //char instruction[10];
+    /*char instruction[10];*/
     char *instruction;
     void (*process)(Line *line);
     short int args;

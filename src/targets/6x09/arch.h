@@ -47,7 +47,7 @@ typedef enum {
     HD6309_REG_MD
 } mc6x09_register_t;
 
-//extern size_t address;
+/*extern size_t address;*/
 
 extern Architecture *ARCH_MC6809;
 extern Architecture *ARCH_HD6309;

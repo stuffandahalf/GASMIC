@@ -35,7 +35,11 @@ int init_data_table()
  */
 char *resolve_symbol(char *symbol)
 {
+    size_t parent_len, local_len;
+    char *symbol_ptr;
     char *complete_symbol = NULL;
+    char *c;
+
     if (*symbol != '.') {
         complete_symbol = salloc(sizeof(char) * (strlen(symbol) + 1));
         strcpy(complete_symbol, symbol);
@@ -47,19 +51,19 @@ char *resolve_symbol(char *symbol)
         fail("Local label cannot be defined before any non-local labels.\n");
     }
 
-    size_t parent_len = strlen(symtab->last_parent->label);
-    size_t local_len = strlen(symbol);
+    parent_len = strlen(symtab->last_parent->label);
+    local_len = strlen(symbol);
     complete_symbol = salloc(sizeof(char) * (parent_len + local_len + 1));
 
-    char *symbol_ptr = complete_symbol;
-    for (char *c = symtab->last_parent->label; *c != '\0'; c++) {
+    symbol_ptr = complete_symbol;
+    for (c = symtab->last_parent->label; *c != '\0'; c++) {
         *symbol_ptr++ = *c;
     }
-    for (char *c = symbol; *c != '\0'; c++) {
+    for (c = symbol; *c != '\0'; c++) {
         *symbol_ptr++ = *c;
     }
     *symbol_ptr = '\0';
-    printdf("Symbol \"%s\" resolved to \"%s\"\n", symbol, complete_symbol);
+    printdf(("Symbol \"%s\" resolved to \"%s\"\n", symbol, complete_symbol));
 
     return complete_symbol;
 }
@@ -67,6 +71,8 @@ char *resolve_symbol(char *symbol)
 
 void add_label(Line *line)
 {
+    Symbol *test_sym;
+
     Symbol *sym = salloc(sizeof(Symbol));
 
     sym->next = NULL;
@@ -104,11 +110,11 @@ void add_label(Line *line)
         symtab->last_parent = sym;
     }*/
 
-    //printdf("Parsed label = %s\n", sym->label);
+    /*printdf("Parsed label = %s\n", sym->label);*/
 
     sym->value = address;
 
-    for (Symbol *test_sym = symtab->first; test_sym != NULL; test_sym = test_sym->next) {
+    for (test_sym = symtab->first; test_sym != NULL; test_sym = test_sym->next) {
         if (streq(test_sym->label, sym->label)) {
             fail("Symbol \"%s\" is already defined.\n", test_sym->label);
         }
@@ -134,6 +140,8 @@ Data *init_data(Data *data)
 
 void add_data(Data *data)
 {
+    Data *next;
+
     if (datatab->first == NULL) {
         datatab->first = data;
     }
@@ -141,7 +149,7 @@ void add_data(Data *data)
         datatab->last->next = data;
     }
     datatab->last = data;
-    Data *next = datatab->last->next;
+    next = datatab->last->next;
     while (next != NULL) {
         datatab->last = next;
         next = next->next;
@@ -150,14 +158,17 @@ void add_data(Data *data)
 
 void prepare_line(Line *line)
 {
-    for (size_t i = 0; i < line->argc; i++) {
+    size_t i;
+    struct token *tok;
+
+    for (i = 0; i < line->argc; i++) {
         if (line->argv[i].type == ARG_TYPE_UNPROCESSED) {
             line->argv[i].type = ARG_TYPE_EXPRESSION;
             line->argv[i].val.rpn_expr = parse_expression(line->argv[i].val.str);
             if (arithmetic_status_code != ARITHMETIC_SUCCESS) {
                 fail("Failed to parse expression.");
             }
-            for (struct token *tok = line->argv[i].val.rpn_expr; tok != NULL; tok = tok->next) {
+            for (tok = line->argv[i].val.rpn_expr; tok != NULL; tok = tok->next) {
                 if (tok->type == TOKEN_TYPE_SYMBOL && tok->value.symbol[0] == '.') {
                     size_t parent_size = strlen(symtab->last_parent->label);
                     size_t child_size = strlen(tok->value.symbol);
