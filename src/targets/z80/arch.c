@@ -1,6 +1,7 @@
 #include <targets/z80/arch.h>
 
 Architecture *ARCH_Z80;
+Architecture *ARCH_I8080;
 
 static const Register registers[] = {
     { "A", 1, Z80 },
@@ -72,4 +73,14 @@ void Z80_init(void)
 void Z80_destroy(void)
 {
     sfree(ARCH_Z80);
+}
+
+void I8080_init(void)
+{
+    fail("I8080 architecture is not ready yet.");
+    ARCH_I8080 = salloc(sizeof(Architecture));
+}
+void I8080_destroy(void)
+{
+    sfree(ARCH_I8080);
 }

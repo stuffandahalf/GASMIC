@@ -11,6 +11,7 @@
     INIT_TARGET(MC6809); \
     INIT_TARGET(HD6309); \
     INIT_TARGET(Z80); \
+    /*INIT_TARGET(I8080);*/ \
     /*INIT_TARGET(MOS6502);*/ \
 }
 #define DESTROY_TARGET(target) target##_destroy()
@@ -18,9 +19,10 @@
     DESTROY_TARGET(MC6809); \
     DESTROY_TARGET(HD6309); \
     DESTROY_TARGET(Z80); \
+    /*DESTROY_TARGET(I8080);*/ \
     /*DESTROY_TARGET(MOS6502);*/ \
 }
-#define TARGETS &ARCH_MC6809, &ARCH_HD6309, &ARCH_Z80, /*&ARCH_MOS6502,*/ NULL
+#define TARGETS &ARCH_MC6809, &ARCH_HD6309, &ARCH_Z80, /*&ARCH_I8080,*/ /*&ARCH_MOS6502,*/ NULL
 
 //extern Architecture **architectures[];
 

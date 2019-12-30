@@ -10,6 +10,7 @@
 #include <pseudo.h>
 #include <util.h>
 #include <arithmetic.h>
+#include "as.h"
 
 #define LINEBUFFERSIZE (256)
 char buffer[LINEBUFFERSIZE];
@@ -19,9 +20,9 @@ static int configure(int argc, char *argv[]);
 static void parse_line(Line *l, char *buffer);
 static void resolve_mnemonic_type(Line *l);
 static void set_syntax_parser();
-static void parse_instruction_motorola(Line *l);
-static void parse_instruction_att(Line *l);
-static void parse_instruction_intel(Line *l);
+static void prepare_line_motorola(Line *l);
+static void prepare_line_att(Line *l);
+static void prepare_line_intel(Line *l);
 
 Config configuration;
 struct context *g_context;
@@ -37,16 +38,6 @@ Architecture **architectures[] = { TARGETS };
 
 int main(int argc, char **argv)
 {
-#if 0
-    //struct token *rpn_expr = parse_expression("1 *(2 +3)");
-    struct token *rpn_expr = parse_expression("(_start * 3) + tmp");
-    //struct token *rpn_expr = parse_expression("(_start * 3 + tmp");
-    print_token_list(rpn_expr);
-    printf("%d\n", arithmetic_status_code);
-    free_token_chain(rpn_expr);
-    return 0;
-#endif
-
     INIT_TARGETS();
 
     //FILE *in;
@@ -120,7 +111,7 @@ int main(int argc, char **argv)
     //sfree(symtab->first->label);
     sfree(symtab);
     symtab = NULL;
-    sym = NULL;
+    //sym = NULL;
 
     printdf("DATATAB\n");
     Data *data = datatab->first;
@@ -241,7 +232,7 @@ static int configure(int argc, char *argv[])
     while ((c = getopt(argc, argv, "hm:o:f:")) != -1) {
         switch (c) {
         case 'm':	// architecture
-            configuration.arch = str_to_arch(optarg);
+            configuration.arch = find_arch(optarg);
             if (configuration.arch == NULL) {
                 //free(configuration.out_fname);
                 die("Unsupported architecture: %s\n", optarg);
@@ -271,16 +262,6 @@ static int configure(int argc, char *argv[])
     configuration.in_fnamec = argc - optind;
 
     return 1;
-}
-
-Architecture *str_to_arch(const char arch_name[])
-{
-    for (Architecture ***a = architectures; *a != NULL; a++) {
-        if (streq(arch_name, (**a)->name)) {
-            return **a;
-        }
-    }
-    return NULL;
 }
 
 static void parse_line(Line *l, char *buffer)
@@ -364,7 +345,8 @@ static void parse_line(Line *l, char *buffer)
             }
             /*LineArg **/la = &(l->argv[l->argc++]);
             la->type = arg_type;
-            la->state = ARG_STATE_CLEAR;
+            //la->state = ARG_STATE_CLEAR;
+            //la->addr_mode = ADDR_MODE_INVALID;
             la->val.str = buffer;
             *c = '\0';
             buffer = c;
@@ -462,173 +444,348 @@ static void set_syntax_parser()
 {
     switch (configuration.syntax) {
     case SYNTAX_MOTOROLA:
-        parse_instruction = &parse_instruction_motorola;
+        parse_instruction = &prepare_line_motorola;
         break;
     case SYNTAX_ATT:
         fail("AT&T instruction syntax is not yet implemented.\n");
-        parse_instruction = &parse_instruction_att;
+        parse_instruction = &prepare_line_att;
         break;
     case SYNTAX_INTEL:
         fail("Intel instruction syntax is not yet implemented.\n");
-        parse_instruction = &parse_instruction_intel;
+        parse_instruction = &prepare_line_intel;
         break;
     case SYNTAX_UNKNOWN:
         fail("Unrecognized syntax.\n");
     }
 }
 
-static void parse_instruction_motorola(Line *l)
+static void prepare_line_motorola(Line *l)
 {
-	const char *instr_mnem = NULL;
+	/*const char *instr_mnem = NULL;
 	const char *line_mnemonic = NULL;
 	const Register *reg = NULL;
 	const struct instruction_register *instruction_reg = NULL;
 	struct LineArg *argcpy = NULL;  // store a copy of the arguments in case processing fails
-    //size_t j;
+    //size_t j;*/
 
-	const Instruction **i = NULL;
+	//char *unified_arg_str;
+
+	size_t arg_len = 0;
+	for (unsigned int i = 0; i < l->argc; i++) {
+	    if (l->argv[i].type != ARG_TYPE_UNPROCESSED) {
+	        fail("Instructions should not have complex arguments.\n");
+	    }
+	    arg_len += strlen(l->argv[i].val.str);
+	}
+	arg_len += l->argc - 1;
+	arg_len++;
+
+	char *unified_arg_str = salloc(sizeof(char) * arg_len);
+
+	//char *c = unified_arg_str;
+	char *buffer_ptr = unified_arg_str;
+	for (unsigned int i = 0; i < l->argc; i++) {
+	    if (i) {
+	        *buffer_ptr++ = ',';
+	    }
+        for (char *c = l->argv[i].val.str; *c != '\0'; c++) {
+            *buffer_ptr++ = *c;
+        }
+	}
+	*buffer_ptr = '\0';
+
+	l->argc = 1;
+	LineArg *la = &l->argv[0];
+	la->val.str = unified_arg_str;
+	la->type = ARG_TYPE_UNPROCESSED;
+
+    char *arg_dup;
+    const Register *reg;
+        // first try to figure out what kind of forced argument this is
+    char *c = la->val.str;
+    //la->val.str = NULL;
+    char *tmp_c;
+    switch (*c) {
+    case '#':
+        l->address_mode |= FLAG(ADDR_MODE_IMMEDIATE);
+        c++;
+        break;
+    case '>':
+        l->address_mode |= FLAG(ADDR_MODE_EXTENDED);
+        c++;
+        break;
+    case '<':
+        l->address_mode |= FLAG(ADDR_MODE_DIRECT);
+        c++;
+        break;
+    case '[':
+        l->address_mode |= FLAG(ADDR_MODE_INDIRECT);
+        c++;
+        for (tmp_c = c; *tmp_c != '\0' && *tmp_c != ']'; tmp_c++);
+        if (*tmp_c == '\0') {
+            fail("Unterminated bracket for indirect addressing.\n");
+        }
+        *tmp_c = '\0';
+        tmp_c++;
+        while(*tmp_c == ' ' || *tmp_c == '\t') {
+            tmp_c++;
+        }
+        if (*tmp_c != ',' && *tmp_c != '\0') {
+            fail("Unexpected characters after indirect argument.\n");
+        }
+        break;
+    default:
+        break;
+    }
+
+    la->val.str = c;
+    buffer_ptr = c;
+    while (*c != '\0') {
+        switch (*c) {
+        case ',':
+            if (la->type == ARG_TYPE_INDEX_CONSTANT || la->type == ARG_TYPE_INDEX_REGISTER) {
+                fail("Malformed indexed expression.\n");
+            }
+
+            *c = '\0';
+            l->address_mode |= FLAG(ADDR_MODE_INDEXED);
+            if ((arg_dup = strdup(buffer_ptr)) == NULL) {
+                die("Failed to allocate temporary argument buffer string.\n");
+            }
+            if (buffer_ptr == c) {
+                la->type = ARG_TYPE_INDEX_CONSTANT;
+                la->val.indexed.offset.expression = parse_expression("0");
+            }
+            else if ((reg = find_reg(str_to_upper(arg_dup))) != NULL) {
+                la->type = ARG_TYPE_INDEX_REGISTER;
+                la->val.indexed.offset.reg = reg;
+            }
+            free(arg_dup);
+            break;
+        case '\0':
+            if (la->type == ARG_TYPE_INDEX_CONSTANT || la->type == ARG_TYPE_INDEX_REGISTER) {
+                if ((arg_dup = strdup(buffer_ptr)) == NULL) {
+                    die("Failed to allocate temporary argument buffer string.\n");
+                }
+                reg = find_reg(str_to_upper(arg_dup));
+                free(arg_dup);
+                if (reg == NULL) {
+                    fail("Indexed address base register not found");
+                }
+                la->val.indexed.base = reg;
+            }
+            else {
+
+            }
+            break;
+        }
+
+        /*if (*c == ',' || *c == '\0') {
+            if (*c == ',') {
+                *c = '\0';
+                l->address_mode |= FLAG(ADDR_MODE_INDEXED);
+                switch (la->type) {
+                case ARG_TYPE_REGISTER:
+                    la->val.indexed.offset.reg = la->val.reg;
+                    break;
+                case ARG_TYPE_EXPRESSION:
+                    la->val.indexed.offset.expression = la->val.rpn_expr;
+                    break;
+                case ARG_TYPE_UNPROCESSED:
+                default:
+                    fail("Pls explain.\n");
+                    break;
+                }
+                if (la->type == ARG_TYPE_REGISTER) {
+                    la->val.indexed.offset.reg = la->val.reg;
+                }
+            }
+
+            if ((arg_dup = strdup(buffer_ptr)) == NULL) {
+                fail("Failed to duplicate argument string.\n");
+            }
+            if (buffer_ptr == c) {
+                la->val.indexed.offset.expression = parse_expression("0");
+            }
+            else if ((reg = find_reg(str_to_upper(arg_dup))) != NULL) {
+                if (la->val.reg != NULL) {
+                    la->val.reg = reg;
+                }
+                else {
+                    la->val.indexed.base = reg;
+                }
+            }
+            else {
+                la->val.rpn_expr = parse_expression(buffer_ptr);
+            }
+            free(arg_dup);
+            buffer_ptr = c;
+            buffer_ptr++;
+        }*/
+        c++;
+    }
+    /*for (char *c = la->val.str; *c != '\0'; c++) {
+        if (*c == ',') {
+            *c = '\0';
+            c++;
+            la->addr_mode |= FLAG(ADDR_MODE_INDEXED);
+        }
+    }*/
+    //}
+
+	//const Instruction **i = NULL;
 
 	//const MC6x09_Instruction *i = NULL;
-	for (const Instruction **i = configuration.arch->instructions; *i != NULL; i++) {
-		if (!((*i)->architectures & FLAG(configuration.arch->value))) {
-			goto next_instruction;
-		}
-        instr_mnem = (*i)->mnemonic;
-        line_mnemonic = l->mnemonic;
-        while (*instr_mnem != '\0' && *line_mnemonic != '\0') {
-            if (*instr_mnem++ != *line_mnemonic++) {
-                goto next_instruction;
-            }
-        }
-
-        switch ((*i)->arg_order) {
-        case ARG_ORDER_NONE:
-        case ARG_ORDER_INTERREG:
-            if (*line_mnemonic != '\0') {
-                goto next_instruction;
-            }
-            if ((*i)->arg_order == ARG_ORDER_NONE) {
-                l->address_mode = ADDR_MODE_INHERENT;
-                goto instruction_found;
-            }
-
-            // check that the two arguments are registers and assign the argument
-            if (l->argc != 2) {
-                goto next_instruction;
-            }
-            for (size_t j = 0; j < l->argc; j++) {
-                if (l->argv[j].type != ARG_TYPE_UNPROCESSED) {
-                    goto next_instruction;
-                }
-                for (reg = &(configuration.arch->registers[1]); reg->name[0] != '\0'; reg++) {
-                    if (streq(l->argv[j].val.str, reg->name)) {
-                        l->argv[j].type = ARG_TYPE_REGISTER;
-                        l->argv[j].val.indexed.reg = reg;
-                        break;
-                    }
-                }
-                if (l->argv[j].type != ARG_TYPE_REGISTER) {
-                    goto next_instruction;
-                }
-            }
-            l->address_mode = ADDR_MODE_INTERREGISTER;
-            goto instruction_found;
-
-            break;
-        case ARG_ORDER_FROM_REG:
-        case ARG_ORDER_TO_REG:
-            for (reg = &(configuration.arch->registers[1]); reg->name[0] != '\0'; reg++) {
-                if (streq(line_mnemonic, reg->name) &&
-                    (reg->arcs & FLAG(configuration.arch->value)) &&
-                    ((instruction_reg = instruction_supports_reg(*i, reg)) != NULL)) {
-                    goto evaluate_args;
-                    //goto instruction_found;
-                }
-            }
-            goto next_instruction;
-
-evaluate_args:
-            if (l->argc < 1) {
-                goto next_instruction;
-            }
-            if (l->argv->type != ARG_TYPE_UNPROCESSED) {
-                goto next_instruction;
-            }
-            argcpy = salloc(sizeof(LineArg));
-            memcpy(argcpy, l->argv, sizeof(LineArg));
-
-            const char *c = l->argv->val.str;
-            switch (*c) {
-            case '>':
-                l->address_mode = ADDR_MODE_EXTENDED;
-                c++;
-                break;
-            case '<':
-                l->address_mode = ADDR_MODE_DIRECT;
-                c++;
-                break;
-            case '#':
-                l->address_mode = ADDR_MODE_IMMEDIATE;
-                c++;
-                break;
-            /*case ',':
-                l->address_mode = ADDR_MODE_INDEXED;
-                c++;
-                break;*/
-            default:
-                break;
-            }
-
-            printdf("%s\n", c);
-            for (; *c != '\0'; c++) {
-                switch (*c) {
-                case ',':
-                    if (l->address_mode == ADDR_MODE_INDIRECT) {
-
-                    }
-                    if (l->address_mode != ADDR_MODE_INVALID) {
-                        fail("Cannot have indexed address mode");
-                    }
-                    break;
-                //case ''
-                }
-            }
-            //}
-            goto instruction_found;
-            break;
-        }
-
-next_instruction:
-		continue;
-	}
-
-	fail("Instruction not found.\n");
-
-instruction_found:
-    ;
-	//while (0);
-
-    prepare_line(l);
-
-	Data *data = init_data(salloc(sizeof(Data)));
-	/*assembled->next = NULL;
-	assembled->type = DATA_TYPE_NONE;
-	assembled->bytec = 0;
-	assembled->contents.bytes = NULL;*/
-	//process_instruction(l, instruction_reg, reg, assembled);
-	printdf("Instruction Register is %s\n", instruction_reg ? instruction_reg->reg->name : "NONE");
-
-	configuration.arch->process_line(l, instruction_reg, data);
-
-	add_data(data);
+//	for (const Instruction **i = configuration.arch->instructions; *i != NULL; i++) {
+//		if (!((*i)->architectures & FLAG(configuration.arch->value))) {
+//			goto next_instruction;
+//		}
+//        instr_mnem = (*i)->mnemonic;
+//        line_mnemonic = l->mnemonic;
+//        while (*instr_mnem != '\0' && *line_mnemonic != '\0') {
+//            if (*instr_mnem++ != *line_mnemonic++) {
+//                goto next_instruction;
+//            }
+//        }
+//
+//        switch ((*i)->arg_order) {
+//        case ARG_ORDER_NONE:
+//        case ARG_ORDER_INTERREG:
+//            if (*line_mnemonic != '\0') {
+//                goto next_instruction;
+//            }
+//            if ((*i)->arg_order == ARG_ORDER_NONE) {
+//                l->address_mode = ADDR_MODE_INHERENT;
+//                goto instruction_found;
+//            }
+//
+//            // check that the two arguments are registers and assign the argument
+//            if (l->argc != 2) {
+//                goto next_instruction;
+//            }
+//            for (size_t j = 0; j < l->argc; j++) {
+//                if (l->argv[j].type != ARG_TYPE_UNPROCESSED) {
+//                    goto next_instruction;
+//                }
+//                for (reg = &(configuration.arch->registers[1]); reg->name[0] != '\0'; reg++) {
+//                    if (streq(l->argv[j].val.str, reg->name)) {
+//                        l->argv[j].type = ARG_TYPE_REGISTER;
+//                        l->argv[j].val.indexed.base = reg;
+//                        break;
+//                    }
+//                }
+//                if (l->argv[j].type != ARG_TYPE_REGISTER) {
+//                    goto next_instruction;
+//                }
+//            }
+//            l->address_mode = ADDR_MODE_INTERREGISTER;
+//            goto instruction_found;
+//
+//            break;
+//        case ARG_ORDER_FROM_REG:
+//        case ARG_ORDER_TO_REG:
+//            for (reg = &(configuration.arch->registers[1]); reg->name[0] != '\0'; reg++) {
+//                if (streq(line_mnemonic, reg->name) &&
+//                    (reg->arcs & FLAG(configuration.arch->value)) &&
+//                    ((instruction_reg = instruction_supports_reg(*i, reg)) != NULL)) {
+//                    goto evaluate_args;
+//                    //goto instruction_found;
+//                }
+//            }
+//            goto next_instruction;
+//
+//evaluate_args:
+//            if (l->argc < 1) {
+//                goto next_instruction;
+//            }
+//            if (l->argv->type != ARG_TYPE_UNPROCESSED) {
+//                goto next_instruction;
+//            }
+//            argcpy = salloc(sizeof(LineArg));
+//            memcpy(argcpy, l->argv, sizeof(LineArg));
+//
+//            char *c = l->argv->val.str;
+//            char *tmp;
+//            switch (*c) {
+//            case '>':
+//                l->address_mode |= FLAG(ADDR_MODE_EXTENDED);
+//                c++;
+//                break;
+//            case '<':
+//                l->address_mode |= FLAG(ADDR_MODE_DIRECT);
+//                c++;
+//                break;
+//            case '#':
+//                l->address_mode |= FLAG(ADDR_MODE_IMMEDIATE);
+//                c++;
+//                break;
+//            case '[':
+//                l->address_mode |= FLAG(ADDR_MODE_INDIRECT);
+//                c++;
+//                for (tmp = c; *tmp != '\0' && *tmp != ']'; tmp++);
+//                if (*tmp == '\0') {
+//                    fail("Missing terminating ']' character for indirect addressing mode.\n");
+//                }
+//
+//                break;
+//            /*case ',':
+//                l->address_mode = ADDR_MODE_INDEXED;
+//                c++;
+//                break;*/
+//            default:
+//                break;
+//            }
+//
+//            printdf("%s\n", c);
+//            for (; *c != '\0'; c++) {
+//                switch (*c) {
+//                case ',':
+//                    if (l->address_mode == ADDR_MODE_INDIRECT) {
+//
+//                    }
+//                    if (l->address_mode != ADDR_MODE_INVALID) {
+//                        fail("Cannot have indexed address mode");
+//                    }
+//                    break;
+//                //case ''
+//                }
+//            }
+//            //}
+//            goto instruction_found;
+//            break;
+//        }
+//
+//next_instruction:
+//		continue;
+//	}
+//
+//	fail("Instruction not found.\n");
+//
+//instruction_found:
+//    ;
+//	//while (0);
+//
+//    prepare_line(l);
+//
+//	Data *data = init_data(salloc(sizeof(Data)));
+//	/*assembled->next = NULL;
+//	assembled->type = DATA_TYPE_NONE;
+//	assembled->bytec = 0;
+//	assembled->contents.bytes = NULL;*/
+//	//process_instruction(l, instruction_reg, reg, assembled);
+//	printdf("Instruction Register is %s\n", instruction_reg ? instruction_reg->reg->name : "NONE");
+//
+//	configuration.arch->process_line(l, instruction_reg, data);
+//
+//	add_data(data);
 }
 
-static void parse_instruction_att(Line *l)
+static void prepare_line_att(Line *l)
 {
 
 }
 
-static void parse_instruction_intel(Line *l)
+static void prepare_line_intel(Line *l)
 {
 
 }

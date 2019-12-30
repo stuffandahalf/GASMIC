@@ -2,6 +2,8 @@
 #include <arithmetic.h>
 #include "arithmetic.h"
 
+extern Architecture **architectures[];
+
 SymTab *symtab;
 DataTab *datatab;
 
@@ -150,6 +152,7 @@ void add_data(Data *data)
 
 void prepare_line(Line *line)
 {
+#if 1
     for (size_t i = 0; i < line->argc; i++) {
         if (line->argv[i].type == ARG_TYPE_UNPROCESSED) {
             line->argv[i].type = ARG_TYPE_EXPRESSION;
@@ -174,6 +177,7 @@ void prepare_line(Line *line)
             }
         }
     }
+#endif
 }
 
 char *strdup(const char *src)
@@ -184,4 +188,31 @@ char *strdup(const char *src)
     }
     strcpy(new, src);
     return new;
+}
+
+char *str_to_upper(char str[]) {
+    for (char *c = str; *c != '\0'; c++) {
+        *c = (char)toupper(*c);
+    }
+    return str;
+}
+
+const Architecture *find_arch(const char *arch_name)
+{
+    for (Architecture ***a = architectures; *a != NULL; a++) {
+        if (streq(arch_name, (**a)->name)) {
+            return **a;
+        }
+    }
+    return NULL;
+}
+
+const Register *find_reg(const char *name)
+{
+    for (const Register *r = configuration.arch->registers; *r->name != '\0'; r++) {
+        if (streq(name, r->name)) {
+            return r;
+        }
+    }
+    return NULL;
 }

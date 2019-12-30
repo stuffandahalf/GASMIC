@@ -81,7 +81,7 @@ static void pseudo_set_arch(Line *line)
         fail("Cannot switch architecture after code.\n");
     }
 
-    Architecture *arch = str_to_arch(line->argv[0].val.str);
+    const Architecture *arch = find_arch(line->argv[0].val.str);
     if (arch == NULL) {
         fail("Failed to locate architecture %s.\n", line->argv[0].val.str);
     }
