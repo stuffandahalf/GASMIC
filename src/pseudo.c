@@ -113,8 +113,7 @@ static void pseudo_set_file(Line *line)
             data->bytec = strlen((line)->argv[i].val.str); \
             data->contents.bytes = salloc(sizeof(char) * data->bytec); \
             memcpy(data->contents.bytes, (line)->argv[i].val.str, data->bytec); \
-        } \
-        else { \
+        } else { \
             data->type = DATA_TYPE_EXPRESSION; \
             data->bytec = sizeof(T); \
             data->contents.rpn_expr = (line)->argv[i].val.rpn_expr; \
@@ -264,8 +263,7 @@ static void pseudo_org(Line *line)
     if (*lend == '\0') {
         printdf("new address is 0xzX\n", new_address);
         address = new_address;
-    }
-    else {
+    } else {
         fail("Value is not a number.\n");
     }
 }

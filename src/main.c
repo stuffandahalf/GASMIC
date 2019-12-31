@@ -72,16 +72,14 @@ int main(int argc, char **argv)
 
     if (configuration.in_fnamec < 0) {
         die("Invalid number of command line arguments.\n");
-    }
-    else if (configuration.in_fnamec == 0) {
+    } else if (configuration.in_fnamec == 0) {
         if ((init_cntxt.fname = saquire(strdup("stdin"))) == NULL) {
             die("Failed to duplicate file name \"stdin\"\n");
         }
         init_cntxt.fptr = stdin;
         assemble(l);
         sfree(init_cntxt.fname);
-    }
-    else {
+    } else {
         for (size_t i = 0; i < configuration.in_fnamec; i++) {
             if ((init_cntxt.fname = saquire(strdup(configuration.in_fnames[i]))) == NULL) {
                 die("Failed to duplicate file name \"%s\"\n", configuration.in_fnames[i]);
@@ -273,32 +271,28 @@ static void parse_line(Line *l, char *buffer)
         case '"':
             if (l->line_state & FLAG(LINE_STATE_SINGLE_QUOTE)) {
                 break;
-            }
-            else if (!(l->line_state & FLAG(LINE_STATE_DOUBLE_QUOTE)) && c != buffer) {
+            } else if (!(l->line_state & FLAG(LINE_STATE_DOUBLE_QUOTE)) && c != buffer) {
                 fail("Quotes must occur at the beginning of a field.\n");
             }
             l->line_state ^= FLAG(LINE_STATE_DOUBLE_QUOTE);
             if (l->line_state & FLAG(LINE_STATE_DOUBLE_QUOTE)) {
                 arg_type = ARG_TYPE_STRING;
                 buffer++;
-            }
-            else {
+            } else {
                 *c = '\0';
             }
             break;
         case '\'':
             if (l->line_state & FLAG(LINE_STATE_DOUBLE_QUOTE)) {
                 break;
-            }
-            else if (!(l->line_state & FLAG(LINE_STATE_SINGLE_QUOTE)) && c != buffer) {
+            } else if (!(l->line_state & FLAG(LINE_STATE_SINGLE_QUOTE)) && c != buffer) {
                 fail("Quotes must occur at the beginning of a field.\n");
             }
             l->line_state ^= FLAG(LINE_STATE_SINGLE_QUOTE);
             if (l->line_state & FLAG(LINE_STATE_SINGLE_QUOTE)) {
                 arg_type = ARG_TYPE_STRING;
                 buffer++;
-            }
-            else {
+            } else {
                 *c = '\0';
             }
             break;
@@ -364,8 +358,7 @@ static void parse_line(Line *l, char *buffer)
                 buffer = c;
                 buffer++;
                 l->line_state |= FLAG(LINE_STATE_MNEMONIC);
-            }
-            else {
+            } else {
                 if (l->argc == l->arg_buf_size) {
                     l->arg_buf_size += 2;
                     l->argv = srealloc(l->argv, sizeof(LineArg) * l->arg_buf_size);
@@ -382,11 +375,9 @@ static void parse_line(Line *l, char *buffer)
         case ':':
             if (l->line_state & FLAG(LINE_STATE_LABEL)) {
                 fail("Invalid label.\n");
-            }
-            else if (l->line_state & FLAG(LINE_STATE_MNEMONIC)) {
+            } else if (l->line_state & FLAG(LINE_STATE_MNEMONIC)) {
                 fail("Label must occur at the beginning of a line.\n");
-            }
-            else if (arg_type == ARG_TYPE_STRING) {
+            } else if (arg_type == ARG_TYPE_STRING) {
                 fail("Label cannot be a string literal.\n");
             }
             l->label = buffer;
@@ -416,16 +407,13 @@ static void resolve_mnemonic_type(Line *line)
 
     if (line->mnemonic[0] == '\0') {
         return;
-    }
-    else if (line->mnemonic[0] == '.') {
+    } else if (line->mnemonic[0] == '.') {
         prepare_line(line);
         parse_pseudo_op(line);
-    }
-    else if ((pseudo_op = get_pseudo_op(line)) != NULL) {
+    } else if ((pseudo_op = get_pseudo_op(line)) != NULL) {
         prepare_line(line);
         pseudo_op->process(line);
-    }
-    else {
+    } else {
         //configuration.arch->parse_instruction(line);
 		parse_instruction(line);
     }
@@ -440,6 +428,7 @@ static inline const struct instruction_register *instruction_supports_reg(const 
 	}
 	return NULL;
 }
+
 static void set_syntax_parser()
 {
     switch (configuration.syntax) {
@@ -500,6 +489,7 @@ static void prepare_line_motorola(Line *l)
 	la->type = ARG_TYPE_UNPROCESSED;
 
     char *arg_dup;
+    char *reg_name;
     const Register *reg;
         // first try to figure out what kind of forced argument this is
     char *c = la->val.str;
@@ -540,45 +530,117 @@ static void prepare_line_motorola(Line *l)
 
     la->val.str = c;
     buffer_ptr = c;
-    while (*c != '\0') {
+    struct {
+        enum arg_type type;
+        union {
+            const Register *reg;
+            struct token *expr;
+        } val;
+    } arg_part = {
+        ARG_TYPE_UNPROCESSED,
+        NULL
+    };
+
+    bool end = false;
+    while (!end) {
         switch (*c) {
-        case ',':
-            if (la->type == ARG_TYPE_INDEX_CONSTANT || la->type == ARG_TYPE_INDEX_REGISTER) {
-                fail("Malformed indexed expression.\n");
-            }
-
-            *c = '\0';
-            l->address_mode |= FLAG(ADDR_MODE_INDEXED);
-            if ((arg_dup = strdup(buffer_ptr)) == NULL) {
-                die("Failed to allocate temporary argument buffer string.\n");
-            }
+        case ' ':
+        case '\t':
             if (buffer_ptr == c) {
-                la->type = ARG_TYPE_INDEX_CONSTANT;
-                la->val.indexed.offset.expression = parse_expression("0");
+                buffer_ptr++;
             }
-            else if ((reg = find_reg(str_to_upper(arg_dup))) != NULL) {
-                la->type = ARG_TYPE_INDEX_REGISTER;
-                la->val.indexed.offset.reg = reg;
-            }
-            free(arg_dup);
             break;
+        case ',':
         case '\0':
-            if (la->type == ARG_TYPE_INDEX_CONSTANT || la->type == ARG_TYPE_INDEX_REGISTER) {
-                if ((arg_dup = strdup(buffer_ptr)) == NULL) {
-                    die("Failed to allocate temporary argument buffer string.\n");
-                }
-                reg = find_reg(str_to_upper(arg_dup));
-                free(arg_dup);
-                if (reg == NULL) {
-                    fail("Indexed address base register not found");
-                }
-                la->val.indexed.base = reg;
+            if (*c == '\0') {
+                end = true;
+            } else {
+                *c = '\0';
             }
-            else {
 
+            arg_dup = strdup(buffer_ptr);
+            if (arg_dup == NULL) {
+                die("Failed to allocate new buffer for argument piece.\n");
             }
+            arg_dup = str_trim(arg_dup);
+
+            reg_name = strdup(arg_dup);
+            if (reg_name == NULL) {
+                die("Failed to allocate new buffer for register name.\n");
+            }
+            reg_name = str_to_upper(reg_name);
+
+            if (*arg_dup == '\0') {
+                arg_part.type = ARG_TYPE_EXPRESSION;
+                arg_part.val.expr = parse_expression("0");
+            } else if ((reg = find_reg(reg_name)) != NULL) {
+                arg_part.type = ARG_TYPE_REGISTER;
+                arg_part.val.reg = reg;
+            } else {
+                arg_part.type = ARG_TYPE_EXPRESSION;
+                arg_part.val.expr = parse_expression(arg_dup);
+            }
+
+            free(reg_name);
+            free(arg_dup);
+
+            if (!end) { // not last argument
+                // not last argument, check if indexed, handle appropriately
+            } else {
+                // last argument, check if arg type is indexed
+            }
+
             break;
         }
+
+        c++;
+    }
+//    while (*c != '\0') {
+//        if (*c == '\0' || *c == ',') {
+//
+//        }
+//
+//        switch (*c) {
+//        case ',':
+//            if (la->type == ARG_TYPE_INDEX_CONSTANT || la->type == ARG_TYPE_INDEX_REGISTER) {
+//                fail("Malformed indexed expression.\n");
+//            }
+//
+//            *c = '\0';
+//            l->address_mode |= FLAG(ADDR_MODE_INDEXED);
+//            if ((arg_dup = strdup(buffer_ptr)) == NULL) {
+//                die("Failed to allocate temporary argument buffer string.\n");
+//            }
+//            if (buffer_ptr == c) {
+//                la->type = ARG_TYPE_INDEX_CONSTANT;
+//                la->val.indexed.offset.expression = parse_expression("0");
+//            }
+//            else if ((reg = find_reg(str_to_upper(arg_dup))) != NULL) {
+//                la->type = ARG_TYPE_INDEX_REGISTER;
+//                la->val.indexed.offset.reg = reg;
+//            }
+//            free(arg_dup);
+//            break;
+//        case '\0':
+//            if (la->type == ARG_TYPE_INDEX_CONSTANT || la->type == ARG_TYPE_INDEX_REGISTER) {
+//                if ((arg_dup = strdup(buffer_ptr)) == NULL) {
+//                    die("Failed to allocate temporary argument buffer string.\n");
+//                }
+//                reg = find_reg(str_to_upper(arg_dup));
+//                free(arg_dup);
+//                if (reg == NULL) {
+//                    fail("Indexed address base register not found");
+//                }
+//                la->val.indexed.base = reg;
+//            }
+//            else {
+//                if ((arg_dup = strdup(buffer_ptr)) == NULL) {
+//                    die("Failed to allocate temporary argument buffer string.\n");
+//                }
+//                reg = find_reg()
+//            }
+//            break;
+//        }
 
         /*if (*c == ',' || *c == '\0') {
             if (*c == ',') {
@@ -622,8 +684,8 @@ static void prepare_line_motorola(Line *l)
             buffer_ptr = c;
             buffer_ptr++;
         }*/
-        c++;
-    }
+      //  c++;
+    //}
     /*for (char *c = la->val.str; *c != '\0'; c++) {
         if (*c == ',') {
             *c = '\0';

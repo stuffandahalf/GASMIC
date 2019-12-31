@@ -76,8 +76,7 @@ void add_label(Line *line)
 
     if (line->label[0] == '.') {
         line->label = sym->label;
-    }
-    else {
+    } else {
         symtab->last_parent = sym;
     }
 
@@ -118,8 +117,7 @@ void add_label(Line *line)
 
     if (symtab->first == NULL) {
         symtab->first = sym;
-    }
-    else {
+    } else {
         symtab->last->next = sym;
     }
     symtab->last = sym;
@@ -138,8 +136,7 @@ void add_data(Data *data)
 {
     if (datatab->first == NULL) {
         datatab->first = data;
-    }
-    else {
+    } else {
         datatab->last->next = data;
     }
     datatab->last = data;
@@ -190,10 +187,42 @@ char *strdup(const char *src)
     return new;
 }
 
-char *str_to_upper(char str[]) {
+char *str_to_upper(char *str)
+{
     for (char *c = str; *c != '\0'; c++) {
         *c = (char)toupper(*c);
     }
+    return str;
+}
+
+char *str_trim(char *str)
+{
+    int done = 0;
+    char *c;
+    char *end;
+
+    while (*str == ' ' || *str == '\t') str++;  // find first non whitespace character
+
+    end = str;  // starting from the first whitespace character:
+    while (!done) {
+        while (*end != ' ' && *end != '\t' && *end != '\0') {   // check if the character is not a whitespace character
+            end++;
+        }
+
+        if (*end == '\0') { // if the current character is the end of the string
+            return str;
+        }
+
+        for (c = end; *c == '\t' || *c == ' '; c++);    // look for the next non-whitespace character;
+
+        if (*c == '\0') {
+            *end = '\0';
+            done = 1;
+        } else {
+            end = c;
+        }
+    }
+
     return str;
 }
 
