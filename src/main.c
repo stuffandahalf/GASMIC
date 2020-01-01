@@ -224,10 +224,10 @@ void assemble(Line *l)
 
 static int configure(int argc, char *argv[])
 {
-    const char *help_str = "Usage: %s [-m arch] [-o outfile] [-f outformat]\n";
+    const char *help_str = "Usage: %s [-m arch] [-o outfile] [-f outformat] [-e symfile]\n";
     int c;
 
-    while ((c = getopt(argc, argv, "hm:o:f:")) != -1) {
+    while ((c = getopt(argc, argv, "hm:o:f:e:")) != -1) {
         switch (c) {
         case 'm':	// architecture
             configuration.arch = find_arch(optarg);
@@ -244,6 +244,8 @@ static int configure(int argc, char *argv[])
             configuration.out_fname = optarg;
             break;
         case 'f':	// output file format
+            break;
+        case 'e':   // export symbol table
             break;
         case '?':
         case 'h':
@@ -459,6 +461,11 @@ static void prepare_line_motorola(Line *l)
 
 	//char *unified_arg_str;
 
+	if (l->argc == 0) {
+	    l->address_mode = ADDR_MODE_INHERENT;
+	    goto proceed;
+	}
+
 	size_t arg_len = 0;
 	for (unsigned int i = 0; i < l->argc; i++) {
 	    if (l->argv[i].type != ARG_TYPE_UNPROCESSED) {
@@ -466,7 +473,7 @@ static void prepare_line_motorola(Line *l)
 	    }
 	    arg_len += strlen(l->argv[i].val.str);
 	}
-	arg_len += l->argc - 1;
+	arg_len += l->argc - 1; // space for commas
 	arg_len++;
 
 	char *unified_arg_str = salloc(sizeof(char) * arg_len);
@@ -536,6 +543,8 @@ static void prepare_line_motorola(Line *l)
             const Register *reg;
             struct token *expr;
         } val;
+        int8_t pre_inc;
+        int8_t post_inc;
     } arg_part = {
         ARG_TYPE_UNPROCESSED,
         NULL
@@ -557,6 +566,25 @@ static void prepare_line_motorola(Line *l)
             } else {
                 *c = '\0';
             }
+
+            // This doesnt quite work
+            while (*buffer_ptr == '-' || *buffer_ptr == '+') {
+                if (*buffer_ptr == '-') {
+                    arg_part.pre_inc--;
+                } else if (*buffer_ptr == '+') {
+                    arg_part.pre_inc++;
+                }
+                buffer_ptr++;
+            }
+
+            /*for (tmp_c = c, tmp_c--; *tmp_c == '-' || *tmp_c == '+'; tmp_c--) {
+                if (*buffer_ptr == '-') {
+                    arg_part.pre_inc--;
+                } else if (*buffer_ptr == '+') {
+                    arg_part.pre_inc++;
+                }
+                *tmp_c = '\0';
+            }*/
 
             arg_dup = strdup(buffer_ptr);
             if (arg_dup == NULL) {
@@ -586,114 +614,52 @@ static void prepare_line_motorola(Line *l)
 
             if (!end) { // not last argument
                 // not last argument, check if indexed, handle appropriately
+                l->address_mode |= FLAG(ADDR_MODE_INDEXED);   // more than one argument means indexed
+                switch (arg_part.type) {
+                case ARG_TYPE_EXPRESSION:
+                    la->type = ARG_TYPE_INDEX_CONSTANT;
+                    la->val.indexed.offset.expression = arg_part.val.expr;
+                    break;
+                case ARG_TYPE_REGISTER:
+                    la->type = ARG_TYPE_INDEX_REGISTER;
+                    la->val.indexed.offset.reg = arg_part.val.reg;
+                    break;
+                default:
+                    fail("Invalid type for index offset.\n");
+                    break;
+                }
             } else {
                 // last argument, check if arg type is indexed
+                if (l->address_mode & FLAG(ADDR_MODE_INDEXED)) {
+                    if (arg_part.type != ARG_TYPE_REGISTER) {
+                        fail("Indexed addressing base must be a register.\n");
+                    }
+                    la->val.indexed.base = arg_part.val.reg;
+                } else {
+                    switch (l->address_mode) {
+                    case ADDR_MODE_IMMEDIATE:
+                    case ADDR_MODE_EXTENDED:
+                    case ADDR_MODE_DIRECT:
+                        if (arg_part.type != ARG_TYPE_EXPRESSION) {
+                            fail("Immediate argument must be an expression.\n");
+                        }
+                        la->type = ARG_TYPE_EXPRESSION;
+                        la->val.rpn_expr = arg_part.val.expr;
+                        break;
+                    //case ADDR_MODE_
+                    }
+                }
             }
 
+            buffer_ptr = c, buffer_ptr++;
             break;
         }
 
         c++;
     }
-//    while (*c != '\0') {
-//        if (*c == '\0' || *c == ',') {
-//
-//        }
-//
-//        switch (*c) {
-//        case ',':
-//            if (la->type == ARG_TYPE_INDEX_CONSTANT || la->type == ARG_TYPE_INDEX_REGISTER) {
-//                fail("Malformed indexed expression.\n");
-//            }
-//
-//            *c = '\0';
-//            l->address_mode |= FLAG(ADDR_MODE_INDEXED);
-//            if ((arg_dup = strdup(buffer_ptr)) == NULL) {
-//                die("Failed to allocate temporary argument buffer string.\n");
-//            }
-//            if (buffer_ptr == c) {
-//                la->type = ARG_TYPE_INDEX_CONSTANT;
-//                la->val.indexed.offset.expression = parse_expression("0");
-//            }
-//            else if ((reg = find_reg(str_to_upper(arg_dup))) != NULL) {
-//                la->type = ARG_TYPE_INDEX_REGISTER;
-//                la->val.indexed.offset.reg = reg;
-//            }
-//            free(arg_dup);
-//            break;
-//        case '\0':
-//            if (la->type == ARG_TYPE_INDEX_CONSTANT || la->type == ARG_TYPE_INDEX_REGISTER) {
-//                if ((arg_dup = strdup(buffer_ptr)) == NULL) {
-//                    die("Failed to allocate temporary argument buffer string.\n");
-//                }
-//                reg = find_reg(str_to_upper(arg_dup));
-//                free(arg_dup);
-//                if (reg == NULL) {
-//                    fail("Indexed address base register not found");
-//                }
-//                la->val.indexed.base = reg;
-//            }
-//            else {
-//                if ((arg_dup = strdup(buffer_ptr)) == NULL) {
-//                    die("Failed to allocate temporary argument buffer string.\n");
-//                }
-//                reg = find_reg()
-//            }
-//            break;
-//        }
 
-        /*if (*c == ',' || *c == '\0') {
-            if (*c == ',') {
-                *c = '\0';
-                l->address_mode |= FLAG(ADDR_MODE_INDEXED);
-                switch (la->type) {
-                case ARG_TYPE_REGISTER:
-                    la->val.indexed.offset.reg = la->val.reg;
-                    break;
-                case ARG_TYPE_EXPRESSION:
-                    la->val.indexed.offset.expression = la->val.rpn_expr;
-                    break;
-                case ARG_TYPE_UNPROCESSED:
-                default:
-                    fail("Pls explain.\n");
-                    break;
-                }
-                if (la->type == ARG_TYPE_REGISTER) {
-                    la->val.indexed.offset.reg = la->val.reg;
-                }
-            }
-
-            if ((arg_dup = strdup(buffer_ptr)) == NULL) {
-                fail("Failed to duplicate argument string.\n");
-            }
-            if (buffer_ptr == c) {
-                la->val.indexed.offset.expression = parse_expression("0");
-            }
-            else if ((reg = find_reg(str_to_upper(arg_dup))) != NULL) {
-                if (la->val.reg != NULL) {
-                    la->val.reg = reg;
-                }
-                else {
-                    la->val.indexed.base = reg;
-                }
-            }
-            else {
-                la->val.rpn_expr = parse_expression(buffer_ptr);
-            }
-            free(arg_dup);
-            buffer_ptr = c;
-            buffer_ptr++;
-        }*/
-      //  c++;
-    //}
-    /*for (char *c = la->val.str; *c != '\0'; c++) {
-        if (*c == ',') {
-            *c = '\0';
-            c++;
-            la->addr_mode |= FLAG(ADDR_MODE_INDEXED);
-        }
-    }*/
-    //}
+proceed:
+    ;
 
 	//const Instruction **i = NULL;
 
@@ -829,17 +795,13 @@ static void prepare_line_motorola(Line *l)
 //
 //    prepare_line(l);
 //
-//	Data *data = init_data(salloc(sizeof(Data)));
-//	/*assembled->next = NULL;
-//	assembled->type = DATA_TYPE_NONE;
-//	assembled->bytec = 0;
-//	assembled->contents.bytes = NULL;*/
-//	//process_instruction(l, instruction_reg, reg, assembled);
-//	printdf("Instruction Register is %s\n", instruction_reg ? instruction_reg->reg->name : "NONE");
-//
-//	configuration.arch->process_line(l, instruction_reg, data);
-//
-//	add_data(data);
+
+    Data *data = init_data(salloc(sizeof(Data)));
+
+	//printdf("Instruction Register is %s\n", instruction_reg ? instruction_reg->reg->name : "NONE");
+	//configuration.arch->process_line(l, instruction_reg, data);
+
+	add_data(data);
 }
 
 static void prepare_line_att(Line *l)
