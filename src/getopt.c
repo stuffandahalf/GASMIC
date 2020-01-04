@@ -39,7 +39,7 @@ int getopt(int argc, char *const *argv, const char *arglist)
 		if (optcharind < arglen) {
 			return '?';
 		} else if (optind == argc) {
-			return '?';
+			return ':';
 		} else {
 			optarg = argv[optind++];
 			return retval;

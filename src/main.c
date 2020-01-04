@@ -247,11 +247,14 @@ static int configure(int argc, char *argv[])
             break;
         case 'e':   // export symbol table
             break;
-        case '?':
         case 'h':
             printf(help_str, argv[0]);
             return 0;
-        default:
+        case ':':
+        //default:
+            /*printdf("DEATH\n");
+            printdf("%c\n", c);
+            printdf("%s\n", optarg);*/
             die(help_str, argv[0]);
         }
     }
