@@ -5,24 +5,20 @@
 #include <targets/z80/arch.h>
 //#include <targets/6502/arch.h>
 
-#define str(s) #s
-#define INIT_TARGET(target) target##_init() 
-#define INIT_TARGETS() { \
-    INIT_TARGET(MC6809); \
-    INIT_TARGET(HD6309); \
-    INIT_TARGET(Z80); \
-    /*INIT_TARGET(I8080);*/ \
-    /*INIT_TARGET(MOS6502);*/ \
-}
-#define DESTROY_TARGET(target) target##_destroy()
-#define DESTROY_TARGETS() { \
-    DESTROY_TARGET(MC6809); \
-    DESTROY_TARGET(HD6309); \
-    DESTROY_TARGET(Z80); \
-    /*DESTROY_TARGET(I8080);*/ \
-    /*DESTROY_TARGET(MOS6502);*/ \
-}
-#define TARGETS &ARCH_MC6809, &ARCH_HD6309, &ARCH_Z80, /*&ARCH_I8080,*/ /*&ARCH_MOS6502,*/ NULL
+#define TARGETS \
+    TARGET(MC6809) \
+    TARGET(HD6309) \
+    TARGET(Z80) \
+    //TARGET(I8080) \
+    //TARGET(MOS6502)
+
+#define TARGET(t) t ## _init();
+static inline void init_targets() { TARGETS }
+#undef TARGET
+
+#define TARGET(t) t ## _destroy();
+static inline void destroy_targets() { TARGETS }
+#undef TARGET
 
 //extern Architecture **architectures[];
 

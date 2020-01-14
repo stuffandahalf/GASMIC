@@ -34,11 +34,14 @@ size_t address_mask;    // bits to mask the address to;
 void (*parse_instruction)(Line *l);
 //SymTab *undefined_symtab;
 
-Architecture **architectures[] = { TARGETS };
+#define TARGET(t) &ARCH_ ## t,
+Architecture **architectures[] = { TARGETS NULL };  // NULL terminated array of targets
+#undef TARGET
 
 int main(int argc, char **argv)
 {
-    INIT_TARGETS();
+    //INIT_TARGETS();
+    init_targets();
 
     //FILE *in;
     //out = stdout;
@@ -157,7 +160,8 @@ int main(int argc, char **argv)
     g_context = NULL;
 
 early_exit:
-    DESTROY_TARGETS();
+    //DESTROY_TARGETS();
+    destroy_targets();
 
 #if defined(_WIN32) && !defined(NDEBUG)
     getc(stdin);
