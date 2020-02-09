@@ -14,3 +14,5 @@ set_property(TARGET gasmic PROPERTY C_EXTENSIONS OFF)
 
 #target_include_directories(gasmic PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(gasmic PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+install(TARGETS gasmic DESTINATION ${CMAKE_INSTALL_PREFIX})
