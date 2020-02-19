@@ -10,7 +10,7 @@
 #include <pseudo.h>
 #include <util.h>
 #include <arithmetic.h>
-#include "as.h"
+#include <elf.h>
 
 #define LINEBUFFERSIZE (256)
 char buffer[LINEBUFFERSIZE];
@@ -42,6 +42,8 @@ int main(int argc, char **argv)
 {
     //INIT_TARGETS();
     init_targets();
+
+	printdf("%z\n", sizeof(struct elf_hdr32));
 
     //FILE *in;
     //out = stdout;
