@@ -9,7 +9,8 @@
 #ifdef __cplusplus
 #define __STDC_FORMAT_MACROS
 #endif
-#include <inttypes.h>
+//#include <inttypes.h>
+#include <fixedint.h>
 #include <lang.h>
 #include <smem.h>
 

@@ -47,10 +47,14 @@ static struct token *stack_to_list(struct token *stack_top)
     return prev;
 }
 
-static /*inline*/ bool is_whitespace(char c)
+#if __STDC_VERSION__ >= 199901L/* || defined(__cplusplus)*/
+static bool is_whitespace(char c)
 {
     return c == ' ' || c == '\t' || c == '\n';
 }
+#else
+#define is_whitespace(c) (c == ' ' || c == '\t' || c == '\n')
+#endif
 
 /* Implements the shunting yard algorithm */
 struct token *parse_expression(char *expr)

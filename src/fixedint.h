@@ -1,7 +1,7 @@
 #ifndef GASMIC_FIXEDINT_H
 #define GASMIC_FIXEDINT_H
 
-#if __STDC__VERSION__ >= 199901L
+#if (__STDC_VERSION__ >= 199901L || __cplusplus >= 201103L || (defined(_MSVC_LANG) && _MSVC_LANG))
 #include <stdint.h>
 #else
 #include <limits.h>
@@ -20,7 +20,7 @@
 typedef unsigned char           UINT_TYPE(CHAR_BIT);
 typedef signed char             INT_TYPE(CHAR_BIT);
 
-#if USHRT_MAX == 65535u
+#if USHRT_MAX == 0xffffu
 #define PRId16                  "d"
 #define PRIu16                  "u"
 #define PRIx16                  "x"
@@ -30,11 +30,21 @@ typedef signed char             INT_TYPE(CHAR_BIT);
 #define UINT16_MAX              USHRT_MAX
 typedef unsigned short int      UINT_TYPE(16);
 typedef signed short int        INT_TYPE(16);
+#elif UINT_MAX == 0xffffu
+#define PRId16                  "d"
+#define PRIu16                  "u"
+#define PRIx16                  "x"
+#define PRIX16                  "X"
+#define INT16_MIN               INT_MIN
+#define INT16_MAX               INT_MAX
+#define UINT16_MAX              UINT_MAX
+typedef unsigned int			UINT_TYPE(16);
+typedef signed int		        INT_TYPE(16);
 #else
-#error Unsigned short is greater than 16-bits
+#error No 16-bit int type exists
 #endif
 
-#if UINT_MAX == 4294967295u
+#if UINT_MAX == 0xffffffffUL
 #define PRId32                  "d"
 #define PRIu32                  "u"
 #define PRIx32                  "x"
@@ -44,7 +54,7 @@ typedef signed short int        INT_TYPE(16);
 #define UINT32_MAX              UINT_MAX
 typedef unsigned int            UINT_TYPE(32);
 typedef signed int              INT_TYPE(32);
-#elif ULONG_MAX == 4294967295u
+#elif ULONG_MAX == 0xffffffffUL
 #define PRId32                  "ld"
 #define PRIu32                  "lu"
 #define PRIx32                  "lx"
@@ -55,10 +65,10 @@ typedef signed int              INT_TYPE(32);
 typedef unsigned long int       UINT_TYPE(32);
 typedef signed long int         INT_TYPE(32);
 #else
-#error Unsigned int is an unrecognized size
+#error No 32-bit int type exists
 #endif
 
-#if ULONG_MAX == 18446744073709551615UL
+#if ULONG_MAX == 0xffffffffffffffffUL
 #define PRId64                  "ld"
 #define PRIu64                  "lu"
 #define PRIx64                  "lx"
@@ -68,7 +78,7 @@ typedef signed long int         INT_TYPE(32);
 #define UINT64_MAX              ULONG_MAX
 typedef unsigned long int       UINT_TYPE(64);
 typedef signed long int         INT_TYPE(64);
-#elif ULONG_LONG_MAX == 18446744073709551615UL
+#elif ULLONG_MAX == 0xffffffffffffffffUL
 #define PRId64                  "lld"
 #define PRIu64                  "llu"
 #define PRIx64                  "llx"
@@ -78,6 +88,8 @@ typedef signed long int         INT_TYPE(64);
 #define UINT64_MAX              ULONG_LONG_MAX
 typedef unsigned long long int  UINT_TYPE(64);
 typedef signed long long int    INT_TYPE(64);
+#else
+#error No 64-bit int type exists
 #endif
 
 #undef INT_TYPE
