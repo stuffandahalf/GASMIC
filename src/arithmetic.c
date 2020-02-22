@@ -86,20 +86,17 @@ struct token *parse_expression(char *expr)
                 tok->value.symbol = malloc(sizeof(char) * (buffer_size + 1));
                 strncpy(tok->value.symbol, buffer, buffer_size);
                 tok->value.symbol[buffer_size] = '\0';
-            }
-            else if (endptr == c) {
+            } else if (endptr == c) {
                 tok->type = TOKEN_TYPE_LITERAL;
                 tok->value.number = val;
-            }
-            else {
+            } else {
                 fprintf(stderr, "wtf is this.\n");
                 exit(1);
             }
 
             tok->next = out_stack_top;
             out_stack_top = tok;
-        }
-        else if (is_whitespace(*c)) {
+        } else if (is_whitespace(*c)) {
             changed = true;
         }
 
@@ -123,8 +120,7 @@ struct token *parse_expression(char *expr)
                     }
                 }
                 op_stack_top = op_stack_top->next;
-            }
-            else {
+            } else {
                 if (op->operator != '(') {
                     while (op_stack_top != NULL && op_stack_top->value.operator->precedence >= op->precedence && op_stack_top->value.operator->operator != '(') {
                         struct token *tmp = op_stack_top;
@@ -145,8 +141,7 @@ struct token *parse_expression(char *expr)
             buffer_size = 0;
             buffer = c;
             buffer++;
-        }
-        else {
+        } else {
             buffer_size++;
         }
 

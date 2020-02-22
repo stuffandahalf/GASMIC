@@ -2,6 +2,8 @@
 #include <arithmetic.h>
 #include "arithmetic.h"
 
+extern Architecture **architectures[];
+
 SymTab *symtab;
 DataTab *datatab;
 
@@ -80,8 +82,7 @@ void add_label(Line *line)
 
     if (line->label[0] == '.') {
         line->label = sym->label;
-    }
-    else {
+    } else {
         symtab->last_parent = sym;
     }
 
@@ -122,8 +123,7 @@ void add_label(Line *line)
 
     if (symtab->first == NULL) {
         symtab->first = sym;
-    }
-    else {
+    } else {
         symtab->last->next = sym;
     }
     symtab->last = sym;
@@ -144,8 +144,7 @@ void add_data(Data *data)
 
     if (datatab->first == NULL) {
         datatab->first = data;
-    }
-    else {
+    } else {
         datatab->last->next = data;
     }
     datatab->last = data;
@@ -158,6 +157,7 @@ void add_data(Data *data)
 
 void prepare_line(Line *line)
 {
+#if 1
     size_t i;
     struct token *tok;
 
@@ -185,6 +185,7 @@ void prepare_line(Line *line)
             }
         }
     }
+#endif
 }
 
 char *strdup(const char *src)
@@ -195,4 +196,63 @@ char *strdup(const char *src)
     }
     strcpy(new, src);
     return new;
+}
+
+char *str_to_upper(char *str)
+{
+    for (char *c = str; *c != '\0'; c++) {
+        *c = (char)toupper(*c);
+    }
+    return str;
+}
+
+char *str_trim(char *str)
+{
+    int done = 0;
+    char *c;
+    char *end;
+
+    while (*str == ' ' || *str == '\t') str++;  // find first non whitespace character
+
+    end = str;  // starting from the first whitespace character:
+    while (!done) {
+        while (*end != ' ' && *end != '\t' && *end != '\0') {   // check if the character is not a whitespace character
+            end++;
+        }
+
+        if (*end == '\0') { // if the current character is the end of the string
+            return str;
+        }
+
+        for (c = end; *c == '\t' || *c == ' '; c++);    // look for the next non-whitespace character;
+
+        if (*c == '\0') {
+            *end = '\0';
+            done = 1;
+        } else {
+            end = c;
+        }
+    }
+
+    return str;
+}
+
+const Architecture *find_arch(const char *arch_name)
+{
+    for (Architecture ***a = architectures; *a != NULL; a++) {
+        if (streq(arch_name, (**a)->name)) {
+            return **a;
+        }
+    }
+    return NULL;
+}
+
+const Register *find_reg(const char *name)
+{
+    for (const Register *r = configuration.arch->registers; *r->name != '\0'; r++) {
+        if (streq(name, r->name)) {
+            return r;
+        }
+    }
+    return NULL;
 }

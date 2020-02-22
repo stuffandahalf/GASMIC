@@ -21,8 +21,7 @@ int getopt(int argc, char *const *argv, const char *arglist)
 	arglen = strlen(c);
 	if (arglen == 2) {
 		optind++;
-	}
-	else {
+	} else {
 		optcharind++;
 	}
 
@@ -44,11 +43,9 @@ int getopt(int argc, char *const *argv, const char *arglist)
 	case ':':
 		if (optcharind < arglen) {
 			return '?';
-		}
-		else if (optind == argc) {
-			return '?';
-		}
-		else {
+		} else if (optind == argc) {
+			return ':';
+		} else {
 			optarg = argv[optind++];
 			return retval;
 		}

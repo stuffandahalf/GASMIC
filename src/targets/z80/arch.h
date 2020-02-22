@@ -3,7 +3,8 @@
 
 #include <as.h>
 
-#define Z80 (1)
+#define Z80     (1)
+#define I8080   (2)
 
 #define Z80_REG_INVALID (-1)
 #define Z80_REG_NONE    (0)
@@ -27,8 +28,12 @@
 #define Z80_REG_PC      (18)
 
 extern Architecture *ARCH_Z80;
+extern Architecture *ARCH_I8080;
 
 void Z80_init(void);
 void Z80_destroy(void);
+
+void I8080_init(void);
+void I8080_destroy(void);
 
 #endif

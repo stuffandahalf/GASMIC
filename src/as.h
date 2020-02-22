@@ -124,15 +124,15 @@ typedef struct {
 #define MAX_MNEMONIC_LEN (10)
 
 enum address_mode {
-	ADDR_MODE_INVALID,
-	ADDR_MODE_INHERENT,
-	ADDR_MODE_IMMEDIATE,
-	ADDR_MODE_DIRECT,
-	ADDR_MODE_INDIRECT,
-	ADDR_MODE_EXTENDED,
-	ADDR_MODE_INDEXED,
-	ADDR_MODE_INDEXED_INDIRECT,
-	ADDR_MODE_INTERREGISTER
+	ADDR_MODE_INVALID           = 0,
+	ADDR_MODE_INHERENT          = (1u << 0u),
+	ADDR_MODE_IMMEDIATE         = (1u << 1u),
+	ADDR_MODE_DIRECT            = (1u << 2u),
+	ADDR_MODE_INDIRECT          = (1u << 3u),
+	ADDR_MODE_EXTENDED          = (1u << 4u),
+	ADDR_MODE_INDEXED           = (1u << 5u),
+	ADDR_MODE_INTERREGISTER     = (1u << 7u),
+    ADDR_MODE_INDEXED_INDIRECT  = (FLAG(ADDR_MODE_INDEXED) | FLAG(ADDR_MODE_INDIRECT))
 };
 
 #define ADDRESS_MODE_COUNT (8)
@@ -155,40 +155,38 @@ enum arg_type {
     ARG_TYPE_STRING,
     ARG_TYPE_EXPRESSION,
     ARG_TYPE_REGISTER,
-    ARG_TYPE_INDEX
-};
-
-enum arg_state {
-    ARG_STATE_CLEAR = 0,
-    ARG_STATE_BRACKET = (1u << 0u),
-    ARG_STATE_COMMA = (1u << 1u)
+    ARG_TYPE_INDEX,
+    ARG_TYPE_INDEX_REGISTER,
+    ARG_TYPE_INDEX_CONSTANT
 };
 
 typedef struct {
     enum arg_type type;
-    enum arg_state state;
+    //enum arg_state state;
+    //enum address_mode addr_mode;
     union {
         char *str;
         struct token *rpn_expr;
-        /*struct {
-            const Register *reg;
-            int16_t offset;
-        } address;
-        const Register *reg;*/
+        const Register *reg;
         struct {
-            const Register *reg;
-            int16_t offset;
+            const Register *base;
+            union {
+                struct token *expression;
+                const Register *reg;
+            } offset;
+            int8_t pre_inc;
+            int8_t post_inc;
         } indexed;
     } val;
 } LineArg;
 
 enum line_state {
-    LINE_STATE_CLEAR =          0,
-    LINE_STATE_LABEL =          (1u << 0u),
-    LINE_STATE_MNEMONIC =       (1u << 1u),
-    LINE_STATE_SINGLE_QUOTE =   (1u << 2u),
-    LINE_STATE_DOUBLE_QUOTE =   (1u << 3u),
-    LINE_STATE_BRACKET =        (1u << 4u)
+    LINE_STATE_CLEAR        = 0,
+    LINE_STATE_LABEL        = (1u << 0u),
+    LINE_STATE_MNEMONIC     = (1u << 1u),
+    LINE_STATE_SINGLE_QUOTE = (1u << 2u),
+    LINE_STATE_DOUBLE_QUOTE = (1u << 3u),
+    LINE_STATE_BRACKET      = (1u << 4u)
 };
 
 enum address_post_op {
@@ -227,7 +225,7 @@ typedef struct {
     char **in_fnames;
     size_t in_fnamec;
     uint8_t syntax;
-    Architecture *arch;
+    const Architecture *arch;
 } Config;
 
 struct context {
@@ -244,16 +242,6 @@ extern struct context *g_context;
 
 void init_address_mask();
 void assemble(Line *l);
-Architecture *str_to_arch(const char arch_name[]);
-
-static INLINE char *str_to_upper(char str[]) {
-    char *c;
-
-    for (c = str; *c != '\0'; c++) {
-        *c = (char)toupper(*c);
-    }
-    return str;
-}
 
 static INLINE void fail(const char *msg, ...) {
     struct context *cntxt;

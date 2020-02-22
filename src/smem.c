@@ -80,8 +80,7 @@ void *saquire(void *ptr)
 	if (alloced_mem.first == NULL) {
 		alloced_mem.first = a;
 		a->prev = NULL;
-	}
-	else {
+	} else {
 		alloced_mem.last->next = a;
 		a->prev = alloced_mem.last;
 	}
