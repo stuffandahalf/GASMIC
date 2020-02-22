@@ -158,8 +158,8 @@ enum arg_type {
 
 typedef struct {
     enum arg_type type;
-    //enum arg_state state;
-    //enum address_mode addr_mode;
+    /*enum arg_state state;*/
+    /*enum address_mode addr_mode;*/
     union {
         char *str;
         struct token *rpn_expr;

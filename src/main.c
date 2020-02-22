@@ -34,7 +34,7 @@ void (*parse_instruction)(Line *l);
 /*SymTab *undefined_symtab;*/
 
 #define TARGET(t) &ARCH_ ## t,
-Architecture **architectures[] = { TARGETS NULL };  // NULL terminated array of targets
+Architecture **architectures[] = { TARGETS NULL };  /* NULL terminated array of targets */
 #undef TARGET
 
 int main(int argc, char **argv)
@@ -115,7 +115,7 @@ int main(int argc, char **argv)
     printdf(("SYMBOLS\n"));
     sym = symtab->first;
     while (sym != NULL) {
-        printdf(("label: %s = %zu\n", sym->label, sym->value));
+        printdf(("label: %s = %" PRId64 "\n", sym->label, sym->value));
 
         sfree(sym->label);
         sym->label = NULL;
@@ -126,7 +126,7 @@ int main(int argc, char **argv)
     /*sfree(symtab->first->label)*/;
     sfree(symtab);
     symtab = NULL;
-    //sym = NULL;
+    /*sym = NULL;*/
 
     printdf(("DATATAB\n"));
     data = datatab->first;
@@ -174,7 +174,6 @@ int main(int argc, char **argv)
     g_context = NULL;
 
 early_exit:
-    //DESTROY_TARGETS();
     destroy_targets();
 
 #if defined(_WIN32) && !defined(NDEBUG)

@@ -1,8 +1,6 @@
 #ifndef GASMIC_FIXEDINT_H
 #define GASMIC_FIXEDINT_H
 
-//#if (__STDC_VERSION__ >= 199901L || __cplusplus >= 201103L || (defined(_MSVC_LANG) && _MSVC_LANG))
-//#include <stdint.h>
 #ifdef HAVE_INTTYPES_H
 #ifdef __cplusplus
 #define __STDC_FORMAT_MACROS
@@ -83,7 +81,7 @@ typedef signed long int         INT_TYPE(32);
 #define UINT64_MAX              ULONG_MAX
 typedef unsigned long int       UINT_TYPE(64);
 typedef signed long int         INT_TYPE(64);
-#elif ULLONG_MAX == 0xffffffffffffffffUL
+#elif defined(ULLONG_MAX) && ULLONG_MAX == 0xffffffffffffffffUL
 #define PRId64                  "lld"
 #define PRIu64                  "llu"
 #define PRIx64                  "llx"
