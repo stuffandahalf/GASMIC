@@ -1,8 +1,13 @@
 #ifndef GASMIC_FIXEDINT_H
 #define GASMIC_FIXEDINT_H
 
-#if (__STDC_VERSION__ >= 199901L || __cplusplus >= 201103L || (defined(_MSVC_LANG) && _MSVC_LANG))
-#include <stdint.h>
+//#if (__STDC_VERSION__ >= 199901L || __cplusplus >= 201103L || (defined(_MSVC_LANG) && _MSVC_LANG))
+//#include <stdint.h>
+#ifdef HAVE_INTTYPES_H
+#ifdef __cplusplus
+#define __STDC_FORMAT_MACROS
+#endif /* __cplusplus */
+#include <inttypes.h>
 #else
 #include <limits.h>
 
@@ -96,6 +101,6 @@ typedef signed long long int    INT_TYPE(64);
 #undef UINT_TYPE
 #undef BIT_TYPE
 
-#endif
+#endif /* HAVE_INTTYPES_H */
 
 #endif /* GASMIC_FIXEDINT_H */

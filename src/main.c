@@ -494,7 +494,8 @@ static void prepare_line_motorola(Line *l)
 	}
 
 	size_t arg_len = 0;
-	for (unsigned int i = 0; i < l->argc; i++) {
+    size_t i = 0;
+	for (i = 0; i < l->argc; i++) {
 	    if (l->argv[i].type != ARG_TYPE_UNPROCESSED) {
 	        fail("Instructions should not have complex arguments.\n");
 	    }
@@ -507,7 +508,7 @@ static void prepare_line_motorola(Line *l)
 
 	//char *c = unified_arg_str;
 	char *buffer_ptr = unified_arg_str;
-	for (unsigned int i = 0; i < l->argc; i++) {
+	for (i = 0; i < l->argc; i++) {
 	    if (i) {
 	        *buffer_ptr++ = ',';
 	    }
