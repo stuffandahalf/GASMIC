@@ -12,7 +12,7 @@ int init_symbol_table()
     if (symtab != NULL) {
         return 0;
     }
-    symtab = salloc(sizeof(SymTab));
+    symtab = salloc(SymTab, sizeof(SymTab));
     symtab->first = NULL;
     symtab->last = NULL;
 
@@ -24,7 +24,7 @@ int init_data_table()
     if (datatab != NULL) {
         return 0;
     }
-    datatab = salloc(sizeof(DataTab));
+    datatab = salloc(DataTab, sizeof(DataTab));
     datatab->first = NULL;
     datatab->last = NULL;
 
@@ -43,7 +43,7 @@ char *resolve_symbol(char *symbol)
     char *c;
 
     if (*symbol != '.') {
-        complete_symbol = salloc(sizeof(char) * (strlen(symbol) + 1));
+        complete_symbol = salloc(char, sizeof(char) * (strlen(symbol) + 1));
         strcpy(complete_symbol, symbol);
 
         return complete_symbol;
@@ -55,7 +55,7 @@ char *resolve_symbol(char *symbol)
 
     parent_len = strlen(symtab->last_parent->label);
     local_len = strlen(symbol);
-    complete_symbol = salloc(sizeof(char) * (parent_len + local_len + 1));
+    complete_symbol = salloc(char, sizeof(char) * (parent_len + local_len + 1));
 
     symbol_ptr = complete_symbol;
     for (c = symtab->last_parent->label; *c != '\0'; c++) {
@@ -75,7 +75,7 @@ void add_label(Line *line)
 {
     Symbol *test_sym;
 
-    Symbol *sym = salloc(sizeof(Symbol));
+    Symbol *sym = salloc(Symbol, sizeof(Symbol));
 
     sym->next = NULL;
     sym->label = resolve_symbol(line->label);
@@ -188,19 +188,24 @@ void prepare_line(Line *line)
 #endif
 }
 
-char *strdup(const char *src)
+char *str_clone(const char *src)
 {
-    char *new = malloc(sizeof(char) * (strlen(src) + 1));
-    if (new == NULL) {
+#ifdef __cplusplus
+	char *new_ptr = (char *)malloc(sizeof(char) * (strlen(src) + 1));
+#else
+    char *new_ptr = malloc(sizeof(char) * (strlen(src) + 1));
+#endif
+    if (new_ptr == NULL) {
         return NULL;
     }
-    strcpy(new, src);
-    return new;
+    strcpy(new_ptr, src);
+    return new_ptr;
 }
 
 char *str_to_upper(char *str)
 {
-    for (char *c = str; *c != '\0'; c++) {
+	char *c = NULL;
+    for (c = str; *c != '\0'; c++) {
         *c = (char)toupper(*c);
     }
     return str;
@@ -239,7 +244,8 @@ char *str_trim(char *str)
 
 const Architecture *find_arch(const char *arch_name)
 {
-    for (Architecture ***a = architectures; *a != NULL; a++) {
+	Architecture ***a = NULL;
+    for (a = architectures; *a != NULL; a++) {
         if (streq(arch_name, (**a)->name)) {
             return **a;
         }
@@ -249,7 +255,9 @@ const Architecture *find_arch(const char *arch_name)
 
 const Register *find_reg(const char *name)
 {
-    for (const Register *r = configuration.arch->registers; *r->name != '\0'; r++) {
+	const Register *r = NULL;
+
+    for (r = configuration.arch->registers; *r->name != '\0'; r++) {
         if (streq(name, r->name)) {
             return r;
         }

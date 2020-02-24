@@ -14,7 +14,7 @@ void add_data(Data *data);
 
 void prepare_line(Line *line);
 
-char *strdup(const char *src);
+char *str_clone(const char *src);
 char *str_to_upper(char *str);
 char *str_trim(char *str);
 
