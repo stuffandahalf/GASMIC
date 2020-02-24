@@ -13,7 +13,7 @@ struct alloced {
 static struct {
     struct alloced *first;
     struct alloced *last;
-} alloced_mem = {NULL, NULL };
+} alloced_mem = { NULL, NULL };
 
 void release(void)
 {
@@ -50,19 +50,19 @@ void smem_diagnostic(void)
     puts("");
 }
 
-void *salloc(size_t size)
+void *salloc_real(size_t size)
 {
     void *ptr = NULL;
     if ((ptr = malloc(size)) == NULL) {
         die("Failed to allocate memory\n");
     }
     
-	saquire(ptr);
+	saquire_real(ptr);
     
     return ptr;
 }
 
-void *saquire(void *ptr)
+void *saquire_real(void *ptr)
 {
     struct alloced *a;
 
@@ -89,7 +89,7 @@ void *saquire(void *ptr)
 	return a->address;
 }
 
-void *srealloc(void *ptr, size_t size)
+void *srealloc_real(void *ptr, size_t size)
 {
     struct alloced *a = find_memory(ptr);
     

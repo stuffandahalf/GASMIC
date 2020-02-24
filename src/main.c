@@ -85,12 +85,12 @@ int main(int argc, char **argv)
     init_data_table();
     init_symbol_table();
 
-    l = salloc(sizeof(Line));
+    l = salloc(Line, sizeof(Line));
 
     if (configuration.in_fnamec < 0) {
         die("Invalid number of command line arguments.\n");
     } else if (configuration.in_fnamec == 0) {
-        if ((init_cntxt.fname = saquire(strdup("stdin"))) == NULL) {
+        if ((init_cntxt.fname = saquire(char, str_clone("stdin"))) == NULL) {
             die("Failed to duplicate file name \"stdin\"\n");
         }
         init_cntxt.fptr = stdin;
@@ -98,7 +98,7 @@ int main(int argc, char **argv)
         sfree(init_cntxt.fname);
     } else {
         for (i = 0; i < configuration.in_fnamec; i++) {
-            if ((init_cntxt.fname = saquire(strdup(configuration.in_fnames[i]))) == NULL) {
+            if ((init_cntxt.fname = saquire(char, str_clone(configuration.in_fnames[i]))) == NULL) {
                 die("Failed to duplicate file name \"%s\"\n", configuration.in_fnames[i]);
             }
             if ((init_cntxt.fptr = fopen(init_cntxt.fname, "r")) == NULL) {
@@ -207,7 +207,7 @@ void assemble(Line *l)
             l->addr_mode_post_op = POST_OP_NONE;
             l->arg_buf_size = 2;
             /*l->argv = salloc(sizeof(char *) * l->arg_buf_size);*/
-            l->argv = salloc(sizeof(LineArg) * l->arg_buf_size);
+            l->argv = salloc(LineArg, sizeof(LineArg) * l->arg_buf_size);
             l->argc = 0;
 
             parse_line(l, buffer);
@@ -361,7 +361,7 @@ static void parse_line(Line *l, char *buffer)
             }
             if (l->argc == l->arg_buf_size) {
                 l->arg_buf_size += 2;
-                l->argv = srealloc(l->argv, sizeof(LineArg) * l->arg_buf_size);
+                l->argv = srealloc(LineArg, l->argv, sizeof(LineArg) * l->arg_buf_size);
             }
             /*LineArg **/la = &(l->argv[l->argc++]);
             la->type = arg_type;
@@ -387,7 +387,7 @@ static void parse_line(Line *l, char *buffer)
             } else {
                 if (l->argc == l->arg_buf_size) {
                     l->arg_buf_size += 2;
-                    l->argv = srealloc(l->argv, sizeof(LineArg) * l->arg_buf_size);
+                    l->argv = srealloc(LineArg, l->argv, sizeof(LineArg) * l->arg_buf_size);
                 }
                 /*LineArg **/la = &(l->argv[l->argc++]);
                 la->type = arg_type;
@@ -487,13 +487,23 @@ static void prepare_line_motorola(Line *l)
 
 	//char *unified_arg_str;
 
+	size_t arg_len = 0;
+	size_t i = 0;
+	char *c;
+    char *tmp_c;
+	char *unified_arg_str;
+	char *buffer_ptr;
+	LineArg *la;
+	char *arg_dup;
+    char *reg_name;
+    const Register *reg;
+	Data *data;
+
 	if (l->argc == 0) {
 	    l->address_mode = ADDR_MODE_INHERENT;
 	    goto proceed;
 	}
 
-	size_t arg_len = 0;
-    size_t i = 0;
 	for (i = 0; i < l->argc; i++) {
 	    if (l->argv[i].type != ARG_TYPE_UNPROCESSED) {
 	        fail("Instructions should not have complex arguments.\n");
@@ -503,32 +513,28 @@ static void prepare_line_motorola(Line *l)
 	arg_len += l->argc - 1; // space for commas
 	arg_len++;
 
-	char *unified_arg_str = salloc(sizeof(char) * arg_len);
+	unified_arg_str = salloc(char, sizeof(char) * arg_len);
 
 	//char *c = unified_arg_str;
-	char *buffer_ptr = unified_arg_str;
+	buffer_ptr = unified_arg_str;
 	for (i = 0; i < l->argc; i++) {
 	    if (i) {
 	        *buffer_ptr++ = ',';
 	    }
-        for (char *c = l->argv[i].val.str; *c != '\0'; c++) {
+        for (c = l->argv[i].val.str; *c != '\0'; c++) {
             *buffer_ptr++ = *c;
         }
 	}
 	*buffer_ptr = '\0';
 
 	l->argc = 1;
-	LineArg *la = &l->argv[0];
+	la = &l->argv[0];
 	la->val.str = unified_arg_str;
 	la->type = ARG_TYPE_UNPROCESSED;
 
-    char *arg_dup;
-    char *reg_name;
-    const Register *reg;
         // first try to figure out what kind of forced argument this is
-    char *c = la->val.str;
+    c = la->val.str;
     //la->val.str = NULL;
-    char *tmp_c;
     switch (*c) {
     case '#':
         l->address_mode |= FLAG(ADDR_MODE_IMMEDIATE);
@@ -685,7 +691,7 @@ static void prepare_line_motorola(Line *l)
     }
 
 proceed:
-    ;
+    //;
 
 	//const Instruction **i = NULL;
 
@@ -821,8 +827,9 @@ proceed:
 //
 //    prepare_line(l);
 //
-
-    Data *data = init_data(salloc(sizeof(Data)));
+	
+    data = init_data(salloc(Data, sizeof(Data)));
+	//data = (Data *)salloc_real(sizeof(Data));
 
 	//printdf("Instruction Register is %s\n", instruction_reg ? instruction_reg->reg->name : "NONE");
 	//configuration.arch->process_line(l, instruction_reg, data);
