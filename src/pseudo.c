@@ -79,7 +79,7 @@ void parse_pseudo_op(Line *line)
 
 static void pseudo_set_arch(Line *line)
 {
-    Architecture *arch;
+    const Architecture *arch;
 
     if (datatab->first != NULL) {
         fail("Cannot switch architecture after code.\n");
@@ -100,7 +100,7 @@ static void pseudo_set_file(Line *line)
         die("File name must be a string.");
     }
     sfree(g_context->fname);
-    if ((g_context->fname = saquire(char, strdup(line->argv[0].val.str))) == NULL) {
+    if ((g_context->fname = saquire(char, str_clone(line->argv[0].val.str))) == NULL) {
         fail("Failed to copy substitute file name.\n");
     }
 }
@@ -234,7 +234,7 @@ static void pseudo_include(Line *line)
     included_context.parent = g_context;
     /*included_context.fptr = included_file; */
     included_context.line_num = 1;
-    if ((included_context.fname = saquire(char, strdup(line->argv[0].val.str))) == NULL) {
+    if ((included_context.fname = saquire(char, str_clone(line->argv[0].val.str))) == NULL) {
         fail("Failed to duplicate file name \"%s\"\n", line->argv[0].val.str);
     }
 

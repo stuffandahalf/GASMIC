@@ -217,19 +217,19 @@ char *str_trim(char *str)
     char *c;
     char *end;
 
-    while (*str == ' ' || *str == '\t') str++;  // find first non whitespace character
+    while (*str == ' ' || *str == '\t') str++;  /* find first non whitespace character */
 
-    end = str;  // starting from the first whitespace character:
+    end = str;  /* starting from the first whitespace character: */
     while (!done) {
-        while (*end != ' ' && *end != '\t' && *end != '\0') {   // check if the character is not a whitespace character
+        while (*end != ' ' && *end != '\t' && *end != '\0') {   /* check if the character is not a whitespace character */
             end++;
         }
 
-        if (*end == '\0') { // if the current character is the end of the string
+        if (*end == '\0') { /* if the current character is the end of the string */
             return str;
         }
 
-        for (c = end; *c == '\t' || *c == ' '; c++);    // look for the next non-whitespace character;
+        for (c = end; *c == '\t' || *c == ' '; c++);    /* look for the next non-whitespace character; */
 
         if (*c == '\0') {
             *end = '\0';

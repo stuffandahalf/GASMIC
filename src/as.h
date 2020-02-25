@@ -15,7 +15,7 @@
 #endif
 
 /* test the equality of 2 strings */
-//#define streq(__s1, __s2) !strcmp((const char *)(__s1), (const char *)(__s2))
+/*#define streq(__s1, __s2) !strcmp((const char *)(__s1), (const char *)(__s2))*/
 #define streq(s1, s2) !strcmp((s1), (s2))
 
 /* print if debug build *//*
