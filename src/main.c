@@ -498,6 +498,17 @@ static void prepare_line_motorola(Line *l)
     char *reg_name;
     const Register *reg;
 	Data *data;
+	struct {
+        enum arg_type type;
+        union {
+            const Register *reg;
+            struct token *expr;
+			void *ptr;
+        } val;
+        int8_t pre_inc;
+        int8_t post_inc;
+    } arg_part;
+	bool end;
 
 	if (l->argc == 0) {
 	    l->address_mode = ADDR_MODE_INHERENT;
@@ -570,20 +581,10 @@ static void prepare_line_motorola(Line *l)
 
     la->val.str = c;
     buffer_ptr = c;
-    struct {
-        enum arg_type type;
-        union {
-            const Register *reg;
-            struct token *expr;
-        } val;
-        int8_t pre_inc;
-        int8_t post_inc;
-    } arg_part = {
-        ARG_TYPE_UNPROCESSED,
-        NULL
-    };
+	arg_part.type = ARG_TYPE_UNPROCESSED;
+	arg_part.val.ptr = NULL;
 
-    bool end = false;
+    end = false;
     while (!end) {
         switch (*c) {
         case ' ':
