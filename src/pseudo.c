@@ -300,7 +300,8 @@ static void pseudo_org(Line *line)
     char *lend;
     size_t new_address = strtoul(line->argv[0].val.str, &lend, 0) & address_mask;
     if (*lend == '\0') {
-        printdf(("new address is 0xzX\n", new_address));
+        /*printdf(("new address is 0xzX\n", new_address));*/
+		printdf(("new address is 0x" SZXFMT "\n", new_address));
         address = new_address;
     } else {
         fail("Value is not a number.\n");
