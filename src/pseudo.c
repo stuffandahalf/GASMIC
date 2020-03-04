@@ -72,7 +72,7 @@ void parse_pseudo_op(Line *line)
 {
     struct pseudo_instruction *pseudo_inst = get_pseudo_op(line);
     if (pseudo_inst == NULL) {
-        fail("Unable to find pseudo instruction %s that takes %zu arguments.\n", line->mnemonic, line->argc);
+        fail("Unable to find pseudo instruction %s that takes " SZuFMT " arguments.\n", line->mnemonic, line->argc);
     }
     pseudo_inst->process(line);
 }
@@ -116,7 +116,7 @@ static void pseudo_set_file(Line *line)
         if ((line)->argv[i].type == ARG_TYPE_STRING) { \
             data->type = DATA_TYPE_BYTES; \
             data->bytec = strlen((line)->argv[i].val.str); \
-            data->contents.bytes = salloc(char, sizeof(char) * data->bytec); \
+            data->contents.bytes = salloc(uint8_t, sizeof(uint8_t) * data->bytec); \
             memcpy(data->contents.bytes, (line)->argv[i].val.str, data->bytec); \
         } else { \
             data->type = DATA_TYPE_EXPRESSION; \
@@ -264,6 +264,35 @@ static void pseudo_include(Line *line)
 static void pseudo_insert(Line *line)
 {
     FILE *inserted_file;
+	long size;
+	Data *file_data;
+
+	if (line->argv[0].type != ARG_TYPE_STRING) {
+		fail("Inserted file argument is not a string path.\n");
+	}
+
+	inserted_file = fopen(line->argv[0].val.str, "rb");
+	if (inserted_file == NULL) {
+		fail("Failed to open file \"%s\" to be inserted. Does the file exists?\n", line->argv[0].val.str);
+	}
+
+	size = fsize(inserted_file);
+
+	while (size > 0) {
+		file_data = init_data(salloc(Data, sizeof(Data)));
+		file_data->bytec = (size > 255) ? 255 : size;
+		file_data->address = address;
+		file_data->type = DATA_TYPE_BYTES;
+		file_data->contents.bytes = salloc(uint8_t, sizeof(uint8_t) * file_data->bytec);
+
+		add_data(file_data);
+
+		address += file_data->bytec;
+		size -= file_data->bytec;
+	}
+
+	fclose(inserted_file);
+	printdf(("Inserted fname is %s\n", line->argv[0].val.str));
 }
 
 static void pseudo_org(Line *line)

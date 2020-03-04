@@ -4,9 +4,21 @@
 #include <lang.h>
 /*#include <stdbool.h>*/
 
+#ifdef __cplusplus
+#define NEW(type) new type()
+#define NEW_ARR(type, count) new type[(count)]
+#define FREE(ptr) delete ptr
+#define FREE_ARR(ptr) delete[] ptr
+#else
+#define NEW(type) malloc(sizeof(type));
+#define NEW_ARR(type, count) calloc(sizeof(type), count)
+#define FREE(ptr) free(ptr)
+#define FREE_ARR(ptr) free(ptr)
+#endif
+
 enum arithmetic_status arithmetic_status_code;
 
-static struct operator operators[] = {
+static struct arithmetic_op operators[] = {
     { '(', 0 },
     { ')', 0 },
     { '/', 1 },
@@ -20,11 +32,11 @@ static struct operator operators[] = {
     { 0, 0 }
 };
 
-static struct operator *find_operator(char c)
+static struct arithmetic_op *find_operator(char c)
 {
-    struct operator *op = NULL;
-    for (op = operators; op->operator != 0; op++) {
-        if (c == op->operator) {
+    struct arithmetic_op *op = NULL;
+    for (op = operators; op->symbol != 0; op++) {
+        if (c == op->symbol) {
             return op;
         }
     }
@@ -48,7 +60,7 @@ static struct token *stack_to_list(struct token *stack_top)
 }
 
 #if __STDC_VERSION__ >= 199901L/* || defined(__cplusplus)*/
-static bool is_whitespace(char c)
+static INLINE bool is_whitespace(char c)
 {
     return c == ' ' || c == '\t' || c == '\n';
 }
@@ -76,14 +88,16 @@ struct token *parse_expression(char *expr)
         double val = 0;
         char *endptr;
 
-        struct operator *op = find_operator(*c);
+        struct arithmetic_op *op = find_operator(*c);
         if (buffer_size > 0 && (op != NULL || is_whitespace(*c) || *c == '\0')) {
             changed = true;
-            tok = malloc(sizeof(struct token));
+            //tok = malloc(sizeof(struct token));
+			tok = NEW(struct token);
             val = strtod(buffer, &endptr);
             if (endptr == buffer) {
                 tok->type = TOKEN_TYPE_SYMBOL;
-                tok->value.symbol = malloc(sizeof(char) * (buffer_size + 1));
+                //tok->value.symbol = malloc(sizeof(char) * (buffer_size + 1));
+				tok->value.symbol = NEW_ARR(char, buffer_size + 1);
                 strncpy(tok->value.symbol, buffer, buffer_size);
                 tok->value.symbol[buffer_size] = '\0';
             } else if (endptr == c) {
@@ -102,12 +116,12 @@ struct token *parse_expression(char *expr)
 
         if (op != NULL) {
             changed = true;
-            tok = malloc(sizeof(struct token));
+			tok = NEW(struct token);
             tok->type = TOKEN_TYPE_OPERATOR;
-            tok->value.operator = op;
+            tok->value.op = op;
 
-            if (op->operator == ')') {
-                while (op_stack_top->value.operator->operator != '(') {
+            if (op->symbol == ')') {
+                while (op_stack_top->value.op->symbol != '(') {
                     struct token *top = op_stack_top;
                     op_stack_top = op_stack_top->next;
                     top->next = out_stack_top;
@@ -121,8 +135,11 @@ struct token *parse_expression(char *expr)
                 }
                 op_stack_top = op_stack_top->next;
             } else {
-                if (op->operator != '(') {
-                    while (op_stack_top != NULL && op_stack_top->value.operator->precedence >= op->precedence && op_stack_top->value.operator->operator != '(') {
+                if (op->symbol != '(') {
+                    while (op_stack_top != NULL &&
+						op_stack_top->value.op->precedence >= op->precedence &&
+						op_stack_top->value.op->symbol != '('
+					) {
                         struct token *tmp = op_stack_top;
                         op_stack_top = op_stack_top->next;
                         tmp->next = out_stack_top;
@@ -151,7 +168,7 @@ struct token *parse_expression(char *expr)
     }
 
     while (op_stack_top != NULL) {
-        if (op_stack_top->value.operator->operator == '(') {
+        if (op_stack_top->value.op->symbol == '(') {
             arithmetic_status_code = ARITHMETIC_ERROR_UNMATCHED_PARENTHESIS;
             free_token_chain(op_stack_top);
             free_token_chain(out_stack_top);
@@ -173,9 +190,11 @@ void free_token_chain(struct token *stack_top)
     while (tok != NULL) {
         struct token *next = tok->next;
         if (tok->type == TOKEN_TYPE_SYMBOL) {
-            free(tok->value.symbol);
+            //free(tok->value.symbol);
+			FREE_ARR(tok->value.symbol);
         }
-        free(tok);
+        //free(tok);
+		FREE(tok);
         tok = next;
     }
 }
@@ -192,7 +211,7 @@ void fprint_token_stack(FILE *fptr, struct token *stack_top)
             fprintf(fptr, "%s\n", tok->value.symbol);
             break;
         case TOKEN_TYPE_OPERATOR:
-            fprintf(fptr, "%c\n", tok->value.operator->operator);
+            fprintf(fptr, "%c\n", tok->value.op->symbol);
             break;
         }
     }
@@ -215,7 +234,7 @@ void fprint_token_list(FILE *fptr, struct token *list)
             fprintf(fptr, "%s ", tok->value.symbol);
             break;
         case TOKEN_TYPE_OPERATOR:
-            fprintf(fptr, "%c ", tok->value.operator->operator);
+            fprintf(fptr, "%c ", tok->value.op->symbol);
             break;
         }
     }

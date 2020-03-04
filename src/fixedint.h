@@ -91,8 +91,6 @@ typedef signed long int         INT_TYPE(64);
 #define UINT64_MAX              ULONG_LONG_MAX
 typedef unsigned long long int  UINT_TYPE(64);
 typedef signed long long int    INT_TYPE(64);
-#else
-#error No 64-bit int type exists
 #endif
 
 #undef INT_TYPE

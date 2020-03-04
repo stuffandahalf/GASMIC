@@ -16,9 +16,6 @@ typedef enum { false, true } bool;
 #endif /* __STDC_VERSION >= 199901L */
 #endif /* __cplusplus */
 
-/* print to stderr */
-int printef(const char *msg, ...);
-
 #ifndef NDEBUG
 #define printdf(args) { \
     printf("[%s:%d] >> ", __FILE__, __LINE__); \
@@ -27,5 +24,13 @@ int printef(const char *msg, ...);
 #else
 #define printdf(args)
 #endif
+
+/* test the equality of 2 strings */
+/*#define streq(__s1, __s2) !strcmp((const char *)(__s1), (const char *)(__s2))*/
+#define streq(s1, s2) !strcmp((s1), (s2))
+
+/* print to stderr */
+int printef(const char *msg, ...);
+long fsize(FILE *fptr);
 
 #endif /* GASMIC_LANG_H */

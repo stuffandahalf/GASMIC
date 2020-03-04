@@ -14,3 +14,17 @@ int printef(const char *msg, ...)
 
     return c;
 }
+
+long fsize(FILE *fptr)
+{
+    long current_pos;
+    long size;
+	
+    current_pos = ftell(fptr);
+
+    fseek(fptr, 0, SEEK_END);
+    size = ftell(fptr);
+    fseek(fptr, current_pos, SEEK_SET);
+
+    return size;
+}

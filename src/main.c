@@ -131,7 +131,7 @@ int main(int argc, char **argv)
     printdf(("DATATAB\n"));
     data = datatab->first;
     while (data != NULL) {
-        printdf(("data address: %zX,  ", data->address));
+        printdf(("data address: " SZXFMT ",  ", data->address));
         switch (data->type) {
         case DATA_TYPE_EXPRESSION:
             /*printdf("%" PRIu8 " bytes label \"%s\"\n", data->bytec, data->contents.symbol);*/
@@ -193,7 +193,7 @@ void init_address_mask()
         }
         address_mask |= 1u;
     }
-    printdf(("Address mask: %zX\n", address_mask));
+    printdf(("Address mask: " SZXFMT "\n", address_mask));
 }
 
 void assemble(Line *l)

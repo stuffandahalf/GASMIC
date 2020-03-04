@@ -17,8 +17,8 @@ enum token_type {
     TOKEN_TYPE_SYMBOL
 };
 
-struct operator {
-    char operator;
+struct arithmetic_op {
+    char symbol;
     unsigned char precedence;
 };
 
@@ -26,7 +26,7 @@ struct token {
     enum token_type type;
     struct token *next;
     union {
-        struct operator *operator;
+        struct arithmetic_op *op;
         double number;
         char *symbol;
     } value;

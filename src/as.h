@@ -14,9 +14,17 @@
 #include <ansistyle.h>
 #endif
 
-/* test the equality of 2 strings */
-/*#define streq(__s1, __s2) !strcmp((const char *)(__s1), (const char *)(__s2))*/
-#define streq(s1, s2) !strcmp((s1), (s2))
+#ifdef HAVE_ULL
+typedef unsigned long long int address_uint;
+#define PRIuADD	"%lld"
+#define PRIxADD "%llx"
+#define PRIXADD "%llX"
+#else
+typedef unsigned long int address_uint;
+#define PRIuADD "%ld"
+#define PRIxADD "%lx"
+#define PRIXADD "%lX"
+#endif
 
 /* print if debug build *//*
 #ifndef NDEBUG
@@ -248,7 +256,7 @@ static INLINE void fail(const char *msg, ...) {
     struct context *cntxt;
     va_list args;
     va_start(args, msg);
-    printef("[%s:%zu]\t", g_context->fname, g_context->line_num);
+    printef("[%s:" SZuFMT "]\t", g_context->fname, g_context->line_num);
 
 #ifndef _WIN32
     printef(ANSI_COLOR_RED);
@@ -263,7 +271,7 @@ static INLINE void fail(const char *msg, ...) {
     va_end(args);
 
     for (cntxt = g_context->parent; cntxt != NULL; cntxt = cntxt->parent) {
-        printef("\tIn file included from \"%s\", line %zu\n", cntxt->fname, cntxt->line_num);
+        printef("\tIn file included from \"%s\", line " SZuFMT "\n", cntxt->fname, cntxt->line_num);
     }
 
     die("\n");
