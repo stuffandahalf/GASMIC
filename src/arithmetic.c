@@ -91,7 +91,6 @@ struct token *parse_expression(char *expr)
         struct arithmetic_op *op = find_operator(*c);
         if (buffer_size > 0 && (op != NULL || is_whitespace(*c) || *c == '\0')) {
             changed = true;
-            //tok = malloc(sizeof(struct token));
 			tok = NEW(struct token);
             val = strtod(buffer, &endptr);
             if (endptr == buffer) {
