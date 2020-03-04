@@ -24,6 +24,10 @@ file(GLOB HEADERS "include/*.h")
 
 add_executable(gasmic ${SOURCES} ${LOCAL_HEADERS} ${HEADERS} src/lang.c src/lang.h)
 
+set_property(GLOBAL PROPERTY C_STANDARD 90)
+set_property(GLOBAL PROPERTY C_STANDARD_REQUIRED ON)
+set_property(GLOBAL PROPERTY C_EXTENSIONS OFF)
+
 check_and_add_header(gasmic inttypes.h HAVE_INTTYPES_H)
 #check_and_add_type(gasmic "unsigned long long int" HAVE_ULL)
 
@@ -50,7 +54,7 @@ target_include_directories(gasmic PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 install(TARGETS gasmic DESTINATION ${CMAKE_INSTALL_PREFIX})
 
-set_property(TARGET gasmic PROPERTY C_STANDARD 90)
-set_property(TARGET gasmic PROPERTY C_STANDARD_REQUIRED ON)
-set_property(TARGET gasmic PROPERTY C_EXTENSIONS OFF)
+#set_property(TARGET gasmic PROPERTY C_STANDARD 90)
+#set_property(TARGET gasmic PROPERTY C_STANDARD_REQUIRED ON)
+#set_property(TARGET gasmic PROPERTY C_EXTENSIONS OFF)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pedantic")
