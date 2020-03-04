@@ -24,24 +24,19 @@ file(GLOB HEADERS "include/*.h")
 
 add_executable(gasmic ${SOURCES} ${LOCAL_HEADERS} ${HEADERS} src/lang.c src/lang.h)
 
-set_property(GLOBAL PROPERTY C_STANDARD 90)
-set_property(GLOBAL PROPERTY C_STANDARD_REQUIRED ON)
-set_property(GLOBAL PROPERTY C_EXTENSIONS OFF)
-
 check_and_add_header(gasmic inttypes.h HAVE_INTTYPES_H)
-#check_and_add_type(gasmic "unsigned long long int" HAVE_ULL)
 
 check_type_size("size_t" SIZEOF_SIZE_T)# BUILTIN_TYPES_ONLY LANGUAGE C)
 check_type_size("unsigned long int" SIZEOF_UL BUILTIN_TYPES_ONLY LANGUAGE C)
 
-message(STATUS "SIZEOF_SIZE_T = ${SIZEOF_SIZE_T}")
-message(STATUS "SIZEOF_UL = ${SIZEOF_UL}")
+#message(STATUS "SIZEOF_SIZE_T = ${SIZEOF_SIZE_T}")
+#message(STATUS "SIZEOF_UL = ${SIZEOF_UL})
 
 if(SIZEOF_SIZE_T EQUAL SIZEOF_UL)
 	target_compile_definitions(gasmic PRIVATE SZuFMT="%lu" SZxFMT="%lx" SZXFMT="%lX")
 else()
 	check_type_size("unsigned long long int" SIZEOF_ULL BUILTIN_TYPES_ONLY LANGUAGE C)
-	message(STATUS "SIZEOF_ULL = ${SIZEOF_ULL}")
+	#message(STATUS "SIZEOF_ULL = ${SIZEOF_ULL})
 	if (SIZEOF_SIZE_T EQUAL SIZEOF_ULL)
 		target_compile_definitions(gasmic PRIVATE SZuFMT="%llu" SZxFMT="%llx" SZXFMT="%llX")
 	else()
@@ -55,7 +50,7 @@ target_include_directories(gasmic PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 install(TARGETS gasmic DESTINATION ${CMAKE_INSTALL_PREFIX})
 
-#set_property(TARGET gasmic PROPERTY C_STANDARD 90)
-#set_property(TARGET gasmic PROPERTY C_STANDARD_REQUIRED ON)
-#set_property(TARGET gasmic PROPERTY C_EXTENSIONS OFF)
+set_property(TARGET gasmic PROPERTY C_STANDARD 90)
+set_property(TARGET gasmic PROPERTY C_STANDARD_REQUIRED ON)
+set_property(TARGET gasmic PROPERTY C_EXTENSIONS OFF)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pedantic")
