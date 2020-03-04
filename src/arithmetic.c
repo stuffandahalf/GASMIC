@@ -95,7 +95,6 @@ struct token *parse_expression(char *expr)
             val = strtod(buffer, &endptr);
             if (endptr == buffer) {
                 tok->type = TOKEN_TYPE_SYMBOL;
-                //tok->value.symbol = malloc(sizeof(char) * (buffer_size + 1));
 				tok->value.symbol = NEW_ARR(char, buffer_size + 1);
                 strncpy(tok->value.symbol, buffer, buffer_size);
                 tok->value.symbol[buffer_size] = '\0';
@@ -189,10 +188,8 @@ void free_token_chain(struct token *stack_top)
     while (tok != NULL) {
         struct token *next = tok->next;
         if (tok->type == TOKEN_TYPE_SYMBOL) {
-            //free(tok->value.symbol);
 			FREE_ARR(tok->value.symbol);
         }
-        //free(tok);
 		FREE(tok);
         tok = next;
     }
