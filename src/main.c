@@ -5,6 +5,7 @@
 #include <unistd.h>
 #endif*/
 #include <getopt.h>
+#include <console.h>
 #include <as.h>
 #include <targets.h>
 #include <pseudo.h>
@@ -55,6 +56,7 @@ int main(int argc, char **argv)
     Symbol *sym, *tmp_sym;
     Data *data, *tmp_data;
 
+	init_console();
     init_targets();
 
     /*FILE *in;*/
@@ -179,6 +181,8 @@ early_exit:
 #if defined(_WIN32) && !defined(NDEBUG)
     getc(stdin);
 #endif
+
+	restore_console();
 
 	return 0;
 }

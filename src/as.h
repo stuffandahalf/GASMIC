@@ -10,21 +10,8 @@
 #include <lang.h>
 #include <smem.h>
 
-#ifndef _WIN32
+#include <console.h>
 #include <ansistyle.h>
-#endif
-
-#ifdef HAVE_ULL
-typedef unsigned long long int address_uint;
-#define PRIuADD	"%lld"
-#define PRIxADD "%llx"
-#define PRIXADD "%llX"
-#else
-typedef unsigned long int address_uint;
-#define PRIuADD "%ld"
-#define PRIxADD "%lx"
-#define PRIXADD "%lX"
-#endif
 
 /* print if debug build *//*
 #ifndef NDEBUG
@@ -258,12 +245,20 @@ static INLINE void fail(const char *msg, ...) {
     va_start(args, msg);
     printef("[%s:" SZuFMT "]\t", g_context->fname, g_context->line_num);
 
-#ifndef _WIN32
+#ifdef _WIN32
+    if (console_is_init()) {
+#endif
     printef(ANSI_COLOR_RED);
+#ifdef _WIN32
+    }
 #endif
     printef("ERROR");
-#ifndef _WIN32
+#ifdef _WIN32
+    if (console_is_init()) {
+#endif
     printef(ANSI_COLOR_RESET);
+#ifdef _WIN32
+    }
 #endif
     printef(" ");
 
@@ -273,6 +268,10 @@ static INLINE void fail(const char *msg, ...) {
     for (cntxt = g_context->parent; cntxt != NULL; cntxt = cntxt->parent) {
         printef("\tIn file included from \"%s\", line " SZuFMT "\n", cntxt->fname, cntxt->line_num);
     }
+
+#ifdef _WIN32
+    restore_console();
+#endif
 
     die("\n");
 }
