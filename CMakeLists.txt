@@ -33,7 +33,7 @@ check_type_size("unsigned long int" SIZEOF_UL BUILTIN_TYPES_ONLY LANGUAGE C)
 #message(STATUS "SIZEOF_UL = ${SIZEOF_UL})
 
 if(SIZEOF_SIZE_T EQUAL SIZEOF_UL)
-	target_compile_definitions(gasmic PRIVATE SZuFMT="%lu" SZxFMT="%lx" SZXFMT="%lX")
+	target_compile_definitions(gasmic PRIVATE SZuFMT="%%lu" SZxFMT="%%lx" SZXFMT="%%lX")
 else()
 	check_type_size("unsigned long long int" SIZEOF_ULL BUILTIN_TYPES_ONLY LANGUAGE C)
 	#message(STATUS "SIZEOF_ULL = ${SIZEOF_ULL})
