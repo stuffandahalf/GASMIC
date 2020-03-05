@@ -250,6 +250,9 @@ void assemble(Line *l)
         }
         g_context->line_num++;
     }
+	if (ferror(g_context->fptr)) {
+		fail("Too many characters entered.\n");
+	}
 }
 
 static int configure(int argc, char *argv[])
