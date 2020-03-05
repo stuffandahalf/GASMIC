@@ -56,7 +56,9 @@ int main(int argc, char **argv)
     Symbol *sym, *tmp_sym;
     Data *data, *tmp_data;
 
+#ifdef _WIN32
 	init_console();
+#endif
     init_targets();
 
     /*FILE *in;*/
@@ -182,7 +184,9 @@ early_exit:
     getc(stdin);
 #endif
 
+#ifndef _WIN32
 	restore_console();
+#endif
 
 	return 0;
 }
