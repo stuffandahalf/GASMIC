@@ -11,7 +11,7 @@
 #define FREE_ARR(ptr) delete[] ptr
 #else
 #define NEW(type) malloc(sizeof(type));
-#define NEW_ARR(type, count) calloc(sizeof(type), count)
+#define NEW_ARR(type, count) calloc(count, sizeof(type))
 #define FREE(ptr) free(ptr)
 #define FREE_ARR(ptr) free(ptr)
 #endif*/
@@ -101,7 +101,7 @@ struct token *parse_expression(char *expr)
 			if (endptr == buffer) {
 				tok->type = TOKEN_TYPE_SYMBOL;
 				/*tok->value.str = NEW_ARR(char, buffer_size + 1);*/
-				tok->value.str = calloc(sizeof(char), buffer_size + 1);
+				tok->value.str = calloc(buffer_size + 1, sizeof(char));
 				strncpy(tok->value.str, buffer, buffer_size);
 				tok->value.str[buffer_size] = '\0';
 			}
