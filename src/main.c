@@ -57,7 +57,9 @@ int main(int argc, char **argv)
     Data *data, *tmp_data;
 
 #ifdef _WIN32
-	init_console();
+	if (!init_console()) {
+		printef("WARNING\tFailed to initialize terminal, colour not supported\n");
+	}
 #endif
     init_targets();
 
