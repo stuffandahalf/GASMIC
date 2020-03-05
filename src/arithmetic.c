@@ -4,7 +4,7 @@
 #include <lang.h>
 /*#include <stdbool.h>*/
 
-#ifdef __cplusplus
+/*#ifdef __cplusplus
 #define NEW(type) new type()
 #define NEW_ARR(type, count) new type[(count)]
 #define FREE(ptr) delete ptr
@@ -14,7 +14,7 @@
 #define NEW_ARR(type, count) calloc(sizeof(type), count)
 #define FREE(ptr) free(ptr)
 #define FREE_ARR(ptr) free(ptr)
-#endif
+#endif*/
 
 enum arithmetic_status arithmetic_status_code;
 
@@ -84,27 +84,42 @@ struct token *parse_expression(char *expr)
 
     for (c = expr; !stop/* *c != '\0'*/; c++) {
         bool changed = false;
-
-        double val = 0;
+		struct arithmetic_op *op;
+		union {
+			double d;
+			long l;
+		} val;
         char *endptr;
 
-        struct arithmetic_op *op = find_operator(*c);
+		val.l = 0;
+        op = find_operator(*c);
         if (buffer_size > 0 && (op != NULL || is_whitespace(*c) || *c == '\0')) {
             changed = true;
-			tok = NEW(struct token);
-            val = strtod(buffer, &endptr);
-            if (endptr == buffer) {
-                tok->type = TOKEN_TYPE_SYMBOL;
-				tok->value.symbol = NEW_ARR(char, buffer_size + 1);
-                strncpy(tok->value.symbol, buffer, buffer_size);
-                tok->value.symbol[buffer_size] = '\0';
-            } else if (endptr == c) {
-                tok->type = TOKEN_TYPE_LITERAL;
-                tok->value.number = val;
-            } else {
-                fprintf(stderr, "wtf is this.\n");
-                exit(1);
-            }
+			/*tok = NEW(struct token);*/
+			tok = malloc(sizeof(struct token));
+			val.d = strtod(buffer, &endptr);
+			if (endptr == buffer) {
+				tok->type = TOKEN_TYPE_SYMBOL;
+				/*tok->value.str = NEW_ARR(char, buffer_size + 1);*/
+				tok->value.str = calloc(sizeof(char), buffer_size + 1);
+				strncpy(tok->value.str, buffer, buffer_size);
+				tok->value.str[buffer_size] = '\0';
+			}
+			else if (endptr == c) {
+				tok->type = TOKEN_TYPE_DOUBLE;
+				tok->value.d = val.d;
+			}
+			else {
+				val.l = strtol(buffer, &endptr, 0);
+				if (endptr == c) {
+					tok->type = TOKEN_TYPE_LONG;
+					tok->value.l = val.l;
+				}
+				else {
+					arithmetic_status_code = ARITHMETIC_ERROR_CANNOT_PARSE_TOKEN;
+					return NULL;
+				}
+			}
 
             tok->next = out_stack_top;
             out_stack_top = tok;
@@ -114,7 +129,8 @@ struct token *parse_expression(char *expr)
 
         if (op != NULL) {
             changed = true;
-			tok = NEW(struct token);
+			/*tok = NEW(struct token);*/
+			tok = malloc(sizeof(struct token));
             tok->type = TOKEN_TYPE_OPERATOR;
             tok->value.op = op;
 
@@ -188,9 +204,11 @@ void free_token_chain(struct token *stack_top)
     while (tok != NULL) {
         struct token *next = tok->next;
         if (tok->type == TOKEN_TYPE_SYMBOL) {
-			FREE_ARR(tok->value.symbol);
+			//FREE_ARR(tok->value.str);
+			free(tok->value.str);
         }
-		FREE(tok);
+		//FREE(tok);
+		free(tok);
         tok = next;
     }
 }
@@ -200,17 +218,21 @@ void fprint_token_stack(FILE *fptr, struct token *stack_top)
     struct token *tok;
     for (tok = stack_top; tok != NULL; tok = tok->next) {
         switch (tok->type) {
-        case TOKEN_TYPE_LITERAL:
-            fprintf(fptr, "%f\n", tok->value.number);
+        case TOKEN_TYPE_DOUBLE:
+            fprintf(fptr, "%f\n", tok->value.d);
             break;
+		case TOKEN_TYPE_LONG:
+			fprintf(fptr, "%ld\n", tok->value.l);
+			break;
         case TOKEN_TYPE_SYMBOL:
-            fprintf(fptr, "%s\n", tok->value.symbol);
+            fprintf(fptr, "%s\n", tok->value.str);
             break;
         case TOKEN_TYPE_OPERATOR:
             fprintf(fptr, "%c\n", tok->value.op->symbol);
             break;
         }
     }
+    fprintf(fptr, "\n");
 }
 
 void print_token_stack(struct token *stack_top)
@@ -220,21 +242,7 @@ void print_token_stack(struct token *stack_top)
 
 void fprint_token_list(FILE *fptr, struct token *list)
 {
-    struct token *tok;
-    for (tok = list; tok != NULL; tok = tok->next) {
-        switch (tok->type) {
-        case TOKEN_TYPE_LITERAL:
-            fprintf(fptr, "%f ", tok->value.number);
-            break;
-        case TOKEN_TYPE_SYMBOL:
-            fprintf(fptr, "%s ", tok->value.symbol);
-            break;
-        case TOKEN_TYPE_OPERATOR:
-            fprintf(fptr, "%c ", tok->value.op->symbol);
-            break;
-        }
-    }
-    fprintf(fptr, "\n");
+    fprint_token_stack(fptr, list);
 }
 
 void print_token_list(struct token *list)

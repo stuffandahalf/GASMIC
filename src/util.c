@@ -169,17 +169,17 @@ void prepare_line(Line *line)
                 fail("Failed to parse expression.");
             }
             for (tok = line->argv[i].val.rpn_expr; tok != NULL; tok = tok->next) {
-                if (tok->type == TOKEN_TYPE_SYMBOL && tok->value.symbol[0] == '.') {
+                if (tok->type == TOKEN_TYPE_SYMBOL && tok->value.str[0] == '.') {
                     size_t parent_size = strlen(symtab->last_parent->label);
-                    size_t child_size = strlen(tok->value.symbol);
-                    char *child = tok->value.symbol;
+                    size_t child_size = strlen(tok->value.str);
+                    char *child = tok->value.str;
 
-                    tok->value.symbol = malloc(sizeof(char) * (parent_size + child_size + 1));
-                    if (tok->value.symbol == NULL) {
+                    tok->value.str = malloc(sizeof(char) * (parent_size + child_size + 1));
+                    if (tok->value.str == NULL) {
                         fail("Failed to reallocate buffer for local symbol in expression.\n");
                     }
-                    strncpy(tok->value.symbol, symtab->last_parent->label, parent_size);
-                    strncpy(&tok->value.symbol[parent_size], child, child_size + 1);
+                    strncpy(tok->value.str, symtab->last_parent->label, parent_size);
+                    strncpy(&tok->value.str[parent_size], child, child_size + 1);
                     free(child);
                 }
             }
@@ -190,11 +190,7 @@ void prepare_line(Line *line)
 
 char *str_clone(const char *src)
 {
-#ifdef __cplusplus
-	char *new_ptr = (char *)malloc(sizeof(char) * (strlen(src) + 1));
-#else
-    char *new_ptr = malloc(sizeof(char) * (strlen(src) + 1));
-#endif
+	char *new_ptr = malloc(sizeof(char) * (strlen(src) + 1));
     if (new_ptr == NULL) {
         return NULL;
     }

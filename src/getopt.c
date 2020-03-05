@@ -1,7 +1,7 @@
 #include <getopt.h>
 
 int optind = 1;
-static int optcharind = 1;
+static unsigned int optcharind = 1;
 char *optarg = NULL;
 int optopt;
 

@@ -5,6 +5,7 @@
 
 enum arithmetic_status {
     ARITHMETIC_SUCCESS,
+	ARITHMETIC_ERROR_CANNOT_PARSE_TOKEN,
     ARITHMETIC_ERROR_INSUFFICIENT_OPERANDS,
     ARITHMETIC_ERROR_UNMATCHED_PARENTHESIS
 };
@@ -13,7 +14,8 @@ extern enum arithmetic_status arithmetic_status_code;
 enum token_type {
     TOKEN_TYPE_END,
     TOKEN_TYPE_OPERATOR,
-    TOKEN_TYPE_LITERAL,
+    TOKEN_TYPE_DOUBLE,
+	TOKEN_TYPE_LONG,
     TOKEN_TYPE_SYMBOL
 };
 
@@ -27,8 +29,9 @@ struct token {
     struct token *next;
     union {
         struct arithmetic_op *op;
-        double number;
-        char *symbol;
+        double d;
+		long l;
+        char *str;
     } value;
 };
 
