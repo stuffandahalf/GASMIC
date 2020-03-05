@@ -7,7 +7,7 @@
 /* bool is a standard type in c++ */
 #define INLINE inline
 #else
-#if __STDC_VERSION >= 199901L
+#if __STDC_VERSION__ >= 199901L
 #include <stdbool.h>
 #define INLINE inline
 #else
