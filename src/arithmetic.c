@@ -204,10 +204,10 @@ void free_token_chain(struct token *stack_top)
     while (tok != NULL) {
         struct token *next = tok->next;
         if (tok->type == TOKEN_TYPE_SYMBOL) {
-			//FREE_ARR(tok->value.str);
+			/*FREE_ARR(tok->value.str);*/
 			free(tok->value.str);
         }
-		//FREE(tok);
+		/*FREE(tok);*/
 		free(tok);
         tok = next;
     }
