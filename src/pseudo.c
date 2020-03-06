@@ -104,7 +104,7 @@ static void pseudo_set_file(Line *line)
 		die("File name must be a string.");
 	}
 	sfree(g_context->fname);
-	if ((g_context->fname = saquire(char, str_clone(line->argv[0].val.str))) == NULL) {
+	if ((g_context->fname = saquire(str_clone(line->argv[0].val.str))) == NULL) {
 		fail("Failed to copy substitute file name.\n");
 	}
 }
@@ -115,12 +115,12 @@ static void pseudo_set_file(Line *line)
 	Data *data; \
 	size_t i; \
 	for (i = 0; i < (line)->argc; i++) { \
-		data = init_data(salloc(Data, sizeof(Data))); \
+		data = init_data(salloc(sizeof(Data))); \
 		data->address = address & address_mask; \
 		if ((line)->argv[i].type == ARG_TYPE_STRING) { \
 			data->type = DATA_TYPE_BYTES; \
 			data->bytec = strlen((line)->argv[i].val.str); \
-			data->contents.bytes = salloc(uint8_t, sizeof(uint8_t) * data->bytec); \
+			data->contents.bytes = salloc(sizeof(uint8_t) * data->bytec); \
 			memcpy(data->contents.bytes, (line)->argv[i].val.str, data->bytec); \
 		} else { \
 			data->type = DATA_TYPE_EXPRESSION; \
@@ -197,7 +197,7 @@ static void pseudo_set_quad(Line *line) { pseudo_set_data(uint64_t, line); }
 	} \*/ \
 	long count = 0; \
 	char *end; \
-	Data *data = init_data(salloc(Data, sizeof(Data))); \
+	Data *data = init_data(salloc(sizeof(Data))); \
 	data->type = DATA_TYPE_BYTES; \
 }
 
@@ -239,7 +239,7 @@ static void pseudo_include(Line *line)
 	included_context.parent = g_context;
 	/*included_context.fptr = included_file; */
 	included_context.line_num = 1;
-	if ((included_context.fname = saquire(char, str_clone(line->argv[0].val.str))) == NULL) {
+	if ((included_context.fname = saquire(str_clone(line->argv[0].val.str))) == NULL) {
 		fail("Failed to duplicate file name \"%s\"\n", line->argv[0].val.str);
 	}
 
@@ -248,7 +248,7 @@ static void pseudo_include(Line *line)
 		fail("Failed to open included file \"%s\".\n", included_context.fname);
 	}
 	
-	inc_line = salloc(Line, sizeof(Line));
+	inc_line = salloc(sizeof(Line));
 	g_context = &included_context;
 
 	assemble(inc_line);
@@ -284,11 +284,11 @@ static void pseudo_insert(Line *line)
 	size = fsize(inserted_file);
 
 	while (size > 0) {
-		file_data = init_data(salloc(Data, sizeof(Data)));
+		file_data = init_data(salloc(sizeof(Data)));
 		file_data->bytec = (size > 255) ? 255 : size;
 		file_data->address = address;
 		file_data->type = DATA_TYPE_BYTES;
-		file_data->contents.bytes = salloc(uint8_t, sizeof(uint8_t) * file_data->bytec);
+		file_data->contents.bytes = salloc(sizeof(uint8_t) * file_data->bytec);
 
 		add_data(file_data);
 

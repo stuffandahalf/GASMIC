@@ -90,12 +90,12 @@ int main(int argc, char **argv)
 	init_data_table();
 	init_symbol_table();
 
-	l = salloc(Line, sizeof(Line));
+	l = salloc(sizeof(Line));
 
 	if (configuration.in_fnamec < 0) {
 		die("Invalid number of command line arguments.\n");
 	} else if (configuration.in_fnamec == 0) {
-		if ((init_cntxt.fname = saquire(char, str_clone("stdin"))) == NULL) {
+		if ((init_cntxt.fname = saquire(str_clone("stdin"))) == NULL) {
 			die("Failed to duplicate file name \"stdin\"\n");
 		}
 		init_cntxt.fptr = stdin;
@@ -103,7 +103,7 @@ int main(int argc, char **argv)
 		sfree(init_cntxt.fname);
 	} else {
 		for (i = 0; i < configuration.in_fnamec; i++) {
-			if ((init_cntxt.fname = saquire(char, str_clone(configuration.in_fnames[i]))) == NULL) {
+			if ((init_cntxt.fname = saquire(str_clone(configuration.in_fnames[i]))) == NULL) {
 				die("Failed to duplicate file name \"%s\"\n", configuration.in_fnames[i]);
 			}
 			if ((init_cntxt.fptr = fopen(init_cntxt.fname, "r")) == NULL) {
@@ -216,7 +216,7 @@ void assemble(Line *l)
 			l->addr_mode_post_op = POST_OP_NONE;
 			l->arg_buf_size = 2;
 			/*l->argv = salloc(sizeof(char *) * l->arg_buf_size);*/
-			l->argv = salloc(LineArg, sizeof(LineArg) * l->arg_buf_size);
+			l->argv = salloc(sizeof(LineArg) * l->arg_buf_size);
 			l->argc = 0;
 
 			parse_line(l, buffer);
@@ -373,7 +373,7 @@ static void parse_line(Line *l, char *buffer)
 			}
 			if (l->argc == l->arg_buf_size) {
 				l->arg_buf_size += 2;
-				l->argv = srealloc(LineArg, l->argv, sizeof(LineArg) * l->arg_buf_size);
+				l->argv = srealloc(l->argv, sizeof(LineArg) * l->arg_buf_size);
 			}
 			/*LineArg **/la = &(l->argv[l->argc++]);
 			la->type = arg_type;
@@ -399,7 +399,7 @@ static void parse_line(Line *l, char *buffer)
 			} else {
 				if (l->argc == l->arg_buf_size) {
 					l->arg_buf_size += 2;
-					l->argv = srealloc(LineArg, l->argv, sizeof(LineArg) * l->arg_buf_size);
+					l->argv = srealloc(l->argv, sizeof(LineArg) * l->arg_buf_size);
 				}
 				/*LineArg **/la = &(l->argv[l->argc++]);
 				la->type = arg_type;
@@ -536,7 +536,7 @@ static void prepare_line_motorola(Line *l)
 	arg_len += l->argc - 1; /* space for commas */
 	arg_len++;
 
-	unified_arg_str = salloc(char, sizeof(char) * arg_len);
+	unified_arg_str = salloc(sizeof(char) * arg_len);
 
 	/*char *c = unified_arg_str;*/
 	buffer_ptr = unified_arg_str;
@@ -845,7 +845,7 @@ instruction_found:
 */
 
 	
-	data = init_data(salloc(Data, sizeof(Data)));
+	data = init_data(salloc(sizeof(Data)));
 	/*data = (Data *)salloc_real(sizeof(Data));*/
 
 	/*printdf("Instruction Register is %s\n", instruction_reg ? instruction_reg->reg->name : "NONE");*/

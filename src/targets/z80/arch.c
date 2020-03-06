@@ -58,7 +58,7 @@ void Z80_process_line(Line *line, const struct instruction_register *instr_reg, 
 
 void Z80_init(void)
 {
-	ARCH_Z80 = salloc(Architecture, sizeof(Architecture));
+	ARCH_Z80 = salloc(sizeof(Architecture));
 	ARCH_Z80->value = Z80;
 	/*strcpy(ARCH_Z80->name, "z80");*/
 	ARCH_Z80->name = "Z80";
@@ -78,7 +78,7 @@ void Z80_destroy(void)
 void I8080_init(void)
 {
 	fail("I8080 architecture is not ready yet.");
-	ARCH_I8080 = salloc(Architecture, sizeof(Architecture));
+	ARCH_I8080 = salloc(sizeof(Architecture));
 }
 void I8080_destroy(void)
 {

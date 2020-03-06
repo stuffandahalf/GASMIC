@@ -131,7 +131,7 @@ static void HD6309_process_line(Line *line, const struct instruction_register *i
 }
 
 #define ARCH_INIT(arch_var) { \
-	ARCH_##arch_var = salloc(Architecture, sizeof(Architecture)); \
+	ARCH_##arch_var = salloc(sizeof(Architecture)); \
 	ARCH_##arch_var->value = arch_var; \
 	/*strcpy(ARCH_##arch_var->name, arch_name);*/ \
 	ARCH_##arch_var->name = #arch_var; \

@@ -16,7 +16,7 @@ int init_symbol_table()
 	if (symtab != NULL) {
 		return 0;
 	}
-	symtab = salloc(SymTab, sizeof(SymTab));
+	symtab = salloc(sizeof(SymTab));
 	symtab->first = NULL;
 	symtab->last = NULL;
 
@@ -35,7 +35,7 @@ char *resolve_label(char *symbol)
 	char *c;
 
 	if (*symbol != '.') {
-		complete_symbol = salloc(char, sizeof(char) * (strlen(symbol) + 1));
+		complete_symbol = salloc(sizeof(char) * (strlen(symbol) + 1));
 		strcpy(complete_symbol, symbol);
 
 		return complete_symbol;
@@ -47,7 +47,7 @@ char *resolve_label(char *symbol)
 
 	parent_len = strlen(symtab->last_parent->label);
 	local_len = strlen(symbol);
-	complete_symbol = salloc(char, sizeof(char) * (parent_len + local_len + 1));
+	complete_symbol = salloc(sizeof(char) * (parent_len + local_len + 1));
 
 	symbol_ptr = complete_symbol;
 	for (c = symtab->last_parent->label; *c != '\0'; c++) {
@@ -67,7 +67,7 @@ void add_label(Line *line)
 {
 	Symbol *test_sym;
 
-	Symbol *sym = salloc(Symbol, sizeof(Symbol));
+	Symbol *sym = salloc(sizeof(Symbol));
 
 	sym->next = NULL;
 	sym->label = resolve_label(line->label);
@@ -123,7 +123,7 @@ int init_data_table()
 	if (datatab != NULL) {
 		return 0;
 	}
-	datatab = salloc(DataTab, sizeof(DataTab));
+	datatab = salloc(sizeof(DataTab));
 	datatab->first = NULL;
 	datatab->last = NULL;
 
