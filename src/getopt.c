@@ -7,12 +7,12 @@ int optopt;
 
 int getopt(int argc, char *const *argv, const char *arglist)
 {
-    const char *arg;
-    char *c;
-    size_t arglen;
-    int retval;
+	const char *arg;
+	char *c;
+	size_t arglen;
+	int retval;
 
-    if (optind == argc) {
+	if (optind == argc) {
 		return -1;
 	}
 	

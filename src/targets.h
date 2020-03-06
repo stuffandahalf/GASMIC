@@ -8,11 +8,11 @@
 /*#include <targets/6502/arch.h>*/
 
 #define TARGETS \
-    TARGET(MC6809) \
-    TARGET(HD6309) \
-    TARGET(Z80) \
-    /*TARGET(I8080)*/ \
-    /*TARGET(MOS6502)*/
+	TARGET(MC6809) \
+	TARGET(HD6309) \
+	TARGET(Z80) \
+	/*TARGET(I8080)*/ \
+	/*TARGET(MOS6502)*/
 
 #define TARGET(t) t ## _init();
 static INLINE void init_targets() { TARGETS }

@@ -5,70 +5,70 @@
 #include <stdarg.h>
 
 struct alloced {
-    void *address;
-    struct alloced *next;
+	void *address;
+	struct alloced *next;
 	struct alloced *prev;
 };
 
 static struct {
-    struct alloced *first;
-    struct alloced *last;
+	struct alloced *first;
+	struct alloced *last;
 } alloced_mem = { NULL, NULL };
 
 void release(void)
 {
-    struct alloced *a = alloced_mem.first;
-    while (a != NULL) {
-        struct alloced *tmp = a;
-        a = a->next;
-        free(tmp->address);
-        free(tmp);
-    }
-    alloced_mem.first = NULL;
-    alloced_mem.last = NULL;
+	struct alloced *a = alloced_mem.first;
+	while (a != NULL) {
+		struct alloced *tmp = a;
+		a = a->next;
+		free(tmp->address);
+		free(tmp);
+	}
+	alloced_mem.first = NULL;
+	alloced_mem.last = NULL;
 }
 
 static struct alloced *find_memory(void *ptr)
 {
-    struct alloced *mem;
-    for (mem = alloced_mem.last; mem != NULL; mem = mem->prev) {
-        if (mem->address == ptr) {
-            return mem;
-        }
-    }
-    die("Failed to locate provided address, are you sure you salloced it?\n");
-    return NULL; /* not reachable */
+	struct alloced *mem;
+	for (mem = alloced_mem.last; mem != NULL; mem = mem->prev) {
+		if (mem->address == ptr) {
+			return mem;
+		}
+	}
+	die("Failed to locate provided address, are you sure you salloced it?\n");
+	return NULL; /* not reachable */
 }
 
 void smem_diagnostic(void)
 {
-    struct alloced *a = alloced_mem.first;
-    while (a != NULL) {
-        printf("%p\n", a->address);
-        a = a->next;
-    }
-    puts("");
+	struct alloced *a = alloced_mem.first;
+	while (a != NULL) {
+		printf("%p\n", a->address);
+		a = a->next;
+	}
+	puts("");
 }
 
 void *salloc_real(size_t size)
 {
-    void *ptr = NULL;
-    if ((ptr = malloc(size)) == NULL) {
-        die("Failed to allocate memory\n");
-    }
-    
+	void *ptr = NULL;
+	if ((ptr = malloc(size)) == NULL) {
+		die("Failed to allocate memory\n");
+	}
+	
 	saquire_real(ptr);
-    
-    return ptr;
+	
+	return ptr;
 }
 
 void *saquire_real(void *ptr)
 {
-    struct alloced *a;
+	struct alloced *a;
 
-    if (ptr == NULL) {
-        return NULL;
-    }
+	if (ptr == NULL) {
+		return NULL;
+	}
 
 	if ((a = malloc(sizeof(struct alloced))) == NULL) {
 		die("Failed to allocate storage for allocated memory\n");
@@ -91,53 +91,53 @@ void *saquire_real(void *ptr)
 
 void *srealloc_real(void *ptr, size_t size)
 {
-    struct alloced *a = find_memory(ptr);
-    
-    if ((ptr = realloc(ptr, size)) == NULL) {
-        die("Failed to reallocate memory\n");
-    }
-    
-    a->address = ptr;
-    return ptr;
+	struct alloced *a = find_memory(ptr);
+	
+	if ((ptr = realloc(ptr, size)) == NULL) {
+		die("Failed to reallocate memory\n");
+	}
+	
+	a->address = ptr;
+	return ptr;
 }
 
 void sfree(void *ptr)
 {
-    struct alloced *a, *prev, *next;
+	struct alloced *a, *prev, *next;
 
-    if (ptr == NULL) {
-        return;
-    }
+	if (ptr == NULL) {
+		return;
+	}
 
 	a = find_memory(ptr);
-    prev = a->prev;
+	prev = a->prev;
 	next = a->next;
 
-    if (prev != NULL) {
-	    prev->next = next;
-    }
-    if (next != NULL) {
-	    next->prev = prev;
-    }
-    
-    if (alloced_mem.first == a) {
-        alloced_mem.first = a->next;
-    }
-    if (alloced_mem.last == a) {
-        alloced_mem.last = a->prev;
-    }
-    
-    free(a->address);
-    free(a);
+	if (prev != NULL) {
+		prev->next = next;
+	}
+	if (next != NULL) {
+		next->prev = prev;
+	}
+	
+	if (alloced_mem.first == a) {
+		alloced_mem.first = a->next;
+	}
+	if (alloced_mem.last == a) {
+		alloced_mem.last = a->prev;
+	}
+	
+	free(a->address);
+	free(a);
 }
 
 void die(const char *msg, ...)
 {
-    va_list args;
-    va_start(args, msg);
-    vfprintf(stderr, msg, args);
-    va_end(args);
-    release();
+	va_list args;
+	va_start(args, msg);
+	vfprintf(stderr, msg, args);
+	va_end(args);
+	release();
 	AWAIT_WINDOWS;
-    exit(1);
+	exit(1);
 }

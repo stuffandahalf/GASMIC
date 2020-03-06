@@ -2,24 +2,25 @@
 #define GASMIC_LANG_H
 
 #include <stdio.h>
+#include <string.h>
 
 #ifdef __cplusplus
-/* bool is a standard type in c++ */
 #define INLINE inline
+/* bool is a standard type in c++ */
 #else
 #if __STDC_VERSION__ >= 199901L
-#include <stdbool.h>
 #define INLINE inline
+#include <stdbool.h>
 #else
-typedef enum { false, true } bool;
 #define INLINE
+typedef enum { false, true } bool;
 #endif /* __STDC_VERSION >= 199901L */
 #endif /* __cplusplus */
 
 #ifndef NDEBUG
 #define printdf(args) { \
-    printf("[%s:%d] >> ", __FILE__, __LINE__); \
-    printf args; \
+	printf("[%s:%d] >> ", __FILE__, __LINE__); \
+	printf args; \
 }
 #else
 #define printdf(args)
@@ -44,7 +45,10 @@ typedef enum { false, true } bool;
 #define streq(s1, s2) !strcmp((s1), (s2))
 
 /* print to stderr */
-int printef(const char *msg, ...);
+int printef(const char *fmt, ...);
 long fsize(FILE *fptr);
+char *str_clone(const char *src);
+char *str_to_upper(char *str);
+char *str_trim(char *str);
 
 #endif /* GASMIC_LANG_H */

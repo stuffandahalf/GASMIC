@@ -55,5 +55,5 @@ int restore_console(void)
 	
 	return 1;
 }
-	
+
 #endif /* defined(_WIN32) */
