@@ -1,8 +1,8 @@
-#include <arithmetic.h>
 #include <stdlib.h>
 #include <string.h>
-#include <lang.h>
-/*#include <stdbool.h>*/
+
+#include "arithmetic.h"
+#include "lang.h"
 
 /*#ifdef __cplusplus
 #define NEW(type) new type()

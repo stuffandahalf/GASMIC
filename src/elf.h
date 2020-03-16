@@ -1,14 +1,7 @@
 #ifndef GASMIC_ELF_H
 #define GASMIC_ELF_H
 
-//#if __STDC_VERSION__ >= 199901L || __cplusplus >= 201103L || _MSVC_LANG >= 201103L
-#ifdef __cplusplus
-#define __STDC_FORMAT_MACROS
-#endif
-/*#include <inttypes.h>
-#else
-#include <fixedint.h>
-#endif*/
+#include "fixedint.h"
 
 /* 32-bit data types */
 typedef uint32_t	Elf32_Addr;		/* Unsigned program address */

@@ -1,9 +1,10 @@
 #include <ctype.h>
-#include <lang.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "lang.h"
 
 int printef(const char *fmt, ...)
 {

@@ -1,10 +1,10 @@
-#include <as.h>
-#include <ansistyle.h>
-#include <arithmetic.h>
-#include <smem.h>
-#include <lang.h>
-
 #include <stdarg.h>
+
+#include "as.h"
+#include "ansistyle.h"
+#include "arithmetic.h"
+#include "smem.h"
+#include "lang.h"
 
 extern Architecture **architectures[];
 

@@ -1,7 +1,7 @@
 #include <stdio.h>
 
-#include <ansistyle.h>
-#include <console.h>
+#include "ansistyle.h"
+#include "console.h"
 
 #ifdef _WIN32
 #include <Windows.h>

@@ -1,11 +1,11 @@
 #ifndef GASMIC_TARGETS_H
 #define GASMIC_TARGETS_H
 
-#include <lang.h>
+#include "lang.h"
 
-#include <targets/6x09/arch.h>
-#include <targets/z80/arch.h>
-/*#include <targets/6502/arch.h>*/
+#include "targets/6x09/arch.h"
+#include "targets/z80/arch.h"
+/*#include "targets/6502/arch.h"*/
 
 #define TARGETS \
 	TARGET(MC6809) \

@@ -1,8 +1,9 @@
-#include <pseudo.h>
-#include <arithmetic.h>
-#include <lang.h>
-#include <smem.h>
-#include <string.h>
+/*#include <string.h>*/
+
+#include "pseudo.h"
+#include "arithmetic.h"
+#include "lang.h"
+#include "smem.h"
 
 /*
  * struc?

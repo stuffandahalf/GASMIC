@@ -1,4 +1,4 @@
-#include <targets/6x09/arch.h>
+#include "arch.h"
 
 Architecture *ARCH_MC6809;
 Architecture *ARCH_HD6309;

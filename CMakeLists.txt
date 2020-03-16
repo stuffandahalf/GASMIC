@@ -34,7 +34,7 @@ check_and_add_type(gasmic "unsigned long int" UL YES)
 check_and_add_type(gasmic "unsigned long long int" ULL YES)
 
 #target_include_directories(gasmic PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_include_directories(gasmic PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+#target_include_directories(gasmic PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 install(TARGETS gasmic DESTINATION ${CMAKE_INSTALL_PREFIX})
 

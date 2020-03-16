@@ -1,8 +1,7 @@
 #ifndef GASMIC_MC6x09_ARCH_H
 #define GASMIC_MC6x09_ARCH_H
 
-#include <targets/target.h>
-#include <as.h>
+#include "../target.h"
 
 #define MC6809 (1u)
 #define HD6309 (2u)

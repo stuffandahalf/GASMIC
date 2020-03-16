@@ -1,8 +1,7 @@
 #ifndef GASMIC_Z80_ARCH_H
 #define GASMIC_Z80_ARCH_H
 
-#include <targets/target.h>
-#include <as.h>
+#include "../target.h"
 
 #define Z80	 (1)
 #define I8080   (2)

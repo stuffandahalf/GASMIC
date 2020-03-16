@@ -1,4 +1,4 @@
-#include <targets/z80/arch.h>
+#include "arch.h"
 
 Architecture *ARCH_Z80;
 Architecture *ARCH_I8080;

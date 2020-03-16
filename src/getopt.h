@@ -2,8 +2,8 @@
 #define GASMIC_GETOPT_H
 
 /*#include <stdbool.h>*/
-#include <lang.h>
-#include <string.h>
+#include "lang.h"
+/*#include <string.h>*/
 
 typedef struct {
 	char *longopt;

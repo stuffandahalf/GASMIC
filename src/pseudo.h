@@ -1,7 +1,7 @@
 #ifndef GASMIC_PSEUDO_H
 #define GASMIC_PSEUDO_H
 
-#include <as.h>
+#include "as.h"
 
 struct pseudo_instruction {
 	/*char instruction[10];*/

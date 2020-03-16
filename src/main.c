@@ -4,12 +4,12 @@
 #else
 #include <unistd.h>
 #endif*/
-#include <getopt.h>
-#include <console.h>
-#include <as.h>
-#include <targets.h>
-#include <pseudo.h>
-#include <arithmetic.h>
+#include "getopt.h"
+#include "console.h"
+#include "as.h"
+#include "targets.h"
+#include "pseudo.h"
+#include "arithmetic.h"
 
 #define LINEBUFFERSIZE (256)
 char buffer[LINEBUFFERSIZE];
