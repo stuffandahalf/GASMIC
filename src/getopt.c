@@ -1,26 +1,31 @@
-#include <getopt.h>
+#include "getopt.h"
 
 int optind = 1;
-static int optcharind = 1;
+static unsigned int optcharind = 1;
 char *optarg = NULL;
 int optopt;
 
 int getopt(int argc, char *const *argv, const char *arglist)
 {
+	const char *arg;
+	char *c;
+	size_t arglen;
+	int retval;
+
 	if (optind == argc) {
 		return -1;
 	}
 	
-	const char *arg = NULL;
-	char *c = argv[optind];
-	size_t arglen = strlen(c);
+	arg = NULL;
+	c = argv[optind];
+	arglen = strlen(c);
 	if (arglen == 2) {
 		optind++;
 	} else {
 		optcharind++;
 	}
 
-	int retval = 0;
+	retval = 0;
 
 	if (*c != '-') {
 		return '?';

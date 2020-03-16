@@ -4,7 +4,7 @@ Greg's retargettable assembler written in pure C.
 [![Build Status](https://travis-ci.org/stuffandahalf/GASMIC.svg?branch=master)](https://travis-ci.org/stuffandahalf/GASMIC)
 
 ## Requirements
-* A C compiler
+* An ANSI C compiler
 * CMake
 
 ## Build

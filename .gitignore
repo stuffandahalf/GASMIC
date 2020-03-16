@@ -58,4 +58,5 @@ dist
 .idea
 *build*
 xcode
+vs
 .DS_Store

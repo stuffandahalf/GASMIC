@@ -1,74 +1,87 @@
-// Wrapper for memory allocation functions
-// Useful for clearing all allocated memory in the event of a failure
+/* Wrapper for memory allocation functions */
+/* Useful for clearing all allocated memory in the event of a failure */
 
-#include <smem.h>
+#include <stdarg.h>
+#include "smem.h"
 
 struct alloced {
-    void *address;
-    struct alloced *next;
+	void *address;
+	struct alloced *next;
 	struct alloced *prev;
 };
 
 static struct {
-    struct alloced *first;
-    struct alloced *last;
-} alloced_mem = {
-    .first = NULL,
-    .last = NULL
-};
+	struct alloced *first;
+	struct alloced *last;
+} alloced_mem = { NULL, NULL };
 
 void release(void)
 {
-    struct alloced *a = alloced_mem.first;
-    while (a != NULL) {
-        struct alloced *tmp = a;
-        a = a->next;
-        free(tmp->address);
-        free(tmp);
-    }
-    alloced_mem.first = NULL;
-    alloced_mem.last = NULL;
+	struct alloced *a = alloced_mem.first;
+	while (a != NULL) {
+		struct alloced *tmp = a;
+		a = a->next;
+		free(tmp->address);
+		free(tmp);
+	}
+	alloced_mem.first = NULL;
+	alloced_mem.last = NULL;
 }
 
 static struct alloced *find_memory(void *ptr)
 {
-    for (struct alloced *mem = alloced_mem.last; mem != NULL; mem = mem->prev) {
-        if (mem->address == ptr) {
-            return mem;
-        }
-    }
-    die("Failed to locate provided address, are you sure you salloced it?\n");
+	struct alloced *mem;
+	for (mem = alloced_mem.last; mem != NULL; mem = mem->prev) {
+		if (mem->address == ptr) {
+			return mem;
+		}
+	}
+	die("Failed to locate provided address, are you sure you salloced it?\n");
+	return NULL; /* not reachable */
 }
 
 void smem_diagnostic(void)
 {
-    struct alloced *a = alloced_mem.first;
-    while (a != NULL) {
-        printf("%p\n", a->address);
-        a = a->next;
-    }
-    puts("");
+	struct alloced *a = alloced_mem.first;
+	while (a != NULL) {
+		printf("%p\n", a->address);
+		a = a->next;
+	}
+	puts("");
 }
 
+#ifdef SMEM_CPP
+void *salloc_real(size_t size)
+#else
 void *salloc(size_t size)
+#endif
 {
-    void *ptr = NULL;
-    if ((ptr = malloc(size)) == NULL) {
-        die("Failed to allocate memory\n");
-    }
-    
+	void *ptr = NULL;
+	if ((ptr = malloc(size)) == NULL) {
+		die("Failed to allocate memory\n");
+	}
+
+#ifdef SMEM_CPP
+	saquire_real(ptr);
+#else
 	saquire(ptr);
-    
-    return ptr;
+#endif
+	
+	return ptr;
 }
 
+#ifdef SMEM_CPP
+void *saquire_real(void *ptr)
+#else
 void *saquire(void *ptr)
+#endif
 {
-    if (ptr == NULL) {
-        return NULL;
-    }
-
 	struct alloced *a;
+
+	if (ptr == NULL) {
+		return NULL;
+	}
+
 	if ((a = malloc(sizeof(struct alloced))) == NULL) {
 		die("Failed to allocate storage for allocated memory\n");
 	}
@@ -88,43 +101,59 @@ void *saquire(void *ptr)
 	return a->address;
 }
 
+#ifdef SMEM_CPP
+void *srealloc_real(void *ptr, size_t size)
+#else
 void *srealloc(void *ptr, size_t size)
+#endif
 {
-    struct alloced *a = find_memory(ptr);
-    
-    if ((ptr = realloc(ptr, size)) == NULL) {
-        die("Failed to reallocate memory\n");
-    }
-    
-    a->address = ptr;
-    return ptr;
+	struct alloced *a = find_memory(ptr);
+	
+	if ((ptr = realloc(ptr, size)) == NULL) {
+		die("Failed to reallocate memory\n");
+	}
+	
+	a->address = ptr;
+	return ptr;
 }
 
 void sfree(void *ptr)
 {
-    if (ptr == NULL) {
-        return;
-    }
+	struct alloced *a, *prev, *next;
 
-	struct alloced *a = find_memory(ptr);
+	if (ptr == NULL) {
+		return;
+	}
 
-	struct alloced *prev = a->prev;
-	struct alloced *next = a->next;
+	a = find_memory(ptr);
+	prev = a->prev;
+	next = a->next;
 
-    if (prev != NULL) {
-	    prev->next = next;
-    }
-    if (next != NULL) {
-	    next->prev = prev;
-    }
-    
-    if (alloced_mem.first == a) {
-        alloced_mem.first = a->next;
-    }
-    if (alloced_mem.last == a) {
-        alloced_mem.last = a->prev;
-    }
-    
-    free(a->address);
-    free(a);
+	if (prev != NULL) {
+		prev->next = next;
+	}
+	if (next != NULL) {
+		next->prev = prev;
+	}
+	
+	if (alloced_mem.first == a) {
+		alloced_mem.first = a->next;
+	}
+	if (alloced_mem.last == a) {
+		alloced_mem.last = a->prev;
+	}
+	
+	free(a->address);
+	free(a);
+}
+
+void die(const char *msg, ...)
+{
+	va_list args;
+	va_start(args, msg);
+	vfprintf(stderr, msg, args);
+	va_end(args);
+	release();
+	AWAIT_WINDOWS;
+	exit(1);
 }
