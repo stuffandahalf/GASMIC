@@ -161,10 +161,14 @@ int main(int argc, char **argv)
 			sfree(data->contents.bytes);
 			break;
 		case DATA_TYPE_NONE:
-			printdf(("Empty data.\n"));
+#ifndef NDEBUG
+			printf("Empty data.\n");
+#endif
 			break;
 		default:
-			printdf(("Garbage data.\n"));
+#ifndef NDEBUG
+			printf("Garbage data.\n");
+#endif
 			break;
 		}
 		tmp_data = data;
