@@ -120,7 +120,7 @@ int main(int argc, char **argv)
 	printdf(("SYMBOLS\n"));
 	sym = symtab->first;
 	while (sym != NULL) {
-		printdf(("label: %s = %" PRId64 "\n", sym->label, sym->value));
+		printdf(("%s = %" PRId64 "\n", sym->label, sym->value));
 
 		sfree(sym->label);
 		sym->label = NULL;

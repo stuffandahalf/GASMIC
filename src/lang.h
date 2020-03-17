@@ -19,8 +19,8 @@ typedef enum { false, true } bool;
 
 #ifndef NDEBUG
 #define printdf(args) { \
-	printf("[%s:%d] >> ", __FILE__, __LINE__); \
-	printf args; \
+	printef("[%s:%d] >> ", __FILE__, __LINE__); \
+	printef args; \
 }
 #else
 #define printdf(args)
