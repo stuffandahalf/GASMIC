@@ -104,4 +104,4 @@ jobs:
      - mkdir build
      - cd build
      #- cmake .. -G "Visual Studio 15 2017 Win64"
-    script: ls "C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools"
+    script: ls "C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/MSBuild"
