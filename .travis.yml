@@ -1,6 +1,9 @@
 language: c
 
 jobs:
+ allow_failures:
+  - os: windows
+
  include:
   - os: linux
     dist: precise
@@ -96,7 +99,8 @@ jobs:
   - os: windows
     compiler: gcc
     before_script:
+     - cmd /c "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
      - mkdir build
      - cd build
-     - cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER="C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Tools/MSVC/14.16.27023/bin/Hostx86/x86/cl.exe"
+     - cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=cl
     script: nmake
