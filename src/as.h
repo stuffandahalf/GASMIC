@@ -219,6 +219,7 @@ typedef struct {
 struct configuration {
 	char				*out_fname;
 	char				**in_fnames;
+	char				*export_fname;
 	size_t				in_fnamec;
 	size_t 				in_fname_size;
 	uint8_t				syntax;

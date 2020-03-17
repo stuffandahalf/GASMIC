@@ -123,6 +123,21 @@ int main(int argc, char *const argv[])
 
 	/* TODO: Resolve references here */
 
+	if (g_config.export_fname != NULL) {
+		FILE *export_file;
+		
+		export_file = fopen(g_config.export_fname, "w+");
+		if (export_file == NULL) {
+			die("Failed to open export file \"%s\"\n", g_config.export_fname);
+		}
+		sym = symtab->first;
+		while (sym != NULL) {
+			fprintf(export_file, "%s: EQU %" PRId64 "\n", sym->label, sym->value);
+			sym = sym->next;
+		}
+		fclose(export_file);
+	}
+
 	printdf(("SYMBOLS\n"));
 	sym = symtab->first;
 	while (sym != NULL) {
@@ -273,6 +288,7 @@ static int configure(int argc, char *const argv[])
 	g_config.in_fname_size = 1;
 	g_config.in_fnamec = 0;
 	g_config.in_fnames = salloc(sizeof(char *) * g_config.in_fname_size);
+	g_config.export_fname = NULL;
 
 	while ((c = getopt(argc, argv, "-hm:o:f:e:")) != -1) {
 		switch (c) {
@@ -301,6 +317,7 @@ static int configure(int argc, char *const argv[])
 		case 'f':	/* output file format */
 			break;
 		case 'e':   /* export symbol table */
+			g_config.export_fname = optarg;
 			break;
 		case 'h':
 		case '?':
