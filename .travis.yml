@@ -4,46 +4,70 @@ jobs:
  include:
   - os: linux
     dist: precise
-    compiler:
-     - gcc
-     - clang
+    compiler: gcc
     before_script:
      - mkdir build
      - cd build
-     - cmake ..
+     - cmake .. -DCMAKE_BUILD_TYPE=Release
+    script: make
+  - os: linux
+    dist: precise
+    compiler: clang
+    before_script:
+     - mkdir build
+     - cd build
+     - cmake .. -DCMAKE_BUILD_TYPE=Release
     script: make
 
   - os: linux
     dist: trusty
-    compiler:
-     - gcc
-     - clang
+    compiler: gcc
     before_script:
      - mkdir build
      - cd build
-     - cmake ..
+     - cmake .. -DCMAKE_BUILD_TYPE=Release
+    script: make
+  - os: linux
+    dist: trusty
+    compiler: clang
+    before_script:
+     - mkdir build
+     - cd build
+     - cmake .. -DCMAKE_BUILD_TYPE=Release
     script: make
 
   - os: linux
     dist: bionic
-    compiler:
-     - gcc
-     - clang
+    compiler: gcc
     before_script:
      - mkdir build
      - cd build
-     - cmake ..
+     - cmake .. -DCMAKE_BUILD_TYPE=Release
+    script: make
+  - os: linux
+    dist: bionic
+    compiler: clang
+    before_script:
+     - mkdir build
+     - cd build
+     - cmake .. -DCMAKE_BUILD_TYPE=Release
     script: make
 
   - os: linux
     dist: xenial
-    compiler:
-     - gcc
-     - clang
+    compiler: gcc
     before_script:
      - mkdir build
      - cd build
-     - cmake ..
+     - cmake .. -DCMAKE_BUILD_TYPE=Release
+    script: make
+  - os: linux
+    dist: xenial
+    compiler: clang
+    before_script:
+     - mkdir build
+     - cd build
+     - cmake .. -DCMAKE_BUILD_TYPE=Release
     script: make
 
   - os: osx
@@ -52,15 +76,15 @@ jobs:
     before_script:
      - mkdir build
      - cd build
-     - cmake ..
+     - cmake .. -DCMAKE_BUILD_TYPE=Release
     script: make
 
   - os: windows
     compiler:
-     - clang
      - gcc
+     - clang
     before_script:
      - mkdir build
      - cd build
-     - cmake -G "NMake Makefiles"
+     - cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release
     script: nmake
