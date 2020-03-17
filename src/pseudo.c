@@ -94,9 +94,9 @@ static void pseudo_set_arch(Line *line)
 	if (arch == NULL) {
 		fail("Failed to locate architecture %s.\n", line->argv[0].val.str);
 	}
-	configuration.arch = arch;
+	g_config.arch = arch;
 	init_address_mask();
-	printdf(("%s\n", configuration.arch->name));
+	printdf(("%s\n", g_config.arch->name));
 }
 
 static void pseudo_set_file(Line *line)
@@ -166,14 +166,14 @@ static void pseudo_set_file(Line *line)
 			} \
 			else { \
 				data->contents.bytes = salloc(sizeof(T)); \
-				if (configuration.arch->endianness == ARCH_ENDIAN_BIG) { \
+				if (g_config.arch->endianness == ARCH_ENDIAN_BIG) { \
 					printdf("big endian\n"); \
 					for (j = sizeof(T) - 1; j >= 0; j--) { \
 						data->contents.bytes[j] = number & 0xFF; \
 						number >>= 8; \
 					} \
 				} \
-				else if (configuration.arch->endianness == ARCH_ENDIAN_LITTLE) { \
+				else if (g_config.arch->endianness == ARCH_ENDIAN_LITTLE) { \
 					printdf("little endian\n"); \
 					for (j = 0; j < sizeof(T); j++) { \
 						data->contents.bytes[j] = number & 0xFF; \

@@ -76,6 +76,7 @@ int getopt(int argc, char *const argv[], const char *arglist)
 			cptr++;
 			if (*cptr == ':') {			/* takes argument */
 				cptr++;
+				/* TODO: These two branches only differ slightly, need to refactor */
 				if (*cptr == ':') {		/* optional argument */
 					nextchar++;
 					if (argv[optind][nextchar] == '\0') {

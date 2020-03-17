@@ -14,7 +14,7 @@
 #define LINEBUFFERSIZE (256)
 char buffer[LINEBUFFERSIZE];
 
-static int configure(int argc, char *argv[]);
+static int configure(int argc, char *const argv[]);
 /*static void trim_str(char str[]);*/
 static void parse_line(Line *l, char *buffer);
 static void resolve_mnemonic_type(Line *l);
@@ -23,7 +23,7 @@ static void prepare_line_motorola(Line *l);
 static void prepare_line_att(Line *l);
 static void prepare_line_intel(Line *l);
 
-Config configuration;
+struct configuration g_config;
 struct context *g_context;
 
 /*FILE *in;*/
@@ -37,7 +37,7 @@ void (*parse_instruction)(Line *l);
 Architecture **architectures[] = { TARGETS NULL };  /* NULL terminated array of targets */
 #undef TARGET
 
-int main(int argc, char **argv)
+int main(int argc, char *const argv[])
 {
 #if 0
 	//struct token *rpn_expr = parse_expression("1 *(2 +3)");
@@ -64,11 +64,11 @@ int main(int argc, char **argv)
 
 	/*FILE *in;*/
 	/*out = stdout;*/
-	configuration.arch = *architectures[0];
-	configuration.in_fnames = NULL;
-	configuration.in_fnamec = 0;
-	configuration.syntax = configuration.arch->default_syntax;
-	configuration.out_fname = "a.out";
+	g_config.arch = *architectures[0];
+	g_config.in_fnames = NULL;
+	g_config.in_fnamec = 0;
+	g_config.syntax = g_config.arch->default_syntax;
+	g_config.out_fname = "a.out";
 	address = 0;
 
 	if (!configure(argc, argv)) {
@@ -76,8 +76,8 @@ int main(int argc, char **argv)
 	}
 
 	/*out = fopen(out_fname, "w+");*/
-	/*free(configuration.out_fname);*/
-	configuration.out_fname = NULL;
+	/*free(g_config.out_fname);*/
+	g_config.out_fname = NULL;
 
 	/*struct context init_cntxt;*/
 	g_context = &init_cntxt;
@@ -92,9 +92,9 @@ int main(int argc, char **argv)
 
 	l = salloc(sizeof(Line));
 
-	if (configuration.in_fnamec < 0) {
+	if (g_config.in_fnamec < 0) {
 		die("Invalid number of command line arguments.\n");
-	} else if (configuration.in_fnamec == 0) {
+	} else if (g_config.in_fnamec == 0) {
 		if ((init_cntxt.fname = saquire(str_clone("stdin"))) == NULL) {
 			die("Failed to duplicate file name \"stdin\"\n");
 		}
@@ -102,12 +102,12 @@ int main(int argc, char **argv)
 		assemble(l);
 		sfree(init_cntxt.fname);
 	} else {
-		for (i = 0; i < configuration.in_fnamec; i++) {
-			if ((init_cntxt.fname = saquire(str_clone(configuration.in_fnames[i]))) == NULL) {
-				die("Failed to duplicate file name \"%s\"\n", configuration.in_fnames[i]);
+		for (i = 0; i < g_config.in_fnamec; i++) {
+			if ((init_cntxt.fname = saquire(str_clone(g_config.in_fnames[i]))) == NULL) {
+				die("Failed to duplicate file name \"%s\"\n", g_config.in_fnames[i]);
 			}
 			if ((init_cntxt.fptr = fopen(init_cntxt.fname, "r")) == NULL) {
-				die("Failed to open input file %s\n", configuration.in_fnames[i]);
+				die("Failed to open input file %s\n", g_config.in_fnames[i]);
 			}
 			init_cntxt.line_num = 1;
 			assemble(l);
@@ -115,7 +115,13 @@ int main(int argc, char **argv)
 			sfree(init_cntxt.fname);
 		}
 	}
+	sfree(g_config.in_fnames);
+	g_config.in_fnames = NULL;
+	g_config.in_fnamec = 0;
+	g_config.in_fname_size = 0;
 	sfree(l);
+
+	/* TODO: Resolve references here */
 
 	printdf(("SYMBOLS\n"));
 	sym = symtab->first;
@@ -185,11 +191,11 @@ int main(int argc, char **argv)
 early_exit:
 	destroy_targets();
 
-#if defined(_WIN32) && !defined(NDEBUG)
+#ifdef _WIN32
+#ifndef NDEBUG
+	printef("Press any key to exit.\n");
 	getc(stdin);
 #endif
-
-#ifdef _WIN32
 	restore_console();
 #endif
 
@@ -200,7 +206,7 @@ void init_address_mask()
 {
 	int i;
 	address_mask = 0;
-	for (i = 0; i < configuration.arch->bytes_per_address * configuration.arch->byte_size; i++) {
+	for (i = 0; i < g_config.arch->bytes_per_address * g_config.arch->byte_size; i++) {
 		if (i) {
 			address_mask <<= 1u;
 		}
@@ -258,47 +264,55 @@ void assemble(Line *l)
 	}
 }
 
-static int configure(int argc, char *argv[])
+static int configure(int argc, char *const argv[])
 {
-	const char *help_str = "Usage: %s [-m arch] [-o outfile] [-f outformat] [-e symfile]\n";
+	static const char *const help_str = "Usage: %s [-m arch] [-o outfile] [-f outformat] [-e symfile]\n";
 	int c;
 
-	while ((c = getopt(argc, argv, "hm:o:f:e:")) != -1) {
+
+	g_config.in_fname_size = 1;
+	g_config.in_fnamec = 0;
+	g_config.in_fnames = salloc(sizeof(char *) * g_config.in_fname_size);
+
+	while ((c = getopt(argc, argv, "-hm:o:f:e:")) != -1) {
 		switch (c) {
+		case 1:
+			printdf(("Found file argument %s\n", optarg));
+			if (g_config.in_fnamec == g_config.in_fname_size) {
+				g_config.in_fname_size += 2;
+				g_config.in_fnames = srealloc(g_config.in_fnames, g_config.in_fname_size);
+			}
+			g_config.in_fnames[g_config.in_fnamec++] = optarg;
+			break;
 		case 'm':	/* architecture */
-			configuration.arch = find_arch(optarg);
-			if (configuration.arch == NULL) {
-				/*free(configuration.out_fname);*/
+			g_config.arch = find_arch(optarg);
+			if (g_config.arch == NULL) {
+				/*free(g_config.out_fname);*/
 				die("Unsupported architecture: %s\n", optarg);
 			}
 			break;
 		case 'o':	/* output file */
-			/*free(configuration.out_fname);*/
-			/*if ((configuration.out_fname = strdup(optarg)) == NULL) {
+			/*free(g_config.out_fname);*/
+			/*if ((g_config.out_fname = strdup(optarg)) == NULL) {
 				die("Failed to allocate new output file name");
 			}*/
-			configuration.out_fname = optarg;
+			g_config.out_fname = optarg;
 			break;
 		case 'f':	/* output file format */
 			break;
 		case 'e':   /* export symbol table */
 			break;
 		case 'h':
+		case '?':
 			printf(help_str, argv[0]);
 			return 0;
-		case ':':
-		/*default:*/
-			/*printdf("DEATH\n");
-			printdf("%c\n", c);
-			printdf("%s\n", optarg);*/
-			die(help_str, argv[0]);
 		}
 	}
 
-	printdf(("argcount = %d\n", argc - optind));
+	/*printdf(("argcount = %d\n", argc - optind));*/
 
-	configuration.in_fnames = argv + sizeof(char) * optind;
-	configuration.in_fnamec = argc - optind;
+	/*g_config.in_fnames = argv + sizeof(char) * optind;*/
+	/*g_config.in_fnamec = argc - optind;*/
 
 	return 1;
 }
@@ -456,7 +470,7 @@ static void resolve_mnemonic_type(Line *line)
 		prepare_line(line);
 		pseudo_op->process(line);
 	} else {
-		/*configuration.arch->parse_instruction(line);*/
+		/*g_config.arch->parse_instruction(line);*/
 		parse_instruction(line);
 	}
 }
@@ -474,7 +488,7 @@ static INLINE const struct instruction_register *instruction_supports_reg(const 
 
 static void set_syntax_parser()
 {
-	switch (configuration.syntax) {
+	switch (g_config.syntax) {
 	case SYNTAX_MOTOROLA:
 		parse_instruction = &prepare_line_motorola;
 		break;
@@ -714,8 +728,8 @@ proceed:
 	const Instruction **i = NULL;
 
 	const MC6x09_Instruction *i = NULL;
-	for (const Instruction **i = configuration.arch->instructions; *i != NULL; i++) {
-		if (!((*i)->architectures & FLAG(configuration.arch->value))) {
+	for (const Instruction **i = g_config.arch->instructions; *i != NULL; i++) {
+		if (!((*i)->architectures & FLAG(g_config.arch->value))) {
 			goto next_instruction;
 		}
 		instr_mnem = (*i)->mnemonic;
@@ -745,7 +759,7 @@ proceed:
 				if (l->argv[j].type != ARG_TYPE_UNPROCESSED) {
 					goto next_instruction;
 				}
-				for (reg = &(configuration.arch->registers[1]); reg->name[0] != '\0'; reg++) {
+				for (reg = &(g_config.arch->registers[1]); reg->name[0] != '\0'; reg++) {
 					if (streq(l->argv[j].val.str, reg->name)) {
 						l->argv[j].type = ARG_TYPE_REGISTER;
 						l->argv[j].val.indexed.base = reg;
@@ -762,9 +776,9 @@ proceed:
 			break;
 		case ARG_ORDER_FROM_REG:
 		case ARG_ORDER_TO_REG:
-			for (reg = &(configuration.arch->registers[1]); reg->name[0] != '\0'; reg++) {
+			for (reg = &(g_config.arch->registers[1]); reg->name[0] != '\0'; reg++) {
 				if (streq(line_mnemonic, reg->name) &&
-					(reg->arcs & FLAG(configuration.arch->value)) &&
+					(reg->arcs & FLAG(g_config.arch->value)) &&
 					((instruction_reg = instruction_supports_reg(*i, reg)) != NULL)) {
 					goto evaluate_args;
 					//goto instruction_found;
@@ -853,7 +867,7 @@ instruction_found:
 	/*data = (Data *)salloc_real(sizeof(Data));*/
 
 	/*printdf("Instruction Register is %s\n", instruction_reg ? instruction_reg->reg->name : "NONE");*/
-	/*configuration.arch->process_line(l, instruction_reg, data);*/
+	/*g_config.arch->process_line(l, instruction_reg, data);*/
 
 	add_data(data);
 }

@@ -216,13 +216,14 @@ typedef struct {
 	void (*process_line)(Line *line, const struct instruction_register *instr_reg, Data *data);
 } Architecture;
 
-typedef struct {
-	char *out_fname;
-	char **in_fnames;
-	size_t in_fnamec;
-	uint8_t syntax;
-	const Architecture *arch;
-} Config;
+struct configuration {
+	char				*out_fname;
+	char				**in_fnames;
+	size_t				in_fnamec;
+	size_t 				in_fname_size;
+	uint8_t				syntax;
+	const Architecture 	*arch;
+};
 
 struct context {
 	FILE *fptr;
@@ -236,7 +237,7 @@ extern DataTab *datatab;
 
 extern size_t address;
 extern size_t address_mask;
-extern Config configuration;
+extern struct configuration g_config;
 extern struct context *g_context;
 
 void init_address_mask();

@@ -322,7 +322,7 @@ static void process_instruction_motorola(Line *line, MC6x09_Instruction *instr, 
 }*/
 
 /*static void process_instruction(Line *line, const struct MC6x09_instruction_register *instr, const Register *reg, Data *data) {
-	switch (configuration.syntax) {
+	switch (g_config.syntax) {
 	case SYNTAX_MOTOROLA:
 		process_instruction_motorola(line, instr, reg, data);
 		break;
@@ -366,7 +366,7 @@ static void parse_instruction(Line *l, int arch) {
 			goto next_instruction;
 		}
 
-		switch (configuration.syntax) {
+		switch (g_config.syntax) {
 		case SYNTAX_MOTOROLA:
 			mnem = i->mnemonic;
 			line = l->mnemonic;
@@ -387,7 +387,7 @@ static void parse_instruction(Line *l, int arch) {
 			case ARG_ORDER_FROM_REG:
 			case ARG_ORDER_TO_REG:
 				for (reg = registers; reg->name[0] != '\0'; reg++) {
-					if (streq(line, reg->name) && (reg->arcs & configuration.arch->value) && (instruction_reg = instruction_supports_reg(i, reg)) != NULL) {
+					if (streq(line, reg->name) && (reg->arcs & g_config.arch->value) && (instruction_reg = instruction_supports_reg(i, reg)) != NULL) {
 						goto instruction_found;
 					}
 				}
@@ -431,7 +431,7 @@ instruction_found:
 			goto next_instruction;
 		}
 
-		switch (configuration.syntax) {
+		switch (g_config.syntax) {
 		case SYNTAX_MOTOROLA:
 			mnem = i->mnemonic;
 			line = l->mnemonic;
@@ -450,7 +450,7 @@ instruction_found:
 			case ARG_ORDER_FROM_REG:
 			case ARG_ORDER_TO_REG:
 				for (reg = registers; reg != NULL; reg++) {
-					if (streq(line, reg->name) && (reg->arcs & configuration.arch->value)) {
+					if (streq(line, reg->name) && (reg->arcs & g_config.arch->value)) {
 						goto instruction_found;
 					}
 				}

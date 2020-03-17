@@ -171,7 +171,7 @@ const Register *find_reg(const char *name)
 {
 	const Register *r = NULL;
 
-	for (r = configuration.arch->registers; *r->name != '\0'; r++) {
+	for (r = g_config.arch->registers; *r->name != '\0'; r++) {
 		if (streq(name, r->name)) {
 			return r;
 		}
