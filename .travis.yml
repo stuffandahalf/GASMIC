@@ -80,11 +80,23 @@ jobs:
     script: make
 
   - os: windows
-    compiler:
-     - gcc
-     - clang
+    compiler: gcc
     before_script:
      - mkdir build
      - cd build
      - cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release
     script: nmake
+  - os: windows
+    compiler: clang
+    before_script:
+     - mkdir build
+     - cd build
+     - cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release
+    script: nmake
+  - os: windows
+    compiler: gcc
+    before_script:
+     - mkdir build
+     - cd build
+     - cmake .. -G "Visual Studio 15 2017" -DCMAKE_BUILD_TYPE=Release
+    script: msbuild gasmic.sln
