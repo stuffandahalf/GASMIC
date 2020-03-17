@@ -1,12 +1,107 @@
 language: c
 
-compiler:
- - gcc
- - clang
- 
-before_script:
- - mkdir build
- - cd build
- - cmake ..
+jobs:
+ allow_failures:
+  - os: windows
+  - os: linux
+    dist: precise
 
-script: make
+ include:
+  - os: linux
+    dist: precise
+    compiler: gcc
+    before_script:
+     - mkdir build
+     - cd build
+     - cmake .. -DCMAKE_BUILD_TYPE=Release
+    script: make
+  - os: linux
+    dist: precise
+    compiler: clang
+    before_script:
+     - mkdir build
+     - cd build
+     - cmake .. -DCMAKE_BUILD_TYPE=Release
+    script: make
+
+  - os: linux
+    dist: trusty
+    compiler: gcc
+    before_script:
+     - mkdir build
+     - cd build
+     - cmake .. -DCMAKE_BUILD_TYPE=Release
+    script: make
+  - os: linux
+    dist: trusty
+    compiler: clang
+    before_script:
+     - mkdir build
+     - cd build
+     - cmake .. -DCMAKE_BUILD_TYPE=Release
+    script: make
+
+  - os: linux
+    dist: bionic
+    compiler: gcc
+    before_script:
+     - mkdir build
+     - cd build
+     - cmake .. -DCMAKE_BUILD_TYPE=Release
+    script: make
+  - os: linux
+    dist: bionic
+    compiler: clang
+    before_script:
+     - mkdir build
+     - cd build
+     - cmake .. -DCMAKE_BUILD_TYPE=Release
+    script: make
+
+  - os: linux
+    dist: xenial
+    compiler: gcc
+    before_script:
+     - mkdir build
+     - cd build
+     - cmake .. -DCMAKE_BUILD_TYPE=Release
+    script: make
+  - os: linux
+    dist: xenial
+    compiler: clang
+    before_script:
+     - mkdir build
+     - cd build
+     - cmake .. -DCMAKE_BUILD_TYPE=Release
+    script: make
+
+  - os: osx
+    osx_image: xcode9
+    compiler: clang
+    before_script:
+     - mkdir build
+     - cd build
+     - cmake .. -DCMAKE_BUILD_TYPE=Release
+    script: make
+
+  - os: windows
+    compiler: gcc
+    before_script:
+     - mkdir build
+     - cd build
+     - cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release
+    script: nmake
+  - os: windows
+    compiler: clang
+    before_script:
+     - mkdir build
+     - cd build
+     - cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release
+    script: nmake
+  - os: windows
+    compiler: gcc
+    before_script:
+     - mkdir build
+     - cd build
+     - cmake .. -G "Visual Studio 15 2017 Win64"
+    script: /c/Program\ Files\ \(x86\)/Microsoft\ Visual\ Studio/2017/BuildTools/MSBuild/15.0/Bin/MSBuild.exe gasmic.sln
