@@ -98,5 +98,5 @@ jobs:
     before_script:
      - mkdir build
      - cd build
-     - cmake .. -G "Visual Studio 15 2017" -DCMAKE_BUILD_TYPE=Release
-    script: msbuild gasmic.sln
+     - cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER="C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Tools/MSVC/14.16.27023/bin/Hostx86/x86/cl.exe"
+    script: nmake
