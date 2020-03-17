@@ -3,6 +3,7 @@
 #include "as.h"
 #include "ansistyle.h"
 #include "arithmetic.h"
+#include "console.h"
 #include "smem.h"
 #include "lang.h"
 

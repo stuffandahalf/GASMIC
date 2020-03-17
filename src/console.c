@@ -1,10 +1,9 @@
+#ifdef _WIN32
 #include <stdio.h>
+#include <Windows.h>
 
 #include "ansistyle.h"
 #include "console.h"
-
-#ifdef _WIN32
-#include <Windows.h>
 
 #ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
 #define ENABLE_VIRTUAL_TERMINAL_PROCESSING  0x0004
