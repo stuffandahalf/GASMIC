@@ -57,25 +57,25 @@ static void pseudo_insert(Line *line);
 static void pseudo_org(Line *line);
 
 static struct pseudo_instruction pseudo_ops[] = {
-	{ ".ARCH", &pseudo_set_arch,		1 },
-	{ ".FILE", &pseudo_set_file,		1 },
+	{ ".ARCH",		&pseudo_set_arch,			1 },
+	{ ".FILE",		&pseudo_set_file,			1 },
 
-	{ ".DB", &pseudo_set_byte,		  -1 },
-	{ ".DW", &pseudo_set_word,		  -1 },
-	{ ".DD", &pseudo_set_double,		-1 },
-	{ ".DQ", &pseudo_set_quad,		  -1 },
+	{ ".DB",		&pseudo_set_byte,			-1 },
+	{ ".DW",		&pseudo_set_word,			-1 },
+	{ ".DD",		&pseudo_set_double,			-1 },
+	{ ".DQ",		&pseudo_set_quad,			-1 },
 
-	{ ".RESB", &pseudo_reserve_bytes,   1 },
-	{ ".RESW", &pseudo_reserve_words,   1 },
-	{ ".RESD", &pseudo_reserve_doubles, 1 },
-	{ ".RESQ", &pseudo_reserve_quads,   1 },
+	{ ".RESB",		&pseudo_reserve_bytes,		1 },
+	{ ".RESW",		&pseudo_reserve_words,		1 },
+	{ ".RESD",		&pseudo_reserve_doubles,	1 },
+	{ ".RESQ",		&pseudo_reserve_quads,		1 },
 
-	{ ".EQU", &pseudo_equ,			  1 },
-	{ ".INCLUDE", &pseudo_include,	  1 },
-	{ ".INSERT", &pseudo_insert,		1 },
-	{ ".ORG", &pseudo_org,			  1 },
+	{ ".EQU",		&pseudo_equ,				1 },
+	{ ".INCLUDE",	&pseudo_include,			1 },
+	{ ".INSERT",	&pseudo_insert,				1 },
+	{ ".ORG",		&pseudo_org,				1 },
 	/*{ ".SYNTAX", &pseudo_syntax, 1 },*/
-	{ NULL, NULL,					 0 }
+	{ NULL,			NULL,						0 }
 };
 
 struct pseudo_instruction *get_pseudo_op(Line *line)
@@ -129,8 +129,6 @@ static void pseudo_set_file(Line *line)
 }
 
 #define pseudo_set_data(T, line) { \
-	char *endptr; \
-	T number; \
 	Data *data; \
 	size_t i; \
 	for (i = 0; i < (line)->argc; i++) { \
@@ -151,65 +149,14 @@ static void pseudo_set_file(Line *line)
 	} \
 }
 
-/*#define pseudo_set_data(T, line) { \
-	char *send; \
-	T number; \
-	Data *data; \
-	size_t i; \
-	size_t j; \
-	for (i = 0; i < line->argc; i++) { \
-		data = salloc(sizeof(Data)); \
-		data->type = DATA_TYPE_BYTES; \
-		data->next = NULL; \
-		data->address = address & address_mask; \
-		printdf("%c\n", line->argv[i].val.str[0]); \
-		if (line->argv[i].val.str[0] == '"' || line->argv[i].val.str[0] == '\'') { \
-			data->bytec = strlen(line->argv[i].val.str) - 1; \
-			data->contents.bytes = salloc(sizeof(uint8_t) * data->bytec); \
-			uint8_t *current_byte = data->contents.bytes; \
-			char *j; \
-			for (j = &line->argv[i].val.str[1]; *j != '\0'; j++) { \
-				number = (*j) & 0xFF; \
-				*current_byte++ = number; \
-			} \
-			address += data->bytec; \
-		} \
-		else { \
-			data->bytec = sizeof(T); \
-			number = (T)strtol(line->argv[i].val.str, &send, 0); \
-			if (*send != '\0') { \
-				data->type = DATA_TYPE_SYMBOL; \
-				data->contents.symbol = line->argv[i].val.str; \
-				*//*fail("Unrecognized data %s\n.", line->argv[i].val.str);*//* \
-			} \
-			else { \
-				data->contents.bytes = salloc(sizeof(T)); \
-				if (g_config.arch->endianness == ARCH_ENDIAN_BIG) { \
-					printdf("big endian\n"); \
-					for (j = sizeof(T) - 1; j >= 0; j--) { \
-						data->contents.bytes[j] = number & 0xFF; \
-						number >>= 8; \
-					} \
-				} \
-				else if (g_config.arch->endianness == ARCH_ENDIAN_LITTLE) { \
-					printdf("little endian\n"); \
-					for (j = 0; j < sizeof(T); j++) { \
-						data->contents.bytes[j] = number & 0xFF; \
-						number >>= 8; \
-					} \
-				} \
-			} \
-			address += sizeof(T); \
-		} \
-		add_data(data); \
-	} \
-}*/
-
 static void pseudo_set_byte(Line *line) { pseudo_set_data(uint8_t, line); }
 static void pseudo_set_word(Line *line) { pseudo_set_data(uint16_t, line); }
 static void pseudo_set_double(Line *line) { pseudo_set_data(uint32_t, line); }
 static void pseudo_set_quad(Line *line) { pseudo_set_data(uint64_t, line); }
 
+#undef pseudo_set_data
+
+/* TODO: Need to resolve this */
 #define pseudo_reserve_data(T, line) { \
 	/*if (line->argc != 1) { \
 		fail("Reserving bytes requires one parameter.\n"); \
