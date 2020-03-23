@@ -1,5 +1,25 @@
-/*#include <string.h>*/
+#if defined(HAVE_UNISTD_H)
+#include <unistd.h>
+#define GASMIC_CAN_SWITCH_DIR	1
+#elif defined(_WIN32)
+#include <direct.h>
+#define chdir	_chdir
+#define GASMIC_CAN_SWITCH_DIR	1
+#endif
 
+#if defined(HAVE_FCNTL_H) && defined(HAVE_SYS_STAT_H)
+#include <fcntl.h>
+#include <sys/stat.h>
+#if defined(_WIN32)
+#define open	_open
+#define close	_close
+#define stat	_stat
+#define fstat	_fstat
+#endif	/* defined(_WIN32) */
+#define GASMIC_HAVE_POSIX_FILE_IO	1
+#endif	/* defined(HAVE_FCNTL_H) && defined(HAVE_SYS_STAT_H) */
+
+#include "as.h"
 #include "pseudo.h"
 #include "arithmetic.h"
 #include "lang.h"
@@ -20,8 +40,6 @@
  * .extern
  * .global
  */
-
-extern DataTab *dataTab;
 
 static void pseudo_set_file(Line *line);
 static void pseudo_set_arch(Line *line);
@@ -269,9 +287,29 @@ static void pseudo_include(Line *line)
  */
 static void pseudo_insert(Line *line)
 {
+	Data *file_data;
+#if defined(GASMIC_HAVE_POSIX_FILE_IO)
+	int fd;
+	off_t size;
+	struct stat fstatus;
+
+	if (line->argv[0].type != ARG_TYPE_STRING) {
+		fail("Inserted file argument is not a string path.\n");
+	}
+
+	fd = open(line->argv[0].val.str, O_RDONLY);
+	if (fd < 0) {
+		fail("Failed to open file.\n");
+	}
+
+	if (fstat(fd, &fstatus) < 0) {
+		fail("Failed to get file specifications.\n");
+	}
+
+	size = fstatus.st_size;
+#else /* defined(GASMIC_HAVE_POSIX_FILE_IO) */
 	FILE *inserted_file;
 	long size;
-	Data *file_data;
 
 	if (line->argv[0].type != ARG_TYPE_STRING) {
 		fail("Inserted file argument is not a string path.\n");
@@ -283,6 +321,7 @@ static void pseudo_insert(Line *line)
 	}
 
 	size = fsize(inserted_file);
+#endif /* defined(GASMIC_HAVE_POSIX_FILE_IO) */
 
 	while (size > 0) {
 		file_data = init_data(salloc(sizeof(Data)));
@@ -291,13 +330,24 @@ static void pseudo_insert(Line *line)
 		file_data->type = DATA_TYPE_BYTES;
 		file_data->contents.bytes = salloc(sizeof(uint8_t) * file_data->bytec);
 
+#if defined(GASMIC_HAVE_POSIX_FILE_IO)
+		read(fd, file_data->contents.bytes, file_data->bytec);
+#else
+		fread(file_data->contents.bytes, sizeof(uint8_t), file_data->bytec, inserted_file);
+#endif
+
 		add_data(file_data);
 
 		address += file_data->bytec;
 		size -= file_data->bytec;
 	}
 
+#if defined(GASMIC_HAVE_POSIX_FILE_IO)
+	close(fd);
+#else
 	fclose(inserted_file);
+#endif /* defined(GASMIC_HAVE_POSIX_FILE_IO) */
+
 	printdf(("Inserted fname is %s\n", line->argv[0].val.str));
 }
 
