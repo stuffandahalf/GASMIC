@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "noreturn.h"
 
 /*#define SMEM_CPP*/
 
@@ -17,7 +18,9 @@ void *srealloc(void *ptr, size_t size);
 void *saquire(void *ptr);
 #endif
 void sfree(void *ptr);
-void die(const char *msg, ...);
+NORETURN_START
+void die(const char *msg, ...)
+NORETURN_END;
 
 #ifdef SMEM_CPP
 #ifdef __cplusplus

@@ -9,6 +9,7 @@
 #include "fixedint.h"
 /*#include <lang.h>
 #include <smem.h>*/
+#include "noreturn.h"
 
 /*#include <console.h>
 #include <ansistyle.h>*/
@@ -243,7 +244,9 @@ extern struct context *g_context;
 
 void init_address_mask();
 void assemble(Line *l);
-void fail(const char *fmt, ...);
+NORETURN_START
+void fail(const char *fmt, ...)
+NORETURN_END;
 
 const Architecture *find_arch(const char *arch_name);
 const Register *find_reg(const char *name);

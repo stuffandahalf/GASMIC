@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "noreturn.h"
 
 #ifdef __cplusplus
 #define INLINE inline
