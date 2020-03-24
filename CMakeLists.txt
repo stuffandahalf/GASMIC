@@ -27,7 +27,7 @@ file(GLOB HEADERS "include/*.h")
 
 add_executable(gasmic ${SOURCES} ${LOCAL_HEADERS} ${HEADERS})
 
-if(CMAKE_GENERATOR MATCHES "Visual Studio")
+if(MSVC OR CMAKE_GENERATOR MATCHES "Visual Studio")
 	target_compile_definitions(gasmic PRIVATE _CRT_SECURE_NO_WARNINGS)
 endif()
 
