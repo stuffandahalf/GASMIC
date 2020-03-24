@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1)
-project(gasmic C)
+project(GASMIC C)
 
 include(CheckIncludeFile)
 function(CHECK_AND_ADD_HEADER PROJECT HEADER VAR)
@@ -28,6 +28,14 @@ file(GLOB HEADERS "include/*.h")
 
 add_executable(gasmic ${SOURCES} ${LOCAL_HEADERS} ${HEADERS} src/lang.c src/lang.h)
 
+if(CMAKE_GENERATOR MATCHES "Visual Studio")
+	target_compile_definitions(gasmic PRIVATE _CRT_SECURE_NO_WARNINGS)
+endif()
+
+set_property(TARGET gasmic PROPERTY C_STANDARD 90)
+set_property(TARGET gasmic PROPERTY C_STANDARD_REQUIRED ON)
+set_property(TARGET gasmic PROPERTY C_EXTENSIONS OFF)
+
 check_and_add_header(gasmic inttypes.h HAVE_INTTYPES_H)
 check_and_add_header(gasmic unistd.h HAVE_UNISTD_H)
 check_and_add_header(gasmic fcntl.h HAVE_FCNTL_H)
@@ -36,12 +44,6 @@ check_and_add_type(gasmic "size_t" SIZE_T NO)
 check_and_add_type(gasmic "unsigned long int" UL YES)
 check_and_add_type(gasmic "unsigned long long int" ULL YES)
 
-#target_include_directories(gasmic PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-#target_include_directories(gasmic PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-
 install(TARGETS gasmic DESTINATION ${CMAKE_INSTALL_PREFIX})
 
-set_property(TARGET gasmic PROPERTY C_STANDARD 90)
-set_property(TARGET gasmic PROPERTY C_STANDARD_REQUIRED ON)
-set_property(TARGET gasmic PROPERTY C_EXTENSIONS OFF)
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pedantic")

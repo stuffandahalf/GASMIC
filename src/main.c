@@ -370,10 +370,16 @@ static void parse_line(Line *l, char *buffer)
 			}
 			break;
 		case ']':
+			if (l->line_state & (FLAG(LINE_STATE_SINGLE_QUOTE) | FLAG(LINE_STATE_DOUBLE_QUOTE) | FLAG(LINE_STATE_BRACKET))) {
+				break;
+			}
 			if (!(l->line_state & FLAG(LINE_STATE_BRACKET))) {
 				fail("']' requires '[' first.");
 			}
 		case '[':
+			if (l->line_state & (FLAG(LINE_STATE_SINGLE_QUOTE) | FLAG(LINE_STATE_DOUBLE_QUOTE) | FLAG(LINE_STATE_BRACKET))) {
+				break;
+			}
 			l->line_state ^= FLAG(LINE_STATE_BRACKET);
 			break;
 
@@ -446,7 +452,9 @@ static void parse_line(Line *l, char *buffer)
 			buffer++;
 			break;
 		case ':':
-			if (l->line_state & FLAG(LINE_STATE_LABEL)) {
+			if (l->line_state & (FLAG(LINE_STATE_SINGLE_QUOTE) | FLAG(LINE_STATE_DOUBLE_QUOTE) | FLAG(LINE_STATE_BRACKET))) {
+				break;
+			} else if (l->line_state & FLAG(LINE_STATE_LABEL)) {
 				fail("Invalid label.\n");
 			} else if (l->line_state & FLAG(LINE_STATE_MNEMONIC)) {
 				fail("Label must occur at the beginning of a line.\n");

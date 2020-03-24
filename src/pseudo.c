@@ -11,8 +11,16 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #if defined(_WIN32)
+#include <io.h>
+#if !defined(open)
 #define open	_open
+#endif /* !defined(open) */
+#if !defined(close)
 #define close	_close
+#endif /* !defined(close) */
+#if !defined(read)
+#define read	_read
+#endif /* !defined(read) */
 #define stat	_stat
 #define fstat	_fstat
 #endif	/* defined(_WIN32) */
@@ -272,7 +280,7 @@ static void pseudo_insert(Line *line)
 
 	while (size > 0) {
 		file_data = init_data(salloc(sizeof(Data)));
-		file_data->bytec = (size > 255) ? 255 : size;
+		file_data->bytec = (uint8_t)((size > 255) ? 255 : size);
 		file_data->address = address;
 		file_data->type = DATA_TYPE_BYTES;
 		file_data->contents.bytes = salloc(sizeof(uint8_t) * file_data->bytec);
