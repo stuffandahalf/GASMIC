@@ -147,8 +147,7 @@ void sfree(void *ptr)
 	free(a);
 }
 
-NORETURN_START
-void die(const char *msg, ...)
+NORETURN void die(const char *msg, ...)
 {
 	va_list args;
 	va_start(args, msg);
@@ -158,4 +157,3 @@ void die(const char *msg, ...)
 	AWAIT_WINDOWS;
 	exit(1);
 }
-NORETURN_END

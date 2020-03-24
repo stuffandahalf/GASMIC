@@ -32,8 +32,8 @@ if(MSVC OR CMAKE_GENERATOR MATCHES "Visual Studio")
 endif()
 
 set_property(TARGET gasmic PROPERTY C_STANDARD 90)
-set_property(TARGET gasmic PROPERTY C_STANDARD_REQUIRED ON)
-set_property(TARGET gasmic PROPERTY C_EXTENSIONS OFF)
+#set_property(TARGET gasmic PROPERTY C_STANDARD_REQUIRED ON)
+#set_property(TARGET gasmic PROPERTY C_EXTENSIONS OFF)
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pedantic")
 
 check_and_add_header(gasmic inttypes.h HAVE_INTTYPES_H)

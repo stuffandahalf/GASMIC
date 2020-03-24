@@ -18,9 +18,7 @@ void *srealloc(void *ptr, size_t size);
 void *saquire(void *ptr);
 #endif
 void sfree(void *ptr);
-NORETURN_START
-void die(const char *msg, ...)
-NORETURN_END;
+NORETURN void die(const char *msg, ...);
 
 #ifdef SMEM_CPP
 #ifdef __cplusplus

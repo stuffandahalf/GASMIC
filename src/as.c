@@ -213,8 +213,8 @@ void prepare_line(Line *line)
 #endif
 }
 
-NORETURN_START
-void fail(const char *fmt, ...) {
+NORETURN void fail(const char *fmt, ...)
+{
 	struct context *cntxt;
 	va_list args;
 	va_start(args, fmt);
@@ -250,4 +250,3 @@ void fail(const char *fmt, ...) {
 
 	die("\n");
 }
-NORETURN_END

@@ -244,9 +244,7 @@ extern struct context *g_context;
 
 void init_address_mask();
 void assemble(Line *l);
-NORETURN_START
-void fail(const char *fmt, ...)
-NORETURN_END;
+NORETURN void fail(const char *fmt, ...);
 
 const Architecture *find_arch(const char *arch_name);
 const Register *find_reg(const char *name);
