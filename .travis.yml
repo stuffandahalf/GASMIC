@@ -89,15 +89,15 @@ jobs:
     before_script:
      - mkdir build
      - cd build
-     - cmake .. -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release
-    script: mingw32-make
+     - cat "cmake .. -G \"MinGW Makefiles\" -DCMAKE_BUILD_TYPE=Release" > cmd.exe
+    script: cat "mingw32-make" > cmd.exe
   - os: windows
     compiler: clang
     before_script:
      - mkdir build
      - cd build
-     - cmake .. -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release
-    script: mingw32-make
+     - cat "cmake .. -G \"MSYS Makefiles\" -DCMAKE_BUILD_TYPE=Release" > cmd.exe
+    script: cat "mingw32-make" > cmd.exe
   - os: windows
     compiler: gcc
     before_script:
