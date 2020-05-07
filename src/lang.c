@@ -82,3 +82,4 @@ char *str_trim(char *str)
 
 	return str;
 }
+

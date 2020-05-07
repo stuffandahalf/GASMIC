@@ -15,8 +15,7 @@
 #elif defined(__GNUC__)
 #define NORETURN	__attribute__((__noreturn__))
 #else
-#define NORETURN_START	/**/
-#define NORETURN_END	/**/
+#define NORETURN	/**/
 #endif /* Compiler specific extensions */
 #endif /* Standard C or C++ noreturn attribute */
 

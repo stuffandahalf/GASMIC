@@ -318,3 +318,4 @@ static void pseudo_org(Line *line)
 		fail("Value is not a number.\n");
 	}
 }
+

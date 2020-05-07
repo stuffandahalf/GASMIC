@@ -8,3 +8,4 @@ int restore_console(void);
 #endif
 
 #endif /* !defined(GASMIC_CONSOLE_H) */
+

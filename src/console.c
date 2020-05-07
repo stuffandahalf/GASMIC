@@ -56,3 +56,4 @@ int restore_console(void)
 }
 
 #endif /* defined(_WIN32) */
+

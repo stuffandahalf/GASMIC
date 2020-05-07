@@ -157,3 +157,4 @@ NORETURN void die(const char *msg, ...)
 	AWAIT_WINDOWS;
 	exit(1);
 }
+
