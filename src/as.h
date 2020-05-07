@@ -180,10 +180,10 @@ typedef struct {
 enum line_state {
 	LINE_STATE_CLEAR		= 0,
 	LINE_STATE_LABEL		= (1u << 0u),
-	LINE_STATE_MNEMONIC	 = (1u << 1u),
+	LINE_STATE_MNEMONIC		= (1u << 1u),
 	LINE_STATE_SINGLE_QUOTE = (1u << 2u),
 	LINE_STATE_DOUBLE_QUOTE = (1u << 3u),
-	LINE_STATE_BRACKET	  = (1u << 4u)
+	LINE_STATE_BRACKET		= (1u << 4u)
 };
 
 enum address_post_op {
