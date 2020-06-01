@@ -44,4 +44,4 @@ check_and_add_type(gasmic "size_t" SIZE_T NO)
 check_and_add_type(gasmic "unsigned long int" UL YES)
 check_and_add_type(gasmic "unsigned long long int" ULL YES)
 
-install(TARGETS gasmic DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(TARGETS gasmic)
