@@ -221,7 +221,7 @@ static void pseudo_include(Line *line)
 	if ((included_context.fptr = fopen(included_context.fname, "r")) == NULL) {
 		fail("Failed to open included file \"%s\".\n", included_context.fname);
 	}
-	
+
 	inc_line = salloc(sizeof(Line));
 	g_context = &included_context;
 

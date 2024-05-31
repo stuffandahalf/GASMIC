@@ -1,3 +1,5 @@
+	.org 0x100
+
 _start:
     abx
     adca #$5

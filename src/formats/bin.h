@@ -1,0 +1,6 @@
+#ifndef GASMIC_FORMAT_BIN_H
+#define GASMIC_FORMAT_BIN_H 1
+
+
+
+#endif /* GASMIC_FORMAT_BIN_H */

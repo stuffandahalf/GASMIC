@@ -8,6 +8,7 @@
 #include "console.h"
 #include "as.h"
 #include "targets.h"
+#include "formats.h"
 #include "pseudo.h"
 #include "arithmetic.h"
 
@@ -125,7 +126,7 @@ int main(int argc, char *const argv[])
 
 	if (g_config.export_fname != NULL) {
 		FILE *export_file;
-		
+
 		export_file = fopen(g_config.export_fname, "w+");
 		if (export_file == NULL) {
 			die("Failed to open export file \"%s\"\n", g_config.export_fname);
@@ -489,10 +490,10 @@ static void resolve_mnemonic_type(Line *line)
 	if (line->mnemonic[0] == '\0') {
 		return;
 	} else if (line->mnemonic[0] == '.') {
-		prepare_line(line);
+		//prepare_line(line);
 		parse_pseudo_op(line);
 	} else if ((pseudo_op = get_pseudo_op(line)) != NULL) {
-		prepare_line(line);
+		//prepare_line(line);
 		pseudo_op->process(line);
 	} else {
 		/*g_config.arch->parse_instruction(line);*/
@@ -887,7 +888,7 @@ instruction_found:
 	prepare_line(l);
 */
 
-	
+
 	data = init_data(salloc(sizeof(Data)));
 	/*data = (Data *)salloc_real(sizeof(Data));*/
 
