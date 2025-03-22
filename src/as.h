@@ -49,10 +49,10 @@ enum endian {
 };
 
 enum syntax {
-	SYNTAX_UNKNOWN,
 	SYNTAX_MOTOROLA,
 	SYNTAX_INTEL,
-	SYNTAX_ATT
+	SYNTAX_ATT,
+	SYNTAX_UNKNOWN
 };
 
 enum arg_order {
@@ -206,6 +206,8 @@ struct line {
 	enum address_post_op addr_mode_post_op;
 };
 
+typedef void (syntax_handler)(struct line *l);
+
 typedef struct {
 	char *name;
 	int value;
@@ -224,7 +226,7 @@ struct configuration {
 	char				*export_fname;
 	size_t				in_fnamec;
 	size_t 				in_fname_size;
-	uint8_t				syntax;
+	enum syntax			syntax;
 	const Architecture 	*arch;
 };
 

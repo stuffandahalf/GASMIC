@@ -30,12 +30,7 @@ char buffer[LINEBUFFERSIZE];
 static int configure(int argc, char *const argv[]);
 /*static void trim_str(char str[]);*/
 static void parse_line(struct line *l, char *buffer);
-static void evaluate_args(struct line *l);
-static void resolve_mnemonic_type(struct line *l);
-static void set_syntax_parser();
-static void prepare_line_motorola(struct line *l);
-static void prepare_line_att(struct line *l);
-static void prepare_line_intel(struct line *l);
+static void evaluate_mnemonic(struct line *l);
 
 struct configuration g_config;
 struct context *g_context;
@@ -44,8 +39,18 @@ struct context *g_context;
 FILE *out;
 size_t address = 0;
 size_t address_mask;	/* bits to mask the address to;*/
-void (*parse_instruction)(struct line *l);
 /*SymTab *undefined_symtab;*/
+
+extern syntax_handler process_motorola_syntax;
+extern syntax_handler process_intel_syntax;
+extern syntax_handler process_att_syntax;
+
+syntax_handler *syntax_handlers[] = {
+	&process_motorola_syntax,
+	&process_intel_syntax,
+	&process_att_syntax,
+	NULL
+};
 
 #define TARGET(t) &ARCH_ ## t,
 Architecture **architectures[] = { TARGETS NULL };  /* NULL terminated array of targets */
@@ -93,10 +98,11 @@ main(int argc, char *const argv[])
 	init_cntxt.parent = NULL;
 
 	init_address_mask();
-	set_syntax_parser();
+	//set_syntax_parser();
 
 	init_data_table();
 
+	/* establish new context and handle file io */
 	if (g_config.in_fnamec < 0) {
 		die("Invalid number of command line arguments.\n");
 	} else if (g_config.in_fnamec == 0) {
@@ -245,11 +251,13 @@ assemble(struct context *cntxt)
 
 	while (fgets(buffer, LINEBUFFERSIZE, g_context->fptr) != NULL) {
 		if (buffer[0] != '\0' && buffer[0] != '\n') {
+			/* initialize line state */
 			l.line_state = LINE_STATE_CLEAR;
 			l.address_mode = ADDR_MODE_INVALID;
 			l.addr_mode_post_op = POST_OP_NONE;
 			l.argc = 0;
 
+			/* process line */
 			parse_line(&l, buffer);
 
 #ifndef NDEBUG
@@ -268,13 +276,14 @@ assemble(struct context *cntxt)
 			}
 			puts("");
 #endif
+
 			if (l.line_state & FLAG(LINE_STATE_LABEL)) {	  /* If current line has a label */
 				add_label(&l);
 			}
 			if (l.line_state & FLAG(LINE_STATE_MNEMONIC)) {   /* If current line has a mnemonic */
 				str_to_upper(l.mnemonic);
-				evaluate_args(&l);
-				resolve_mnemonic_type(&l);
+				//evaluate_args(&l);
+				evaluate_mnemonic(&l);
 			}
 		}
 		g_context->line_num++;
@@ -434,7 +443,6 @@ parse_line(struct line *l, char *buffer)
 			buffer++;
 			arg_type = ARG_TYPE_UNPROCESSED;
 			break;
-
 		case '\n':
 			if (l->line_state & (FLAG(LINE_STATE_SINGLE_QUOTE) | FLAG(LINE_STATE_DOUBLE_QUOTE))) {
 				fail("Unterminated string constant.\n");
@@ -489,17 +497,32 @@ parse_line(struct line *l, char *buffer)
 	}
 }
 
-static void
+static int
 evaluate_args(struct line *l)
 {
 	int i;
+	printef("ARGS: ");
 	for (i = 0; i < l->argc; i++) {
-		printef("%s\t", l->argv[i].val.str);
+		printef("(%d) %s\t", l->argv[i].type, l->argv[i].val.str);
+		/* argument type was set during parsing, no need to evaluate */
+		if (l->argv[i].type) {
+			continue;
+		}
+
 	}
+	printef("\n");
+
+	return 0;
+}
+
+static INLINE void
+process_instruction(struct line *line)
+{
+	syntax_handlers[g_config.syntax](line);
 }
 
 static void
-resolve_mnemonic_type(struct line *line)
+evaluate_mnemonic(struct line *line)
 {
 	struct pseudo_instruction *pseudo_op;
 
@@ -512,8 +535,7 @@ resolve_mnemonic_type(struct line *line)
 		//prepare_line(line);
 		pseudo_op->process(line);
 	} else {
-		/*g_config.arch->parse_instruction(line);*/
-		parse_instruction(line);
+		process_instruction(line);
 	}
 }
 
@@ -529,25 +551,25 @@ instruction_supports_reg(const Instruction *instruction, const Register *reg)
 	return NULL;
 }
 
-static void
+/*static void
 set_syntax_parser()
 {
 	switch (g_config.syntax) {
 	case SYNTAX_MOTOROLA:
-		parse_instruction = &prepare_line_motorola;
+		process_instruction = &prepare_line_motorola;
 		break;
 	case SYNTAX_ATT:
 		fail("AT&T instruction syntax is not yet implemented.\n");
-		parse_instruction = &prepare_line_att;
+		process_instruction = &prepare_line_att;
 		break;
 	case SYNTAX_INTEL:
 		fail("Intel instruction syntax is not yet implemented.\n");
-		parse_instruction = &prepare_line_intel;
+		process_instruction = &prepare_line_intel;
 		break;
 	case SYNTAX_UNKNOWN:
 		fail("Unrecognized syntax.\n");
 	}
-}
+}*/
 
 static void
 prepare_line_motorola(struct line *l)
