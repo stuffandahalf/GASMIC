@@ -26,7 +26,7 @@ process_motorola_syntax(struct line *l)
 			}
 			l->argv[i].val.str++;
 			l->address_mode = ADDR_MODE_IMMEDIATE;
-			parse_arg(&l->argv[i]);
+			//parse_arg(&l->argv[i]);
 			break;
 		/*case '(':
 			break;*/

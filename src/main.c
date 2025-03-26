@@ -41,11 +41,11 @@ size_t address = 0;
 size_t address_mask;	/* bits to mask the address to;*/
 /*SymTab *undefined_symtab;*/
 
-extern syntax_handler process_motorola_syntax;
-extern syntax_handler process_intel_syntax;
-extern syntax_handler process_att_syntax;
+extern line_processor process_motorola_syntax;
+extern line_processor process_intel_syntax;
+extern line_processor process_att_syntax;
 
-syntax_handler *syntax_handlers[] = {
+line_processor *syntax_handlers[] = {
 	&process_motorola_syntax,
 	&process_intel_syntax,
 	&process_att_syntax,
@@ -524,7 +524,9 @@ process_instruction(struct line *line)
 static void
 evaluate_mnemonic(struct line *line)
 {
-	struct pseudo_instruction *pseudo_op;
+	//struct pseudo_instruction *pseudo_op;
+	//int (*pseudo_op)(struct line *line) = NULL;
+	const struct mnemonic *pseudo_op = NULL;
 
 	if (line->mnemonic[0] == '\0') {
 		return;
@@ -533,7 +535,8 @@ evaluate_mnemonic(struct line *line)
 		parse_pseudo_op(line);
 	} else if ((pseudo_op = get_pseudo_op(line)) != NULL) {
 		//prepare_line(line);
-		pseudo_op->process(line);
+		//pseudo_op->process(line);
+		pseudo_op->forms[0].callback(line);
 	} else {
 		process_instruction(line);
 	}

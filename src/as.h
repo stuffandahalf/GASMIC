@@ -62,23 +62,6 @@ enum arg_order {
 	ARG_ORDER_INTERREG
 };
 
-#if 0
-enum address_type {
-	ADDRESS_TYPE_ABSOLUTE;
-	ADDRESS_TYPE_RELATIVE;
-};
-struct address {
-	enum address_type type;
-	union {
-		size_t absolute;
-		struct {
-			struct token *root_expr;
-			size_t offset;
-		};
-	} value;
-};
-#endif
-
 struct symbol {
 	char *label;
 	int64_t value;
@@ -206,7 +189,23 @@ struct line {
 	enum address_post_op addr_mode_post_op;
 };
 
-typedef void (syntax_handler)(struct line *l);
+typedef int (line_processor)(struct line *l);
+
+// TODO: Set a realistic limit
+#define MAX_MNEMONIC_FORMS (10)
+#define MAX_OPCODE_LEN (2)
+struct mnemonic {
+	char mnemonic[MAX_MNEMONIC_LEN];
+	int8_t compatibility;					// supported architectures for general instruction support
+	struct {
+		int8_t compatibility;
+		enum address_mode mode;
+		uint8_t opcodesz;
+		uint8_t opcode[MAX_OPCODE_LEN];
+		int8_t nargs;
+		line_processor *callback;
+	} forms[MAX_MNEMONIC_LEN];
+};
 
 typedef struct {
 	char *name;

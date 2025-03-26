@@ -1,7 +1,7 @@
 #ifndef GASMIC_PSEUDO_H
 #define GASMIC_PSEUDO_H
 
-/*#include "as.h"*/
+#include "as.h"
 
 struct pseudo_instruction {
 	/*char instruction[10];*/
@@ -10,7 +10,8 @@ struct pseudo_instruction {
 	short int args;
 };
 
-struct pseudo_instruction *get_pseudo_op(struct line *line);
+//struct pseudo_instruction *get_pseudo_op(struct line *line);
+const struct mnemonic *get_pseudo_op(struct line *line);
 void parse_pseudo_op(struct line *line);
 
 #endif /* GASMIC_PSEUDO_H */
