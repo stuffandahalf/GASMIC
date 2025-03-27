@@ -86,21 +86,34 @@ static int pseudo_org(struct line *line);
 // 	{ NULL,			NULL,						0 }
 // };
 
+/* Define pseudo mnemonics */
+#define PSEUDO_OP(name, callback, nargs) { \
+	.mnemonic = (name), \
+	.compatibility = -1, \
+	.forms = { \
+		{ -1, 0, 0, {}, (nargs), (callback) } \
+	} \
+}
+
 static const struct mnemonic pseudo_ops[] = {
-	{
-		.mnemonic = "ARCH",
-		.compatibility = -1,
-		.forms = {
-			{ -1, 0, 0, {}, -1, &pseudo_set_arch }
-		}
-	},
-	{
-		.mnemonic = "FILE",
-		.compatibility = -1,
-		.forms = {
-			{ -1, 0, 0, {}, -1, &pseudo_set_file }
-		}
-	}
+	PSEUDO_OP("ARCH", &pseudo_set_arch, 1),
+	PSEUDO_OP("FILE", &pseudo_set_file, 1),
+
+	PSEUDO_OP("DB", &pseudo_set_byte, -1),
+	PSEUDO_OP("DW", &pseudo_set_word, -1),
+	PSEUDO_OP("DD", &pseudo_set_double, -1),
+	PSEUDO_OP("DQ", &pseudo_set_quad, -1),
+
+	PSEUDO_OP("RESB", &pseudo_reserve_bytes, 1),
+	PSEUDO_OP("RESW", &pseudo_reserve_words, 1),
+	PSEUDO_OP("RESD", &pseudo_reserve_doubles, 1),
+	PSEUDO_OP("RESQ", &pseudo_reserve_quads, 1),
+
+	PSEUDO_OP("EQU", &pseudo_equ, 1),
+	PSEUDO_OP("INCLUDE", &pseudo_include, 1),
+	PSEUDO_OP("INSERT", &pseudo_insert, 1),
+	PSEUDO_OP("ORG", &pseudo_org, 1)
+	// PSEUDO_OP("SYNTAX", &pseudo_syntax, 1)
 };
 static const pseudo_op_sz = sizeof(pseudo_ops) / sizeof(struct mnemonic);
 
