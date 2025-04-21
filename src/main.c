@@ -41,7 +41,7 @@ size_t address = 0;
 size_t address_mask;	/* bits to mask the address to;*/
 /*SymTab *undefined_symtab;*/
 
-extern line_processor process_motorola_syntax;
+/*extern line_processor process_motorola_syntax;
 extern line_processor process_intel_syntax;
 extern line_processor process_att_syntax;
 
@@ -50,6 +50,15 @@ line_processor *syntax_handlers[] = {
 	&process_intel_syntax,
 	&process_att_syntax,
 	NULL
+};*/
+
+extern struct syntax_handler motorola_syntax;
+extern struct syntax_handler intel_syntax;
+extern struct syntax_handler att_syntax;
+struct syntax_handler *syntax_handlers[] = {
+	&motorola_syntax,
+	&intel_syntax,
+	&att_syntax
 };
 
 #define TARGET(t) &ARCH_ ## t,
@@ -59,16 +68,6 @@ Architecture **architectures[] = { TARGETS NULL };  /* NULL terminated array of 
 int
 main(int argc, char *const argv[])
 {
-#if 0
-	//struct token *rpn_expr = parse_expression("1 *(2 +3)");
-	struct token *rpn_expr = parse_expression("(_start * 3) + tmp");
-	//struct token *rpn_expr = parse_expression("(_start * 3 + tmp");
-	print_token_list(rpn_expr);
-	printf("%d\n", arithmetic_status_code);
-	free_token_chain(rpn_expr);
-	return 0;
-#endif
-
 	size_t i;
 	struct context init_cntxt;
 	struct symbol *sym, *tmp_sym;
@@ -260,29 +259,14 @@ assemble(struct context *cntxt)
 			/* process line */
 			parse_line(&l, buffer);
 
-#ifndef NDEBUG
-			/*printf("%s\t%s", l.label, l.mnemonic);*/
-			if (l.line_state & FLAG(LINE_STATE_LABEL)) {
-				printf("%s", l.label);
-			}
-			if (l.line_state & FLAG(LINE_STATE_MNEMONIC)) {
-				if (l.line_state & FLAG(LINE_STATE_LABEL)) {
-					puts("\t");
-				}
-				printf("%s", l.mnemonic);
-			}
-			for (i = 0; i < l.argc; i++) {
-				printf("\t%s", l.argv[i].val.str);
-			}
-			puts("");
-#endif
-
 			if (l.line_state & FLAG(LINE_STATE_LABEL)) {	  /* If current line has a label */
 				add_label(&l);
 			}
 			if (l.line_state & FLAG(LINE_STATE_MNEMONIC)) {   /* If current line has a mnemonic */
-				str_to_upper(l.mnemonic);
+				//g_config.syntax.evaluate_args(&l);
+				//syntax_handlers[g_config.syntax]->evaluate_args(&l);
 				//evaluate_args(&l);
+
 				evaluate_mnemonic(&l);
 			}
 		}
@@ -437,7 +421,7 @@ parse_line(struct line *l, char *buffer)
 			la->type = arg_type;
 			//la->state = ARG_STATE_CLEAR;
 			//la->addr_mode = ADDR_MODE_INVALID;
-			la->val.str = buffer;
+			la->str = buffer;
 			*c = '\0';
 			buffer = c;
 			buffer++;
@@ -453,13 +437,14 @@ parse_line(struct line *l, char *buffer)
 				buffer = c;
 				buffer++;
 				l->line_state |= FLAG(LINE_STATE_MNEMONIC);
+				str_to_upper(l->mnemonic);
 			} else {
 				if (l->argc == LINE_ARG_MAX) {
 					fail("Too many arguments provided. (max %d)\n", LINE_ARG_MAX);
 				}
 				la = &(l->argv[l->argc++]);
 				la->type = arg_type;
-				la->val.str = buffer;
+				la->str = buffer;
 				arg_type = ARG_TYPE_UNPROCESSED;
 				/* *c = '\0';*/
 			}
@@ -495,50 +480,35 @@ parse_line(struct line *l, char *buffer)
 	if (l->line_state & FLAG(LINE_STATE_BRACKET)) {
 		fail("Unmatched bracket.\n");
 	}
+
+	syntax_handlers[g_config.syntax]->evaluate_args(l);
 }
 
-static int
-evaluate_args(struct line *l)
+const struct mnemonic *
+get_instruction(struct line *line)
 {
 	int i;
-	printef("ARGS: ");
-	for (i = 0; i < l->argc; i++) {
-		printef("(%d) %s\t", l->argv[i].type, l->argv[i].val.str);
-		/* argument type was set during parsing, no need to evaluate */
-		if (l->argv[i].type) {
-			continue;
-		}
+	//const struct mnemonic *mnemonics = g_config.arch->instructions;
 
-	}
-	printef("\n");
+	//for (i = 0; mnemonics[i]-> < 
 
-	return 0;
-}
-
-static INLINE void
-process_instruction(struct line *line)
-{
-	syntax_handlers[g_config.syntax](line);
+	return NULL;
 }
 
 static void
 evaluate_mnemonic(struct line *line)
 {
-	//struct pseudo_instruction *pseudo_op;
-	//int (*pseudo_op)(struct line *line) = NULL;
-	const struct mnemonic *pseudo_op = NULL;
+	const struct mnemonic *m = NULL;
 
-	if (line->mnemonic[0] == '\0') {
+	if (!line->mnemonic || line->mnemonic[0] == '\0') {
 		return;
-	} else if (line->mnemonic[0] == '.') {
-		//prepare_line(line);
-		parse_pseudo_op(line);
-	} else if ((pseudo_op = get_pseudo_op(line)) != NULL) {
-		//prepare_line(line);
-		//pseudo_op->process(line);
-		pseudo_op->forms[0].callback(line);
-	} else {
-		process_instruction(line);
+	}
+
+	if ((m = get_pseudo_op(line)) != NULL) {
+		m->forms[0].callback(line);
+	} else if ((m = get_instruction(line)) != NULL) {
+		//printf("FOUND INSTRUCTION %s\n", m->name);
+		//process_instruction(line);
 	}
 }
 
@@ -554,402 +524,3 @@ instruction_supports_reg(const Instruction *instruction, const Register *reg)
 	return NULL;
 }
 
-/*static void
-set_syntax_parser()
-{
-	switch (g_config.syntax) {
-	case SYNTAX_MOTOROLA:
-		process_instruction = &prepare_line_motorola;
-		break;
-	case SYNTAX_ATT:
-		fail("AT&T instruction syntax is not yet implemented.\n");
-		process_instruction = &prepare_line_att;
-		break;
-	case SYNTAX_INTEL:
-		fail("Intel instruction syntax is not yet implemented.\n");
-		process_instruction = &prepare_line_intel;
-		break;
-	case SYNTAX_UNKNOWN:
-		fail("Unrecognized syntax.\n");
-	}
-}*/
-
-static void
-prepare_line_motorola(struct line *l)
-{
-	/*const char *instr_mnem = NULL;
-	const char *line_mnemonic = NULL;
-	const char *c;
-	const Register *reg = NULL;
-	const struct instruction_register *instruction_reg = NULL;
-	struct LineArg *argcpy = NULL;  // store a copy of the arguments in case processing fails
-	//size_t j;*/
-
-	/*char *unified_arg_str;*/
-
-	size_t arg_len = 0;
-	size_t i = 0;
-	char *c;
-	char *tmp_c;
-	char *unified_arg_str;
-	char *buffer_ptr;
-	struct line_arg *la;
-	char *arg_dup;
-	char *reg_name;
-	const Register *reg;
-	Data *data;
-	struct {
-		enum arg_type type;
-		union {
-			const Register *reg;
-			struct token *expr;
-			void *ptr;
-		} val;
-		int8_t pre_inc;
-		int8_t post_inc;
-	} arg_part;
-	bool end;
-
-	if (l->argc == 0) {
-		l->address_mode = ADDR_MODE_INHERENT;
-		goto proceed;
-	}
-
-	for (i = 0; i < l->argc; i++) {
-		if (l->argv[i].type != ARG_TYPE_UNPROCESSED) {
-			fail("Instructions should not have complex arguments.\n");
-		}
-		arg_len += strlen(l->argv[i].val.str);
-	}
-	arg_len += l->argc - 1; /* space for commas */
-	arg_len++;
-
-	unified_arg_str = salloc(sizeof(char) * arg_len);
-
-	/*char *c = unified_arg_str;*/
-	buffer_ptr = unified_arg_str;
-	for (i = 0; i < l->argc; i++) {
-		if (i) {
-			*buffer_ptr++ = ',';
-		}
-		for (c = l->argv[i].val.str; *c != '\0'; c++) {
-			*buffer_ptr++ = *c;
-		}
-	}
-	*buffer_ptr = '\0';
-
-	l->argc = 1;
-	la = &l->argv[0];
-	la->val.str = unified_arg_str;
-	la->type = ARG_TYPE_UNPROCESSED;
-
-		/* first try to figure out what kind of forced argument this is*/
-	c = la->val.str;
-	/*la->val.str = NULL;*/
-	switch (*c) {
-	case '#':
-		l->address_mode |= FLAG(ADDR_MODE_IMMEDIATE);
-		c++;
-		break;
-	case '>':
-		l->address_mode |= FLAG(ADDR_MODE_EXTENDED);
-		c++;
-		break;
-	case '<':
-		l->address_mode |= FLAG(ADDR_MODE_DIRECT);
-		c++;
-		break;
-	case '[':
-		l->address_mode |= FLAG(ADDR_MODE_INDIRECT);
-		c++;
-		for (tmp_c = c; *tmp_c != '\0' && *tmp_c != ']'; tmp_c++);
-		if (*tmp_c == '\0') {
-			fail("Unterminated bracket for indirect addressing.\n");
-		}
-		*tmp_c = '\0';
-		tmp_c++;
-		while(*tmp_c == ' ' || *tmp_c == '\t') {
-			tmp_c++;
-		}
-		if (*tmp_c != ',' && *tmp_c != '\0') {
-			fail("Unexpected characters after indirect argument.\n");
-		}
-		break;
-	default:
-		break;
-	}
-
-	la->val.str = c;
-	buffer_ptr = c;
-	arg_part.type = ARG_TYPE_UNPROCESSED;
-	arg_part.val.ptr = NULL;
-
-	end = false;
-	while (!end) {
-		switch (*c) {
-		case ' ':
-		case '\t':
-			if (buffer_ptr == c) {
-				buffer_ptr++;
-			}
-			break;
-		case ',':
-		case '\0':
-			if (*c == '\0') {
-				end = true;
-			} else {
-				*c = '\0';
-			}
-
-			/* This doesnt quite work */
-			while (*buffer_ptr == '-' || *buffer_ptr == '+') {
-				if (*buffer_ptr == '-') {
-					arg_part.pre_inc--;
-				} else if (*buffer_ptr == '+') {
-					arg_part.pre_inc++;
-				}
-				buffer_ptr++;
-			}
-
-			/*for (tmp_c = c, tmp_c--; *tmp_c == '-' || *tmp_c == '+'; tmp_c--) {
-				if (*buffer_ptr == '-') {
-					arg_part.pre_inc--;
-				} else if (*buffer_ptr == '+') {
-					arg_part.pre_inc++;
-				}
-				*tmp_c = '\0';
-			}*/
-
-			arg_dup = str_clone(buffer_ptr);
-			if (arg_dup == NULL) {
-				die("Failed to allocate new buffer for argument piece.\n");
-			}
-			arg_dup = str_trim(arg_dup);
-
-			reg_name = str_clone(arg_dup);
-			if (reg_name == NULL) {
-				die("Failed to allocate new buffer for register name.\n");
-			}
-			reg_name = str_to_upper(reg_name);
-
-			if (*arg_dup == '\0') {
-				arg_part.type = ARG_TYPE_EXPRESSION;
-				arg_part.val.expr = parse_expression("0");
-			} else if ((reg = find_reg(reg_name)) != NULL) {
-				arg_part.type = ARG_TYPE_REGISTER;
-				arg_part.val.reg = reg;
-			} else {
-				arg_part.type = ARG_TYPE_EXPRESSION;
-				arg_part.val.expr = parse_expression(arg_dup);
-			}
-
-			free(reg_name);
-			free(arg_dup);
-			if (!end) { /* not last argument */
-				/* not last argument, check if indexed, handle appropriately */
-				l->address_mode |= FLAG(ADDR_MODE_INDEXED);   /* more than one argument means indexed */
-				switch (arg_part.type) {
-				case ARG_TYPE_EXPRESSION:
-					la->type = ARG_TYPE_INDEX_CONSTANT;
-					la->val.indexed.offset.expression = arg_part.val.expr;
-					break;
-				case ARG_TYPE_REGISTER:
-					la->type = ARG_TYPE_INDEX_REGISTER;
-					la->val.indexed.offset.reg = arg_part.val.reg;
-					break;
-				default:
-					fail("Invalid type for index offset.\n");
-					break;
-				}
-			} else {
-				/* last argument, check if arg type is indexed */
-				if (l->address_mode & FLAG(ADDR_MODE_INDEXED)) {
-					if (arg_part.type != ARG_TYPE_REGISTER) {
-						fail("Indexed addressing base must be a register.\n");
-					}
-					la->val.indexed.base = arg_part.val.reg;
-				} else {
-					switch (l->address_mode) {
-					case ADDR_MODE_IMMEDIATE:
-					case ADDR_MODE_EXTENDED:
-					case ADDR_MODE_DIRECT:
-						if (arg_part.type != ARG_TYPE_EXPRESSION) {
-							fail("Immediate argument must be an expression.\n");
-						}
-						la->type = ARG_TYPE_EXPRESSION;
-						la->val.rpn_expr = arg_part.val.expr;
-						break;
-					/*case ADDR_MODE_*/
-					}
-				}
-			}
-
-			buffer_ptr = c, buffer_ptr++;
-			break;
-		}
-
-		c++;
-	}
-
-proceed:
-	/*;*/
-
-/*
-	const Instruction **i = NULL;
-
-	const MC6x09_Instruction *i = NULL;
-	for (const Instruction **i = g_config.arch->instructions; *i != NULL; i++) {
-		if (!((*i)->architectures & FLAG(g_config.arch->value))) {
-			goto next_instruction;
-		}
-		instr_mnem = (*i)->mnemonic;
-		line_mnemonic = l->mnemonic;
-		while (*instr_mnem != '\0' && *line_mnemonic != '\0') {
-			if (*instr_mnem++ != *line_mnemonic++) {
-				goto next_instruction;
-			}
-		}
-
-		switch ((*i)->arg_order) {
-		case ARG_ORDER_NONE:
-		case ARG_ORDER_INTERREG:
-			if (*line_mnemonic != '\0') {
-				goto next_instruction;
-			}
-			if ((*i)->arg_order == ARG_ORDER_NONE) {
-				l->address_mode = ADDR_MODE_INHERENT;
-				goto instruction_found;
-			}
-
-			// check that the two arguments are registers and assign the argument
-			if (l->argc != 2) {
-				goto next_instruction;
-			}
-			for (size_t j = 0; j < l->argc; j++) {
-				if (l->argv[j].type != ARG_TYPE_UNPROCESSED) {
-					goto next_instruction;
-				}
-				for (reg = &(g_config.arch->registers[1]); reg->name[0] != '\0'; reg++) {
-					if (streq(l->argv[j].val.str, reg->name)) {
-						l->argv[j].type = ARG_TYPE_REGISTER;
-						l->argv[j].val.indexed.base = reg;
-						break;
-					}
-				}
-				if (l->argv[j].type != ARG_TYPE_REGISTER) {
-					goto next_instruction;
-				}
-			}
-			l->address_mode = ADDR_MODE_INTERREGISTER;
-			goto instruction_found;
-
-			break;
-		case ARG_ORDER_FROM_REG:
-		case ARG_ORDER_TO_REG:
-			for (reg = &(g_config.arch->registers[1]); reg->name[0] != '\0'; reg++) {
-				if (streq(line_mnemonic, reg->name) &&
-					(reg->arcs & FLAG(g_config.arch->value)) &&
-					((instruction_reg = instruction_supports_reg(*i, reg)) != NULL)) {
-					goto evaluate_args;
-					//goto instruction_found;
-				}
-			}
-			goto next_instruction;
-
-evaluate_args:
-			if (l->argc < 1) {
-				goto next_instruction;
-			}
-			if (l->argv->type != ARG_TYPE_UNPROCESSED) {
-				goto next_instruction;
-			}
-			argcpy = salloc(sizeof(LineArg));
-			memcpy(argcpy, l->argv, sizeof(LineArg));
-
-			char *c = l->argv->val.str;
-			char *tmp;
-			switch (*c) {
-			case '>':
-				l->address_mode |= FLAG(ADDR_MODE_EXTENDED);
-				c++;
-				break;
-			case '<':
-				l->address_mode |= FLAG(ADDR_MODE_DIRECT);
-				c++;
-				break;
-			case '#':
-				l->address_mode |= FLAG(ADDR_MODE_IMMEDIATE);
-				c++;
-				break;
-			case '[':
-				l->address_mode |= FLAG(ADDR_MODE_INDIRECT);
-				c++;
-				for (tmp = c; *tmp != '\0' && *tmp != ']'; tmp++);
-				if (*tmp == '\0') {
-					fail("Missing terminating ']' character for indirect addressing mode.\n");
-				}
-
-				break;
-			*/
-/*case ',':
-				l->address_mode = ADDR_MODE_INDEXED;
-				c++;
-				break;*//*
-
-			default:
-				break;
-			}
-
-			printdf("%s\n", c);
-			for (; *c != '\0'; c++) {
-				switch (*c) {
-				case ',':
-					if (l->address_mode == ADDR_MODE_INDIRECT) {
-
-					}
-					if (l->address_mode != ADDR_MODE_INVALID) {
-						fail("Cannot have indexed address mode");
-					}
-					break;
-				//case ''
-				}
-			}
-			//}
-			goto instruction_found;
-			break;
-		}
-
-next_instruction:
-		continue;
-	}
-
-	fail("Instruction not found.\n");
-
-instruction_found:
-	;
-	//while (0);
-
-	prepare_line(l);
-*/
-
-
-	data = init_data(salloc(sizeof(Data)));
-	/*data = (Data *)salloc_real(sizeof(Data));*/
-
-	/*printdf("Instruction Register is %s\n", instruction_reg ? instruction_reg->reg->name : "NONE");*/
-	/*g_config.arch->process_line(l, instruction_reg, data);*/
-
-	add_data(data);
-}
-
-static void
-prepare_line_att(struct line *l)
-{
-
-}
-
-static void
-prepare_line_intel(struct line *l)
-{
-
-}

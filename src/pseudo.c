@@ -166,6 +166,7 @@ parse_pseudo_op(struct line *line)
 	//pseudo_inst->process(line);
 }
 
+
 static int
 pseudo_set_arch(struct line *line)
 {
@@ -175,9 +176,9 @@ pseudo_set_arch(struct line *line)
 		fail("Cannot switch architecture after code.\n");
 	}
 
-	arch = find_arch(line->argv[0].val.str);
+	arch = find_arch(line->argv[0].str);
 	if (arch == NULL) {
-		fail("Failed to locate architecture %s.\n", line->argv[0].val.str);
+		fail("Failed to locate architecture %s.\n", line->argv[0].str);
 	}
 	g_config.arch = arch;
 	init_address_mask();
@@ -193,7 +194,7 @@ pseudo_set_file(struct line *line)
 		die("File name must be a string.");
 	}
 	sfree(g_context->fname);
-	if ((g_context->fname = saquire(str_clone(line->argv[0].val.str))) == NULL) {
+	if ((g_context->fname = saquire(str_clone(line->argv[0].str))) == NULL) {
 		fail("Failed to copy substitute file name.\n");
 	}
 
@@ -208,13 +209,13 @@ pseudo_set_file(struct line *line)
 		data->address = address & address_mask; \
 		if ((line)->argv[i].type == ARG_TYPE_STRING) { \
 			data->type = DATA_TYPE_BYTES; \
-			data->bytec = strlen((line)->argv[i].val.str); \
+			data->bytec = strlen((line)->argv[i].str); \
 			data->contents.bytes = salloc(sizeof(uint8_t) * data->bytec); \
-			memcpy(data->contents.bytes, (line)->argv[i].val.str, data->bytec); \
+			memcpy(data->contents.bytes, (line)->argv[i].str, data->bytec); \
 		} else { \
 			data->type = DATA_TYPE_EXPRESSION; \
 			data->bytec = sizeof(T); \
-			data->contents.rpn_expr = (line)->argv[i].val.rpn_expr; \
+			data->contents.rpn_expr = (line)->argv[i].rpn_expr; \
 		} \
 		address += data->bytec; \
 		add_data(data); \
@@ -259,7 +260,7 @@ pseudo_equ(struct line *line)
 	}
 
 	/* TODO: replace this with rpn arithmetic parsing */
-	symtab.last->value = strtol(line->argv[0].val.str, &num_end, 0);
+	symtab.last->value = strtol(line->argv[0].str, &num_end, 0);
 	/*if (line->argv[0] == num_end) {*/
 	if (*num_end != '\0') {
 		fail("Failed to parse given value.\n");
@@ -280,8 +281,8 @@ pseudo_include(struct line *line)
 	included_context.parent = g_context;
 	/*included_context.fptr = included_file; */
 	included_context.line_num = 1;
-	if ((included_context.fname = saquire(str_clone(line->argv[0].val.str))) == NULL) {
-		fail("Failed to duplicate file name \"%s\"\n", line->argv[0].val.str);
+	if ((included_context.fname = saquire(str_clone(line->argv[0].str))) == NULL) {
+		fail("Failed to duplicate file name \"%s\"\n", line->argv[0].str);
 	}
 
 	/*FILE *included_file;*/
@@ -320,7 +321,7 @@ pseudo_insert(struct line *line)
 		fail("Inserted file argument is not a string path.\n");
 	}
 
-	fd = open(line->argv[0].val.str, O_RDONLY);
+	fd = open(line->argv[0].str, O_RDONLY);
 	if (fd < 0) {
 		fail("Failed to open file.\n");
 	}
@@ -338,9 +339,9 @@ pseudo_insert(struct line *line)
 		fail("Inserted file argument is not a string path.\n");
 	}
 
-	inserted_file = fopen(line->argv[0].val.str, "rb");
+	inserted_file = fopen(line->argv[0].str, "rb");
 	if (inserted_file == NULL) {
-		fail("Failed to open file \"%s\" to be inserted. Does the file exists?\n", line->argv[0].val.str);
+		fail("Failed to open file \"%s\" to be inserted. Does the file exists?\n", line->argv[0].str);
 	}
 
 	size = fsize(inserted_file);
@@ -371,7 +372,7 @@ pseudo_insert(struct line *line)
 	fclose(inserted_file);
 #endif /* defined(GASMIC_HAVE_POSIX_FILE_IO) */
 
-	printdf(("Inserted fname is %s\n", line->argv[0].val.str));
+	printdf(("Inserted fname is %s\n", line->argv[0].str));
 
 	return 0;
 }
@@ -380,7 +381,7 @@ static int
 pseudo_org(struct line *line)
 {
 	char *lend;
-	size_t new_address = strtoul(line->argv[0].val.str, &lend, 0) & address_mask;
+	size_t new_address = strtoul(line->argv[0].str, &lend, 0) & address_mask;
 	if (*lend == '\0') {
 		/*printdf(("new address is 0xzX\n", new_address));*/
 		printdf(("new address is 0x" SZXFMT "\n", new_address));

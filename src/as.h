@@ -133,8 +133,12 @@ typedef struct {
 enum arg_type {
 	ARG_TYPE_UNPROCESSED,
 	ARG_TYPE_STRING,
+	ARG_TYPE_UNSIGNED,
+	ARG_TYPE_SIGNED,
 	ARG_TYPE_EXPRESSION,
 	ARG_TYPE_REGISTER,
+	ARG_TYPE_EXTENDED,
+	ARG_TYPE_INDIRECT,
 	ARG_TYPE_INDEX,
 	ARG_TYPE_INDEX_REGISTER,
 	ARG_TYPE_INDEX_CONSTANT
@@ -145,9 +149,12 @@ struct line_arg {
 	/*enum arg_state state;*/
 	/*enum address_mode addr_mode;*/
 	union {
+		char *raw;
 		char *str;
 		struct token *rpn_expr;
 		const Register *reg;
+		int64_t num;
+		uint64_t unum;
 		struct {
 			const Register *base;
 			union {
@@ -157,7 +164,7 @@ struct line_arg {
 			int8_t pre_inc;
 			int8_t post_inc;
 		} indexed;
-	} val;
+	};
 };
 
 enum line_state {
@@ -190,6 +197,11 @@ struct line {
 };
 
 typedef int (line_processor)(struct line *l);
+
+struct syntax_handler {
+	line_processor *evaluate_args;
+	line_processor *handler;
+};
 
 // TODO: Set a realistic limit
 #define MAX_MNEMONIC_FORMS (10)

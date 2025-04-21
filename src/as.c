@@ -188,11 +188,11 @@ prepare_line(struct line *line)
 	for (i = 0; i < line->argc; i++) {
 		if (line->argv[i].type == ARG_TYPE_UNPROCESSED) {
 			line->argv[i].type = ARG_TYPE_EXPRESSION;
-			line->argv[i].val.rpn_expr = parse_expression(line->argv[i].val.str);
+			line->argv[i].rpn_expr = parse_expression(line->argv[i].str);
 			if (arithmetic_status_code != ARITHMETIC_SUCCESS) {
 				fail("Failed to parse expression.");
 			}
-			for (tok = line->argv[i].val.rpn_expr; tok != NULL; tok = tok->next) {
+			for (tok = line->argv[i].rpn_expr; tok != NULL; tok = tok->next) {
 				if (tok->type == TOKEN_TYPE_SYMBOL && tok->value.str[0] == '.') {
 					size_t parent_size = strlen(symtab.last_parent->label);
 					size_t child_size = strlen(tok->value.str);
