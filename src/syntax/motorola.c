@@ -1,9 +1,11 @@
 #include <stdio.h>
+#include <string.h>
 #include "../as.h"
 
-static void evaluate_start(struct line_arg *la, char **buffer);
-static void evaluate_indirect(struct line_arg *la, char **buffer);
-static void evaluate_expr(struct line_arg *la, char **buffer);
+extern int evaluate_expr(struct line_arg *la, const char *buffer);
+
+static int evaluate_start(struct line_arg *la, const char *buffer);
+static int evaluate_indirect(struct line_arg *la, const char *buffer);
 
 
 static int
@@ -13,6 +15,7 @@ evaluate_motorola_args(struct line *l)
 	for (i = 0; i < l->argc; i++) {
 		struct line_arg *la = &l->argv[i];
 		char *c, *buffer;
+		int consumed = 0;
 
 		/* argument type was set during parsing, no need to evaluate */
 		if (la->type) {
@@ -20,47 +23,63 @@ evaluate_motorola_args(struct line *l)
 		}
 
 		buffer = la->raw;
-		evaluate_start(la, &buffer);
+		consumed = evaluate_start(la, buffer);
+		if (!consumed || consumed != strlen(buffer)) {
+			die("failed to parse complete argument \"%s\"\n", buffer);
+		}
 	}
 	return 0;
 }
 
-static void
-evaluate_start(struct line_arg *la, char **buffer)
+static int
+evaluate_start(struct line_arg *la, const char *buffer)
 {
-	if (**buffer == '[') {
+	int i = 0, consumed = 0;
 
+	i += countspaces(&buffer[i]);
+	if ((consumed = evaluate_indirect(la, &buffer[i]))) {
+		i += consumed;
+	} else if ((consumed = evaluate_expr(la, &buffer[i]))) {
+		i += consumed;
 	} else {
-		evaluate_expr(la, buffer);
+		return 0;
 	}
+	i += countspaces(&buffer[i]);
+
+	return i;
 }
 
-static void
-evaluate_indirect(struct line_arg *la, char **buffer)
+static int
+evaluate_indirect(struct line_arg *la, const char *buffer)
 {
+	int i = 0, consumed;
 	char *newBuf;
 
 	if (la->type) {
 		die("argument type already set\n");
 	}
-	if (**buffer != '[') {
-		die("Indirect buffer must start with '['\n");
-	}
-	
-	/* strip off leading '[' */
-	newBuf = *buffer + 1;
-	evaluate_expr(la, &newBuf);
-	if (*newBuf != ']') {
-		die("failed to parse indirect expression \"%s\"\n", la->raw);
-	}
-	la->type = ARG_TYPE_INDIRECT;
-	newBuf++;
-	*buffer = newBuf;
-}
 
-static void
-evaluate_expr(struct line_arg *la, char **buffer)
-{
+	/* \s*\[\s*<expr>\s*\]\s* */
+	i += countspaces(&buffer[i]);
+	if (buffer[i++] != '[') {
+		return 0;
+	}
+	i += countspaces(&buffer[i]);
+	consumed = evaluate_expr(la, &buffer[i]);
+	if (!consumed) {
+		return 0;
+	}
+	i += consumed;
+	i += countspaces(&buffer[i]);
+	if (buffer[i++] != ']') {
+		return 0;
+	}
+	i += countspaces(&buffer[i]);
+
+	/* indirect arg valid */
+	/* update line arg with new data */
+
+	return i;
 }
 
 #if 0

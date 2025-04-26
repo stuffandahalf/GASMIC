@@ -88,3 +88,13 @@ str_trim(char *str)
 	return str;
 }
 
+int
+countspaces(char *str)
+{
+	int n = 0;
+	while (isspace(str[n])) {
+		n++;
+	}
+	return n;
+}
+
