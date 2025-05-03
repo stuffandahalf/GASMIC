@@ -51,5 +51,6 @@ long fsize(FILE *fptr);
 char *str_clone(const char *src);
 char *str_to_upper(char *str);
 char *str_trim(char *str);
+int countspaces(char *str);
 
 #endif /* GASMIC_LANG_H */

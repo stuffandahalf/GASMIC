@@ -49,10 +49,10 @@ enum endian {
 };
 
 enum syntax {
-	SYNTAX_UNKNOWN,
 	SYNTAX_MOTOROLA,
 	SYNTAX_INTEL,
-	SYNTAX_ATT
+	SYNTAX_ATT,
+	SYNTAX_UNKNOWN
 };
 
 enum arg_order {
@@ -62,34 +62,17 @@ enum arg_order {
 	ARG_ORDER_INTERREG
 };
 
-#if 0
-enum address_type {
-	ADDRESS_TYPE_ABSOLUTE;
-	ADDRESS_TYPE_RELATIVE;
-};
-struct address {
-	enum address_type type;
-	union {
-		size_t absolute;
-		struct {
-			struct token *root_expr;
-			size_t offset;
-		};
-	} value;
-};
-#endif
-
-typedef struct symtab_entry {
+struct symbol {
 	char *label;
 	int64_t value;
-	struct symtab_entry *next;
-} Symbol;
+	struct symbol *next;
+};
 
-typedef struct {
-	Symbol *first;
-	Symbol *last;
-	Symbol *last_parent;
-} SymTab;
+struct symboltab{
+	struct symbol *first;
+	struct symbol *last;
+	struct symbol *last_parent;
+};
 
 enum data_type {
 	DATA_TYPE_NONE,
@@ -150,21 +133,28 @@ typedef struct {
 enum arg_type {
 	ARG_TYPE_UNPROCESSED,
 	ARG_TYPE_STRING,
+	ARG_TYPE_UNSIGNED,
+	ARG_TYPE_SIGNED,
 	ARG_TYPE_EXPRESSION,
 	ARG_TYPE_REGISTER,
+	ARG_TYPE_EXTENDED,
+	ARG_TYPE_INDIRECT,
 	ARG_TYPE_INDEX,
 	ARG_TYPE_INDEX_REGISTER,
 	ARG_TYPE_INDEX_CONSTANT
 };
 
-typedef struct {
+struct line_arg {
 	enum arg_type type;
 	/*enum arg_state state;*/
 	/*enum address_mode addr_mode;*/
 	union {
+		char *raw;
 		char *str;
 		struct token *rpn_expr;
 		const Register *reg;
+		int64_t num;
+		uint64_t unum;
 		struct {
 			const Register *base;
 			union {
@@ -174,8 +164,8 @@ typedef struct {
 			int8_t pre_inc;
 			int8_t post_inc;
 		} indexed;
-	} val;
-} LineArg;
+	};
+};
 
 enum line_state {
 	LINE_STATE_CLEAR		= 0,
@@ -183,7 +173,8 @@ enum line_state {
 	LINE_STATE_MNEMONIC		= (1u << 1u),
 	LINE_STATE_SINGLE_QUOTE = (1u << 2u),
 	LINE_STATE_DOUBLE_QUOTE = (1u << 3u),
-	LINE_STATE_BRACKET		= (1u << 4u)
+	LINE_STATE_BRACKET		= (1u << 4u),
+	LINE_STATE_BOUNDED		= (LINE_STATE_SINGLE_QUOTE | LINE_STATE_DOUBLE_QUOTE | LINE_STATE_BRACKET)
 };
 
 enum address_post_op {
@@ -194,16 +185,39 @@ enum address_post_op {
 	POST_OP_DEC_DOUBLE
 };
 
-typedef struct {
+#define LINE_ARG_MAX 3
+struct line {
 	char *label;
 	char *mnemonic;
-	LineArg *argv;
+	struct line_arg argv[LINE_ARG_MAX];
 	size_t argc;
-	uint8_t arg_buf_size;
 	enum line_state line_state;
 	enum address_mode address_mode;
 	enum address_post_op addr_mode_post_op;
-} Line;
+};
+
+typedef int (line_processor)(struct line *l);
+
+struct syntax_handler {
+	line_processor *evaluate_args;
+	line_processor *handler;
+};
+
+// TODO: Set a realistic limit
+#define MAX_MNEMONIC_FORMS (10)
+#define MAX_OPCODE_LEN (2)
+struct mnemonic {
+	char mnemonic[MAX_MNEMONIC_LEN];
+	int8_t compatibility;					// supported architectures for general instruction support
+	struct {
+		int8_t compatibility;
+		enum address_mode mode;
+		uint8_t opcodesz;
+		uint8_t opcode[MAX_OPCODE_LEN];
+		int8_t nargs;
+		line_processor *callback;
+	} forms[MAX_MNEMONIC_LEN];
+};
 
 typedef struct {
 	char *name;
@@ -214,7 +228,7 @@ typedef struct {
 	enum syntax default_syntax;
 	const Register *registers;
 	const Instruction **instructions;
-	void (*process_line)(Line *line, const struct instruction_register *instr_reg, Data *data);
+	void (*process_line)(struct line *line, const struct instruction_register *instr_reg, Data *data);
 } Architecture;
 
 struct configuration {
@@ -223,7 +237,7 @@ struct configuration {
 	char				*export_fname;
 	size_t				in_fnamec;
 	size_t 				in_fname_size;
-	uint8_t				syntax;
+	enum syntax			syntax;
 	const Architecture 	*arch;
 };
 
@@ -234,7 +248,7 @@ struct context {
 	size_t line_num;
 };
 
-extern SymTab *symtab;
+extern struct symboltab symtab;
 extern DataTab *datatab;
 
 extern size_t address;
@@ -243,18 +257,17 @@ extern struct configuration g_config;
 extern struct context *g_context;
 
 void init_address_mask();
-void assemble(Line *l);
+void assemble(struct context *cntxt);
 NORETURN void fail(const char *fmt, ...);
 
 const Architecture *find_arch(const char *arch_name);
 const Register *find_reg(const char *name);
 
 int init_data_table();
-int init_symbol_table();
 Data *init_data(Data *data);
-void add_label(Line *line);
+void add_label(struct line *line);
 void add_data(Data *data);
 
-void prepare_line(Line *line);
+void prepare_line(struct line *line);
 
 #endif /* GASMIC_AS_H */
