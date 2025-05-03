@@ -36,6 +36,7 @@ evaluate_start(struct line_arg *la, const char *buffer)
 {
 	int i = 0, consumed = 0;
 
+	printf("buffer \"%s\"\n", buffer);
 	i += countspaces(&buffer[i]);
 	if ((consumed = evaluate_indirect(la, &buffer[i]))) {
 		i += consumed;
