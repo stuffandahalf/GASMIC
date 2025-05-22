@@ -1,0 +1,116 @@
+/* tokens */
+COMMENT = [^\n]
+IDENTIFIER = [a-zA-Z_][a-zA-Z0-9_]+
+STR = "(\\"|[^"])*"
+
+DECIMAL = (0d)?[0-9]+
+HEX = (0x|$)[0-9A-Za-z]+
+OCTAL = 0[0-7]+
+
+MINUS = -
+MMINUS = --
+PLUS = +
+PPLUS = ++
+
+; = ;
+, = ,
+: = :
+" = "
+NL = \n
+[ = [
+] = ]
+( = (
+) = )
++ = +
+- = -
+* = *
+/ = /
+| = |
+^ = ^
+& = &
+
+
+ACCUMULATOR = /* architecture specific */
+INDEX = /* architecture specific */
+
+/* language */
+
+S => lines
+S => e
+
+lines => line NL lines
+lines => line
+
+line => label operation comment
+
+label => IDENTIFIER :
+label => e
+
+comment => ; COMMENT
+operation => mnemonic args
+operation => e
+
+args => arg , args
+args => arg
+args => e
+
+arg => STR
+arg => expression
+/* architeture specific */
+arg => register
+
+/* syntax specific */
+arg => indexed
+arg => indirect
+
+expression => bitor_expression
+
+bitor_expression => xor_expression | bitor_expression
+bitor_expression => xor_expression
+
+xor_expression => bitand_expression ^ xor_expression
+xor_expression => bitand_expression
+
+bitand_expression => additive_expression & bitand_expression
+bitand_expression => additive_expression
+
+additive_expression => multiplicative_expression + additive_expression
+additive_expression => multiplicative_expression - additive_expression
+additive_expression => multiplicative_expression
+
+multiplicative_expression => term * multiplicative_expression
+multiplicative_expression => term / multiplicative_expression
+multiplicative_expression => term
+
+term => ( expression )
+term => sign number
+term => IDENTIFIER /* symbol */
+term => register /* maybe remove */
+
+sign => +
+sign => -
+sign => e
+
+number => OCTAL
+number => HEX
+number => DECIMAL
+
+indexed => number , index_op
+indexed => accumulator, index_op
+indexed => , index_op
+
+indirect => [ number ]
+indirect => [ indexed ]
+
+register => ACCUMULATOR
+register => INDEX
+
+index_op => prefix_op index
+index_op => index postfix_op
+
+prefix_op => MINUS
+prefix_op => MMINUS
+
+postfix_op => PLUS
+postfix_op => PPLUS
+

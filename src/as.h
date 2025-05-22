@@ -95,9 +95,14 @@ typedef struct {
 	Data *last;
 } DataTab;
 
-typedef struct {
+
+#define REGISTER_CLASS_ACCUMULATOR (1 << 0)
+#define REGISTER_CLASS_INDEX (1 << 1)
+#define REGISTER_CLASS_OTHER (1 << 2)
+typedef struct proc_register {
 	char name[5];
 	int width;
+	unsigned int class;
 	unsigned int arcs;
 } Register;
 

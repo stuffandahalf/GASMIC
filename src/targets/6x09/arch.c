@@ -3,31 +3,26 @@
 Architecture *ARCH_MC6809;
 Architecture *ARCH_HD6309;
 
-static const Register registers[] = {
-	{ "NONE", 0, MC6809 | HD6309 },
-	{ "A", 1, MC6809 | HD6309 },
-	{ "B", 1, MC6809 | HD6309 },
-	{ "D", 2, MC6809 | HD6309 },
-	{ "X", 2, MC6809 | HD6309 },
-	{ "Y", 2, MC6809 | HD6309 },
-	{ "U", 2, MC6809 | HD6309 },
-	{ "S", 2, MC6809 | HD6309 },
-	{ "PC", 2, MC6809 | HD6309 },
-	{ "E", 1, HD6309 },
-	{ "F", 1, HD6309 },
-	{ "W", 2, HD6309 },
-	{ "Q", 4, HD6309 },
-	{ "V", 2, HD6309 },
-	{ "Z", 2, HD6309 },
-	{ "DP", 1, MC6809 | HD6309 },
-	{ "CC", 1, MC6809 | HD6309 },
-	{ "MD", 1, HD6309 },
-	{ "", 0, 0 }
-	/*{ NULL, 0, 0 }*/
+static const struct proc_register registers[] = {
+	{ "A", 1, REGISTER_CLASS_ACCUMULATOR, MC6809 | HD6309 },
+	{ "B", 1, REGISTER_CLASS_ACCUMULATOR, MC6809 | HD6309 },
+	{ "D", 2, REGISTER_CLASS_ACCUMULATOR, MC6809 | HD6309 },
+	{ "X", 2, REGISTER_CLASS_INDEX, MC6809 | HD6309 },
+	{ "Y", 2, REGISTER_CLASS_INDEX, MC6809 | HD6309 },
+	{ "U", 2, REGISTER_CLASS_INDEX, MC6809 | HD6309 },
+	{ "S", 2, REGISTER_CLASS_INDEX, MC6809 | HD6309 },
+	{ "PC", 2, REGISTER_CLASS_OTHER, MC6809 | HD6309 },
+	{ "E", 1, REGISTER_CLASS_ACCUMULATOR, HD6309 },
+	{ "F", 1, REGISTER_CLASS_ACCUMULATOR, HD6309 },
+	{ "W", 2, REGISTER_CLASS_ACCUMULATOR, HD6309 },
+	{ "Q", 4, REGISTER_CLASS_ACCUMULATOR, HD6309 },
+	{ "V", 2, REGISTER_CLASS_ACCUMULATOR, HD6309 },
+	{ "Z", 2, REGISTER_CLASS_ACCUMULATOR | REGISTER_CLASS_INDEX, HD6309 },
+	{ "DP", 1, REGISTER_CLASS_OTHER, MC6809 | HD6309 },
+	{ "CC", 1, REGISTER_CLASS_OTHER, MC6809 | HD6309 },
+	{ "MD", 1, REGISTER_CLASS_OTHER, HD6309 }
 };
-#ifndef NDEBUG
-static const int regc = sizeof(registers) / sizeof(Register) - 1;
-#endif
+static const int regcount = sizeof(registers) / sizeof(Register) - 1;
 
 #define MC6809_REGISTER(reg) (((reg) >= 0 && (reg) < HD6309_REG_E) ? &(registers[reg]) : NULL)
 #define HD6309_REGISTER(reg) (((reg) >= 0 && (reg) <= HD6309_REG_MD) ? &(registers[reg]) : NULL)
