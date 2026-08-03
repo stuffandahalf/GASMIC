@@ -53,32 +53,20 @@ smem_diagnostic(void)
 	puts("");
 }
 
-#ifdef SMEM_CPP
-void *salloc_real(size_t size)
-#else
 void *salloc(size_t size)
-#endif
 {
 	void *ptr = NULL;
 	if ((ptr = malloc(size)) == NULL) {
 		die("Failed to allocate memory\n");
 	}
 
-#ifdef SMEM_CPP
-	saquire_real(ptr);
-#else
 	saquire(ptr);
-#endif
 	
 	return ptr;
 }
 
 void *
-#ifdef SMEM_CPP
-saquire_real(void *ptr)
-#else
 saquire(void *ptr)
-#endif
 {
 	struct alloced *a;
 
@@ -106,11 +94,7 @@ saquire(void *ptr)
 }
 
 void *
-#ifdef SMEM_CPP
-srealloc_real(void *ptr, size_t size)
-#else
 srealloc(void *ptr, size_t size)
-#endif
 {
 	struct alloced *a = find_memory(ptr);
 	
@@ -161,7 +145,6 @@ die(const char *msg, ...)
 	vfprintf(stderr, msg, args);
 	va_end(args);
 	release();
-	AWAIT_WINDOWS;
 	exit(1);
 }
 

@@ -6,7 +6,8 @@
 /*////#include <stdlib.h>*/
 /*#include <string.h>
 #include <ctype.h>*/
-#include "fixedint.h"
+#include <inttypes.h>
+#include "lang.h"
 /*#include <lang.h>
 #include <smem.h>*/
 #include "noreturn.h"

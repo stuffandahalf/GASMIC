@@ -89,7 +89,7 @@ str_trim(char *str)
 }
 
 int
-countspaces(char *str)
+countspaces(const char *str)
 {
 	int n = 0;
 	while (isspace(str[n])) {

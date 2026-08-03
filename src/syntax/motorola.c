@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "../as.h"
+#include "../smem.h"
 
 extern int evaluate_expr(struct line_arg *la, const char *buffer);
 
@@ -14,7 +15,7 @@ evaluate_motorola_args(struct line *l)
 	int i;
 	for (i = 0; i < l->argc; i++) {
 		struct line_arg *la = &l->argv[i];
-		char *c, *buffer;
+		char /**c,*/ *buffer;
 		int consumed = 0;
 
 		/* argument type was set during parsing, no need to evaluate */
@@ -54,7 +55,7 @@ static int
 evaluate_indirect(struct line_arg *la, const char *buffer)
 {
 	int i = 0, consumed;
-	char *newBuf;
+	//char *newBuf;
 
 	if (la->type) {
 		die("argument type already set\n");

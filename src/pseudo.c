@@ -115,7 +115,7 @@ static const struct mnemonic pseudo_ops[] = {
 	PSEUDO_OP("ORG", &pseudo_org, 1)
 	// PSEUDO_OP("SYNTAX", &pseudo_syntax, 1)
 };
-static const pseudo_op_sz = sizeof(pseudo_ops) / sizeof(struct mnemonic);
+static const size_t pseudo_op_sz = sizeof(pseudo_ops) / sizeof(struct mnemonic);
 
 /*struct pseudo_instruction *
 get_pseudo_op(struct line *line)
@@ -204,6 +204,7 @@ pseudo_set_file(struct line *line)
 #define pseudo_set_data(T, line) { \
 	Data *data; \
 	size_t i; \
+	int c = 0; \
 	for (i = 0; i < (line)->argc; i++) { \
 		data = init_data(salloc(sizeof(Data))); \
 		data->address = address & address_mask; \
@@ -217,9 +218,11 @@ pseudo_set_file(struct line *line)
 			data->bytec = sizeof(T); \
 			data->contents.rpn_expr = (line)->argv[i].rpn_expr; \
 		} \
+		c += data->bytec; \
 		address += data->bytec; \
 		add_data(data); \
 	} \
+	return c; \
 }
 
 static int pseudo_set_byte(struct line *line) { pseudo_set_data(uint8_t, line); }
@@ -235,9 +238,10 @@ static int pseudo_set_quad(struct line *line) { pseudo_set_data(uint64_t, line);
 		fail("Reserving bytes requires one parameter.\n"); \
 	} \*/ \
 	long count = 0; \
-	char *end; \
+	/*char *end;*/ \
 	Data *data = init_data(salloc(sizeof(Data))); \
 	data->type = DATA_TYPE_BYTES; \
+	return count; \
 }
 
 static int pseudo_reserve_bytes(struct line *line) { pseudo_reserve_data(uint8_t, line); }

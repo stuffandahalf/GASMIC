@@ -1,9 +1,11 @@
 #include "../as.h"
+#include "../lang.h"
 
 int
 evaluate_expr(struct line_arg *la, const char *buffer)
 {
-	return evaluate_bitor(la, buffer);
+	//return evaluate_bitor(la, buffer);
+	return 0;
 }
 
 int
@@ -88,7 +90,7 @@ loop:
 end:
 	i += countspaces(&buffer[i]);
 #ifndef NDEBUG
-	printf("NUM \"%d\", remainder \"%s\"\n", n, &buffer[i]);
+	printf("NUM \"%lu\", remainder \"%s\"\n", n, &buffer[i]);
 #endif
 
 	return i;
@@ -97,7 +99,7 @@ end:
 int
 evaluate_register(struct line_arg *la, const char *buffer)
 {
-	int i = 0, consumed;
+	int i = 0/*, consumed*/;
 	const Architecture *arch = g_config.arch;
 	const Register *r, *registers = arch->registers;
 	const char *c;
@@ -234,7 +236,8 @@ evaluate_##name(struct line_arg *la, const char *buffer) \
 		return 0; \
 	} \
 	i += consumed; \
-	i += countspaces(la, &buffer[i]); \
+	/*i += countspaces(la, &buffer[i]);*/ \
+	i += countspaces(&buffer[i]); \
 	for (j = 0; j < sizeof(ops); j++) { \
 		if (buffer[i] == ops[j]) { \
 			/* store operator */ \

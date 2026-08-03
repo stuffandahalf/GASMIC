@@ -11,11 +11,11 @@ Currently targetting
 View the manual [here](http://ganorton.me/GASMIC/manual.html)
 
 ## Requirements
-* An ANSI C compiler
+* An ANSI C99 compiler
 * CMake
 
 ## Build
-Build by running `mkdir build && cd build && cmake .. && make`
+Build by running `cd src && make clean all`
 
 ## Retargetting
 This assembler can be retargetted by adding a new folder within src/targets/ the name of your architecture.

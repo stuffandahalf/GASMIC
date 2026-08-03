@@ -3,7 +3,6 @@
 #include "as.h"
 #include "ansistyle.h"
 #include "arithmetic.h"
-#include "console.h"
 #include "smem.h"
 #include "lang.h"
 
@@ -220,21 +219,9 @@ fail(const char *fmt, ...)
 	va_start(args, fmt);
 	printef("[%s:" SZuFMT "]\t", g_context->fname, g_context->line_num);
 
-#ifdef _WIN32
-	if (console_is_init()) {
-#endif
 	printef(ANSI_COLOR_RED);
-#ifdef _WIN32
-	}
-#endif
 	printef("ERROR");
-#ifdef _WIN32
-	if (console_is_init()) {
-#endif
 	printef(ANSI_COLOR_RESET);
-#ifdef _WIN32
-	}
-#endif
 	printef(" ");
 
 	vfprintf(stderr, fmt, args);
@@ -243,10 +230,6 @@ fail(const char *fmt, ...)
 	for (cntxt = g_context->parent; cntxt != NULL; cntxt = cntxt->parent) {
 		printef("\tIn file included from \"%s\", line " SZuFMT "\n", cntxt->fname, cntxt->line_num);
 	}
-
-#ifdef _WIN32
-	restore_console();
-#endif
 
 	die("\n");
 }

@@ -26,13 +26,13 @@ static const Register registers[] = {
 	/*{ NULL, 0, 0 }*/
 };
 #ifndef NDEBUG
-static const int regc = sizeof(registers) / sizeof(Register) - 1;
+//static const int regc = sizeof(registers) / sizeof(Register) - 1;
 #endif
 
 #define MC6809_REGISTER(reg) (((reg) >= 0 && (reg) < HD6309_REG_E) ? &(registers[reg]) : NULL)
 #define HD6309_REGISTER(reg) (((reg) >= 0 && (reg) <= HD6309_REG_MD) ? &(registers[reg]) : NULL)
 
-static const Instruction I_ABX = {
+/*static const Instruction I_ABX = {
 	"ABX",
 	MC6809 | HD6309,
 	ARG_ORDER_NONE,
@@ -110,13 +110,13 @@ static const Instruction I_ADCR_HD6309 = {
 		},
 		{ NULL, 0 }
 	}
-};
+};*/
 
 static const Instruction *instructions[] = {
-	&I_ABX,
+	/*&I_ABX,
 	&I_ADC_ALL,
 	&I_ADC_HD6309,
-	&I_ADCR_HD6309,
+	&I_ADCR_HD6309,*/
 	NULL
 };
 

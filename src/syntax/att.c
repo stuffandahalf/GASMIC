@@ -1,4 +1,5 @@
 #include "../as.h"
+#include "../smem.h"
 
 static int
 evaluate_att_syntax(struct line *l)

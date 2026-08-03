@@ -1,12 +1,7 @@
 #include <stdio.h>
-/*#ifdef _WIN32
-#include <getopt.h>
-#else
 #include <unistd.h>
-#endif*/
-#include "getopt.h"
-#include "console.h"
 #include "as.h"
+#include "smem.h"
 #include "targets.h"
 #include "formats.h"
 #include "pseudo.h"
@@ -53,12 +48,12 @@ line_processor *syntax_handlers[] = {
 };*/
 
 extern struct syntax_handler motorola_syntax;
-extern struct syntax_handler intel_syntax;
-extern struct syntax_handler att_syntax;
+//extern struct syntax_handler intel_syntax;
+//extern struct syntax_handler att_syntax;
 struct syntax_handler *syntax_handlers[] = {
 	&motorola_syntax,
-	&intel_syntax,
-	&att_syntax
+	//&intel_syntax,
+	//&att_syntax
 };
 
 #define TARGET(t) &ARCH_ ## t,
@@ -73,11 +68,6 @@ main(int argc, char *const argv[])
 	struct symbol *sym, *tmp_sym;
 	//Data *data, *tmp_data;
 
-#ifdef _WIN32
-	if (!init_console()) {
-		printef("WARNING\tFailed to initialize terminal, colour not supported\n");
-	}
-#endif
 	init_targets();
 
 	/*FILE *in;*/
@@ -217,14 +207,6 @@ main(int argc, char *const argv[])
 early_exit:
 	destroy_targets();
 
-#ifdef _WIN32
-#ifndef NDEBUG
-	printef("Press any key to exit.\n");
-	getc(stdin);
-#endif
-	restore_console();
-#endif
-
 	return 0;
 }
 
@@ -245,7 +227,7 @@ init_address_mask()
 void
 assemble(struct context *cntxt)
 {
-	size_t i;
+	//size_t i;
 	struct line l;
 
 	while (fgets(buffer, LINEBUFFERSIZE, g_context->fptr) != NULL) {
@@ -487,7 +469,7 @@ parse_line(struct line *l, char *buffer)
 const struct mnemonic *
 get_instruction(struct line *line)
 {
-	int i;
+	//int i;
 	//const struct mnemonic *mnemonics = g_config.arch->instructions;
 
 	//for (i = 0; mnemonics[i]-> < 
@@ -512,7 +494,7 @@ evaluate_mnemonic(struct line *line)
 	}
 }
 
-static INLINE const struct instruction_register *
+/*static INLINE const struct instruction_register *
 instruction_supports_reg(const Instruction *instruction, const Register *reg)
 {
 	const struct instruction_register *ir;
@@ -522,5 +504,5 @@ instruction_supports_reg(const Instruction *instruction, const Register *reg)
 		}
 	}
 	return NULL;
-}
+}*/
 

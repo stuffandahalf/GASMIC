@@ -4,13 +4,13 @@
 #include "lang.h"
 
 #include "targets/6x09/arch.h"
-#include "targets/z80/arch.h"
+//#include "targets/z80/arch.h"
 /*#include "targets/6502/arch.h"*/
 
 #define TARGETS \
 	TARGET(MC6809) \
-	TARGET(HD6309) \
-	TARGET(Z80) \
+	/*TARGET(HD6309)*/ \
+	/*TARGET(Z80)*/ \
 	/*TARGET(I8080)*/ \
 	/*TARGET(MOS6502)*/
 

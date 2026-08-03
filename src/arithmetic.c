@@ -230,6 +230,8 @@ void fprint_token_stack(FILE *fptr, struct token *stack_top)
 		case TOKEN_TYPE_OPERATOR:
 			fprintf(fptr, "%c\n", tok->value.op->symbol);
 			break;
+		case TOKEN_TYPE_END:
+			break;
 		}
 	}
 	fprintf(fptr, "\n");
