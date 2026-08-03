@@ -211,7 +211,7 @@ prepare_line(struct line *line)
 #endif
 }
 
-NORETURN void
+void
 fail(const char *fmt, ...)
 {
 	struct context *cntxt;

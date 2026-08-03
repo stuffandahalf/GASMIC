@@ -16,7 +16,7 @@ $(TARGET): $(OBJS)
 	$(CC) $(LDFLAGS) -DNDEBUG=1 -o $(TARGET) $(OBJS)
 
 $(TARGET).dbg: $(OBJS)
-	$(CC) $(LDFLAGS) -o $(TARGET) $(OBJS)
+	$(CC) $(LDFLAGS) -g -o $(TARGET) $(OBJS)
 
 clean:
 	rm -f $(TARGET) $(TARGET.dbg) $(OBJS)

@@ -137,7 +137,7 @@ sfree(void *ptr)
 	free(a);
 }
 
-NORETURN void
+void
 die(const char *msg, ...)
 {
 	va_list args;
