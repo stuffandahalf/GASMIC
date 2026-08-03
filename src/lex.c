@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include "as.h"
@@ -31,10 +32,10 @@ static const int tc2toks[] = { TOKEN_PPLUS, TOKEN_MMINUS };
 /* numeric chars */
 static const char *basechars = "dbx";
 static const int basenums[] = { 10, 2, 16 };
-static const char *digits = "0123456789abcdef";
+static const char *digitchars = "0123456789abcdef";
 
 static const char *
-strnchar(const char *str, unsigned int n, char c) {
+strnchr(const char *str, unsigned int n, char c) {
 	int i;
 	for (i = 0; i < n && str[i] != '\0'; i++) {
 		if (str[i] == c) {
@@ -51,7 +52,8 @@ enum lexstate {
 	STATE_NUM
 };
 
-int lex (FILE *fp, char **p) {
+int
+lex (FILE *fp, char **tokstr) {
 	void *ptr;
 	int state = 0;
 	int i = 0, p = 0, c = 0;
@@ -91,8 +93,8 @@ int lex (FILE *fp, char **p) {
 			}
 			break;
 		case STATE_NUM_BASE:
-			if ((ptr = strchr(bchars, c)) != NULL) {
-				i = (int)((char *)ptr - bchars);
+			if ((ptr = strchr(basechars, c)) != NULL) {
+				i = (int)((char *)ptr - basechars);
 				base = basenums[i];
 				state = STATE_NUM;
 				break;
