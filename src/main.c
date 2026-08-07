@@ -25,7 +25,7 @@ char buffer[LINEBUFFERSIZE];
 static int configure(int argc, char *const argv[]);
 /*static void trim_str(char str[]);*/
 static void parse_line(struct line *l, char *buffer);
-static void evaluate_mnemonic(struct line *l);
+static void evaluate_mnemonic(struct context *ctx, struct line *l);
 
 struct configuration g_config;
 struct context *g_context;
@@ -63,8 +63,9 @@ Architecture **architectures[] = { TARGETS NULL };  /* NULL terminated array of 
 int
 main(int argc, char *const argv[])
 {
+	int rcd = 0;
 	size_t i;
-	struct context init_cntxt;
+	//struct context init_cntxt;
 	struct symbol *sym, *tmp_sym;
 	//Data *data, *tmp_data;
 
@@ -73,8 +74,8 @@ main(int argc, char *const argv[])
 	/*FILE *in;*/
 	/*out = stdout;*/
 
-	if (!configure(argc, argv)) {
-		goto early_exit;
+	if ((rcd = configure(argc, argv)) < 0) {
+		goto cleanup;
 	}
 
 	/*out = fopen(out_fname, "w+");*/
@@ -82,6 +83,7 @@ main(int argc, char *const argv[])
 	
 
 	/*struct context init_cntxt;*/
+#if 0
 	g_context = &init_cntxt;
 	init_cntxt.line_num = 1;
 	init_cntxt.parent = NULL;
@@ -90,35 +92,33 @@ main(int argc, char *const argv[])
 	//set_syntax_parser();
 
 	init_data_table();
+#endif
 
 	/* establish new context and handle file io */
 	if (g_config.in_fnamec < 0) {
-		die("Invalid number of command line arguments.\n");
+		// TODO: error, no sources
+		goto cleanup;
+		//die("Invalid number of command line arguments.\n");
 	} else if (g_config.in_fnamec == 0) {
-		if ((init_cntxt.fname = saquire(str_clone("stdin"))) == NULL) {
-			die("Failed to duplicate file name \"stdin\"\n");
+		if ((rcd = assemble("stdin", stdin, NULL)) < 0) {
+			// TODO: error, assembly failed
+			goto cleanup;
 		}
-		init_cntxt.fptr = stdin;
-		assemble(&init_cntxt);
-		sfree(init_cntxt.fname);
 	} else {
 		for (i = 0; i < g_config.in_fnamec; i++) {
-			if ((init_cntxt.fname = saquire(str_clone(g_config.in_fnames[i]))) == NULL) {
-				die("Failed to duplicate file name \"%s\"\n", g_config.in_fnames[i]);
+			FILE *fp = fopen(g_config.in_fnames[i], "r");
+			if (!fp) {
+				// TODO: error, file open
+				goto cleanup;
 			}
-			if ((init_cntxt.fptr = fopen(init_cntxt.fname, "r")) == NULL) {
-				die("Failed to open input file %s\n", g_config.in_fnames[i]);
+			if ((rcd = assemble(g_config.in_fnames[i], fp, NULL)) < 0) {
+				// TODO: error, assembly failed
+				goto cleanup;
 			}
-			init_cntxt.line_num = 1;
-			assemble(&init_cntxt);
-			fclose(init_cntxt.fptr);
-			sfree(init_cntxt.fname);
+
+			fclose(fp);
 		}
 	}
-	sfree(g_config.in_fnames);
-	g_config.in_fnames = NULL;
-	g_config.in_fnamec = 0;
-	g_config.in_fname_size = 0;
 
 	/* TODO: Resolve references here */
 
@@ -202,13 +202,33 @@ main(int argc, char *const argv[])
 	/*close(out);*/
 #endif
 
-	g_context = NULL;
 
-early_exit:
+/*early_exit:
 	destroy_targets();
 
+	return 0;*/
+
+cleanup:
+	sfree(g_config.in_fnames);
+	g_config.in_fnames = NULL;
+	g_config.in_fnamec = 0;
+	g_config.in_fname_size = 0;
+
+	destroy_targets();
+	g_context = NULL;
+	release();
+	if (rcd < 0) {
+		rcd *= -1;
+		//fprintf(stderr, "%s\n", errors[rcd - 1]);
+
+		return rcd;
+	}
 	return 0;
 }
+
+
+
+
 
 void
 init_address_mask()
@@ -224,13 +244,15 @@ init_address_mask()
 	printdf(("Address mask: " SZXFMT "\n", address_mask));
 }
 
-void
-assemble(struct context *cntxt)
+//void
+//assemble(struct context *cntxt)
+int
+assemble(const char *fname, FILE *fp, struct context *parent)
 {
-	//size_t i;
 	struct line l;
+	struct context ctx = { fname, fp, parent, 1 };
 
-	while (fgets(buffer, LINEBUFFERSIZE, g_context->fptr) != NULL) {
+	while (fgets(buffer, LINEBUFFERSIZE, fp) != NULL) {
 		if (buffer[0] != '\0' && buffer[0] != '\n') {
 			/* initialize line state */
 			l.line_state = LINE_STATE_CLEAR;
@@ -249,14 +271,12 @@ assemble(struct context *cntxt)
 				//syntax_handlers[g_config.syntax]->evaluate_args(&l);
 				//evaluate_args(&l);
 
-				evaluate_mnemonic(&l);
+				evaluate_mnemonic(&ctx, &l);
 			}
 		}
-		g_context->line_num++;
+		ctx.line_num++;
 	}
-	if (ferror(g_context->fptr)) {
-		fail("Too many characters entered.\n");
-	}
+	return 0;
 }
 
 static int
@@ -478,7 +498,7 @@ get_instruction(struct line *line)
 }
 
 static void
-evaluate_mnemonic(struct line *line)
+evaluate_mnemonic(struct context *ctx, struct line *line)
 {
 	const struct mnemonic *m = NULL;
 
@@ -487,7 +507,7 @@ evaluate_mnemonic(struct line *line)
 	}
 
 	if ((m = get_pseudo_op(line)) != NULL) {
-		m->forms[0].callback(line);
+		//m->forms[0].callback(line);
 	} else if ((m = get_instruction(line)) != NULL) {
 		//printf("FOUND INSTRUCTION %s\n", m->name);
 		//process_instruction(line);

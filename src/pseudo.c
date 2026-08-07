@@ -1,29 +1,9 @@
-#if defined(HAVE_UNISTD_H)
 #include <unistd.h>
 #define GASMIC_CAN_SWITCH_DIR	1
-#elif defined(_WIN32)
-#include <direct.h>
-#define chdir	_chdir
-#define GASMIC_CAN_SWITCH_DIR	1
-#endif
 
 #if defined(HAVE_FCNTL_H) && defined(HAVE_SYS_STAT_H)
 #include <fcntl.h>
 #include <sys/stat.h>
-#if defined(_WIN32)
-#include <io.h>
-#if !defined(open)
-#define open	_open
-#endif /* !defined(open) */
-#if !defined(close)
-#define close	_close
-#endif /* !defined(close) */
-#if !defined(read)
-#define read	_read
-#endif /* !defined(read) */
-#define stat	_stat
-#define fstat	_fstat
-#endif	/* defined(_WIN32) */
 #define GASMIC_HAVE_POSIX_FILE_IO	1
 #endif	/* defined(HAVE_FCNTL_H) && defined(HAVE_SYS_STAT_H) */
 
@@ -49,20 +29,22 @@
  * .global
  */
 
-static int pseudo_set_file(struct line *line);
-static int pseudo_set_arch(struct line *line);
-static int pseudo_set_byte(struct line *line);
-static int pseudo_set_word(struct line *line);
-static int pseudo_set_double(struct line *line);
-static int pseudo_set_quad(struct line *line);
-static int pseudo_reserve_bytes(struct line *line);
-static int pseudo_reserve_words(struct line *line);
-static int pseudo_reserve_doubles(struct line *line);
-static int pseudo_reserve_quads(struct line *line);
-static int pseudo_equ(struct line *line);
-static int pseudo_include(struct line *line);
-static int pseudo_insert(struct line *line);
-static int pseudo_org(struct line *line);
+#if 0
+static int pseudo_set_file(struct context *ctx, struct line *line);
+#endif
+static int pseudo_set_arch(struct context *ctx, struct line *line);
+static int pseudo_set_byte(struct context *ctx, struct line *line);
+static int pseudo_set_word(struct context *ctx, struct line *line);
+static int pseudo_set_double(struct context *ctx, struct line *line);
+static int pseudo_set_quad(struct context *ctx, struct line *line);
+static int pseudo_reserve_bytes(struct context *ctx, struct line *line);
+static int pseudo_reserve_words(struct context *ctx, struct line *line);
+static int pseudo_reserve_doubles(struct context *ctx, struct line *line);
+static int pseudo_reserve_quads(struct context *ctx, struct line *line);
+static int pseudo_equ(struct context *ctx, struct line *line);
+static int pseudo_include(struct context *ctx, struct line *line);
+static int pseudo_insert(struct context *ctx, struct line *line);
+static int pseudo_org(struct context *ctx, struct line *line);
 
 // static struct pseudo_instruction pseudo_ops[] = {
 // 	{ ".ARCH",		&pseudo_set_arch,			1 },
@@ -90,14 +72,15 @@ static int pseudo_org(struct line *line);
 #define PSEUDO_OP(name, callback, nargs) { \
 	.mnemonic = (name), \
 	.compatibility = -1, \
-	.forms = { \
+	.evaluate = callback \
+	/*.forms = { \
 		{ -1, 0, 0, {}, (nargs), (callback) } \
-	} \
+	}*/ \
 }
 
 static const struct mnemonic pseudo_ops[] = {
 	PSEUDO_OP("ARCH", &pseudo_set_arch, 1),
-	PSEUDO_OP("FILE", &pseudo_set_file, 1),
+	//PSEUDO_OP("FILE", &pseudo_set_file, 1),
 
 	PSEUDO_OP("DB", &pseudo_set_byte, -1),
 	PSEUDO_OP("DW", &pseudo_set_word, -1),
@@ -143,10 +126,9 @@ get_pseudo_op(struct line *line)
 
 	for (i = 0; i < pseudo_op_sz; i++) {
 		printf("NEXT OP %s\n", pseudo_ops[i].mnemonic);
-		// if mnemonic name matches, return first form
+
 		const struct mnemonic *pseudo_op = &pseudo_ops[i];
-		if ((pseudo_op->forms[0].nargs == -1 || pseudo_op->forms[0].nargs == line->argc) &&
-			streq(line_mnemonic, pseudo_op->mnemonic)) {
+		if (!strcmp(line_mnemonic, pseudo_op->mnemonic)) {
 			return pseudo_op;
 		}
 	}
@@ -155,20 +137,19 @@ get_pseudo_op(struct line *line)
 }
 
 void
-parse_pseudo_op(struct line *line)
+parse_pseudo_op(struct context *ctx, struct line *line)
 {
 	//struct pseudo_instruction *pseudo_inst = get_pseudo_op(line);
 	const struct mnemonic *pseudo_op = get_pseudo_op(line);
 	if (pseudo_op == NULL) {
 		fail("Unable to find pseudo instruction %s that takes " SZuFMT " arguments.\n", line->mnemonic, line->argc);
 	}
-	pseudo_op->forms[0].callback(line);
-	//pseudo_inst->process(line);
+	pseudo_op->evaluate(ctx, line);
 }
 
 
 static int
-pseudo_set_arch(struct line *line)
+pseudo_set_arch(struct context *ctx, struct line *line)
 {
 	const Architecture *arch;
 
@@ -187,8 +168,9 @@ pseudo_set_arch(struct line *line)
 	return 0;
 }
 
+#if 0
 static int
-pseudo_set_file(struct line *line)
+pseudo_set_file(struct context *ctx, struct line *line)
 {
 	if (line->argv[0].type != ARG_TYPE_STRING) {
 		die("File name must be a string.");
@@ -200,6 +182,7 @@ pseudo_set_file(struct line *line)
 
 	return 0;
 }
+#endif
 
 #define pseudo_set_data(T, line) { \
 	Data *data; \
@@ -225,10 +208,10 @@ pseudo_set_file(struct line *line)
 	return c; \
 }
 
-static int pseudo_set_byte(struct line *line) { pseudo_set_data(uint8_t, line); }
-static int pseudo_set_word(struct line *line) { pseudo_set_data(uint16_t, line); }
-static int pseudo_set_double(struct line *line) { pseudo_set_data(uint32_t, line); }
-static int pseudo_set_quad(struct line *line) { pseudo_set_data(uint64_t, line); }
+static int pseudo_set_byte(struct context *ctx, struct line *line) { pseudo_set_data(uint8_t, line); }
+static int pseudo_set_word(struct context *ctx, struct line *line) { pseudo_set_data(uint16_t, line); }
+static int pseudo_set_double(struct context *ctx, struct line *line) { pseudo_set_data(uint32_t, line); }
+static int pseudo_set_quad(struct context *ctx, struct line *line) { pseudo_set_data(uint64_t, line); }
 
 #undef pseudo_set_data
 
@@ -244,15 +227,15 @@ static int pseudo_set_quad(struct line *line) { pseudo_set_data(uint64_t, line);
 	return count; \
 }
 
-static int pseudo_reserve_bytes(struct line *line) { pseudo_reserve_data(uint8_t, line); }
-static int pseudo_reserve_words(struct line *line) { pseudo_reserve_data(uint16_t, line); }
-static int pseudo_reserve_doubles(struct line *line) { pseudo_reserve_data(uint32_t, line); }
-static int pseudo_reserve_quads(struct line *line) { pseudo_reserve_data(uint64_t, line); }
+static int pseudo_reserve_bytes(struct context *ctx, struct line *line) { pseudo_reserve_data(uint8_t, line); }
+static int pseudo_reserve_words(struct context *ctx, struct line *line) { pseudo_reserve_data(uint16_t, line); }
+static int pseudo_reserve_doubles(struct context *ctx, struct line *line) { pseudo_reserve_data(uint32_t, line); }
+static int pseudo_reserve_quads(struct context *ctx, struct line *line) { pseudo_reserve_data(uint64_t, line); }
 
 #undef pseudo_reserve_data
 
 static int
-pseudo_equ(struct line *line)
+pseudo_equ(struct context *ctx, struct line *line)
 {
 	char *num_end;
 
@@ -274,37 +257,24 @@ pseudo_equ(struct line *line)
 }
 
 static int
-pseudo_include(struct line *line)
+pseudo_include(struct context *ctx, struct line *line)
 {
-	struct context included_context;
+	FILE *fp;
 
 	if (line->argv[0].type != ARG_TYPE_STRING) {
-		fail("File name is not a string. Did you forget to surround the file name in quotes?\n");
+		//fail("File name is not a string. Did you forget to surround the file name in quotes?\n");
+		// TODO: error, arg is not a string
+		return -1;
 	}
 
-	included_context.parent = g_context;
-	/*included_context.fptr = included_file; */
-	included_context.line_num = 1;
-	if ((included_context.fname = saquire(str_clone(line->argv[0].str))) == NULL) {
-		fail("Failed to duplicate file name \"%s\"\n", line->argv[0].str);
+	fp = fopen(line->argv[0].str, "r");
+	if (!fp) {
+		// TODO: error failed to open file
+		return -1;
 	}
 
-	/*FILE *included_file;*/
-	if ((included_context.fptr = fopen(included_context.fname, "r")) == NULL) {
-		fail("Failed to open included file \"%s\".\n", included_context.fname);
-	}
-
-	g_context = &included_context;
-
-	assemble(&included_context);
-	fclose(included_context.fptr);
-
-	g_context = g_context->parent;
-	sfree(included_context.fname);
-
-	/* need to reassign argv because assemble frees it but we return back to assemble. */
-	/*line->argc = 1; */
-	/*line->argv = salloc(line->argc * sizeof(char *));*/
+	assemble(line->argv[0].str, fp, ctx);
+	fclose(fp);
 
 	return 0;
 }
@@ -313,7 +283,7 @@ pseudo_include(struct line *line)
  * Inserts the raw bytes of this file into the resulting binary
  */
 static int
-pseudo_insert(struct line *line)
+pseudo_insert(struct context *ctx, struct line *line)
 {
 	Data *file_data;
 #if defined(GASMIC_HAVE_POSIX_FILE_IO)
@@ -382,7 +352,7 @@ pseudo_insert(struct line *line)
 }
 
 static int 
-pseudo_org(struct line *line)
+pseudo_org(struct context *ctx, struct line *line)
 {
 	char *lend;
 	size_t new_address = strtoul(line->argv[0].str, &lend, 0) & address_mask;

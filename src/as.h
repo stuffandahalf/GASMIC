@@ -185,6 +185,13 @@ enum address_post_op {
 	POST_OP_DEC_DOUBLE
 };
 
+struct context {
+	const char *fname;
+	FILE *fptr;
+	struct context *parent;
+	size_t line_num;
+};
+
 #define LINE_ARG_MAX 3
 struct line {
 	char *label;
@@ -209,14 +216,15 @@ struct syntax_handler {
 struct mnemonic {
 	char mnemonic[MAX_MNEMONIC_LEN];
 	int8_t compatibility;					// supported architectures for general instruction support
-	struct {
+	int (*evaluate)(struct context *ctx, struct line *l);
+	/*struct {
 		int8_t compatibility;
 		enum address_mode mode;
 		uint8_t opcodesz;
 		uint8_t opcode[MAX_OPCODE_LEN];
 		int8_t nargs;
 		line_processor *callback;
-	} forms[MAX_MNEMONIC_LEN];
+	} forms[MAX_MNEMONIC_LEN];*/
 };
 
 typedef struct {
@@ -241,13 +249,6 @@ struct configuration {
 	const Architecture 	*arch;
 };
 
-struct context {
-	FILE *fptr;
-	char *fname;
-	struct context *parent;
-	size_t line_num;
-};
-
 extern struct symboltab symtab;
 extern DataTab *datatab;
 
@@ -257,7 +258,8 @@ extern struct configuration g_config;
 extern struct context *g_context;
 
 void init_address_mask();
-void assemble(struct context *cntxt);
+//void assemble(struct context *cntxt);
+int assemble(const char *fname, FILE *fp, struct context *parent);
 void fail(const char *fmt, ...);
 
 const Architecture *find_arch(const char *arch_name);

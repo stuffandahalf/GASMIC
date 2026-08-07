@@ -8,16 +8,19 @@ OBJS=main.o as.o lang.o \
 	 targets/6x09/arch.o
 	 #targets/z80/arch.o
 
-CFLAGS=-Wall -Werror -std=c99
+MAIN_CFLAGS=-Wall -Werror -std=c99
+CFLAGS=$(MAIN_CFLAGS) -DNDEBUG=1
+DBG_CFLAGS=$(MAIN_CFLAGS) -g
 
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) $(LDFLAGS) -DNDEBUG=1 -o $(TARGET) $(OBJS)
+	$(CC) $(LDFLAGS) -o $(TARGET) $(OBJS)
 
-$(TARGET).dbg: $(OBJS)
-	$(CC) $(LDFLAGS) -g -o $(TARGET).dbg $(OBJS)
+$(TARGET).dbg:
+	$(MAKE) clean $(TARGET) CFLAGS="$(DBG_CFLAGS)" LDFLAGS="$(LDFLAGS) -g"
+	mv $(TARGET) $(TARGET).dbg
 
 clean:
-	rm -f $(TARGET) $(TARGET.dbg) $(OBJS)
+	rm -f $(TARGET) $(TARGET).dbg $(OBJS)
 
