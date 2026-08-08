@@ -89,9 +89,9 @@ loop:
 
 end:
 	i += countspaces(&buffer[i]);
-#ifndef NDEBUG
+//#ifndef NDEBUG
 	printf("NUM \"%lu\", remainder \"%s\"\n", n, &buffer[i]);
-#endif
+//#endif
 
 	return i;
 }

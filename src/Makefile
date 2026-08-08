@@ -6,11 +6,14 @@ OBJS=main.o as.o lang.o \
 	 formats/bin.o \
 	 syntax/common.o syntax/motorola.o \
 	 targets/6x09/arch.o
-	 #targets/z80/arch.o
+#targets/z80/arch.o
 
 MAIN_CFLAGS=-Wall -Werror -std=c99
 CFLAGS=$(MAIN_CFLAGS) -DNDEBUG=1
 DBG_CFLAGS=$(MAIN_CFLAGS) -g
+
+.c.o:
+	$(CC) $(CFLAGS) -o $@ -c $<
 
 all: $(TARGET)
 

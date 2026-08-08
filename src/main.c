@@ -30,7 +30,6 @@ static void evaluate_mnemonic(struct context *ctx, struct line *l);
 struct configuration g_config;
 struct context *g_context;
 
-/*FILE *in;*/
 FILE *out;
 size_t address = 0;
 size_t address_mask;	/* bits to mask the address to;*/
@@ -65,7 +64,6 @@ main(int argc, char *const argv[])
 {
 	int rcd = 0;
 	size_t i;
-	//struct context init_cntxt;
 	struct symbol *sym, *tmp_sym;
 	//Data *data, *tmp_data;
 
@@ -82,12 +80,8 @@ main(int argc, char *const argv[])
 	/*free(g_config.out_fname);*/
 	
 
-	/*struct context init_cntxt;*/
-#if 0
-	g_context = &init_cntxt;
-	init_cntxt.line_num = 1;
-	init_cntxt.parent = NULL;
 
+#if 0
 	init_address_mask();
 	//set_syntax_parser();
 
@@ -121,23 +115,6 @@ main(int argc, char *const argv[])
 	}
 
 	/* TODO: Resolve references here */
-
-#if 0
-	if (g_config.export_fname != NULL) {
-		FILE *export_file;
-
-		export_file = fopen(g_config.export_fname, "w+");
-		if (export_file == NULL) {
-			die("Failed to open export file \"%s\"\n", g_config.export_fname);
-		}
-		sym = symtab.first;
-		while (sym != NULL) {
-			fprintf(export_file, "%s: EQU %" PRId64 "\n", sym->label, sym->value);
-			sym = sym->next;
-		}
-		fclose(export_file);
-	}
-#endif
 
 	printdf(("SYMBOLS\n"));
 	sym = symtab.first;
@@ -244,8 +221,6 @@ init_address_mask()
 	printdf(("Address mask: " SZXFMT "\n", address_mask));
 }
 
-//void
-//assemble(struct context *cntxt)
 int
 assemble(const char *fname, FILE *fp, struct context *parent)
 {
@@ -513,16 +488,4 @@ evaluate_mnemonic(struct context *ctx, struct line *line)
 		//process_instruction(line);
 	}
 }
-
-/*static INLINE const struct instruction_register *
-instruction_supports_reg(const Instruction *instruction, const Register *reg)
-{
-	const struct instruction_register *ir;
-	for (ir = instruction->opcodes; ir->reg != NULL; ir++) {
-		if (streq(reg->name, ir->reg->name)) {
-			return ir;
-		}
-	}
-	return NULL;
-}*/
 
