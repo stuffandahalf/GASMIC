@@ -30,7 +30,7 @@ static const int regc = sizeof(registers) / sizeof(Register) - 1;
 
 #define Z80_REGISTER(reg) (((reg) >= 0 && (reg) <= Z80_REG_PC) ? &(registers[reg]) : NULL)
 
-static const Instruction I_NOP = {
+static const struct instruction I_NOP = {
 	"NOP",
 	Z80,
 	ARG_ORDER_NONE,
@@ -46,13 +46,13 @@ static const Instruction I_NOP = {
 	}
 };
 
-static const Instruction *instructions[] = {
+static const struct instruction *instructions[] = {
 	&I_NOP,
 	NULL
 };
 
 void
-Z80_process_line(struct line *line, const struct instruction_register *instr_reg, Data *data)
+Z80_process_line(struct line *line, const struct instruction_register *instr_reg, struct data_entry *data)
 {
 	printdf(("Hello from Z80 line processor.\n"));
 }

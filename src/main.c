@@ -236,6 +236,27 @@ assemble(const char *fname, FILE *fp, struct context *parent)
 
 		/* process line */
 		parse_line(&l, buffer);
+#ifndef NDEBUG
+		fprintf(stderr, "%zu\t", ctx.line_num);
+		if (l.line_state & LINE_STATE_LABEL) {
+			fprintf(stderr, "%s:", l.label);
+		} else {
+			fprintf(stderr, "\t");
+		}
+		fprintf(stderr, "\t");
+		if (l.line_state & LINE_STATE_MNEMONIC) {
+			fprintf(stderr, "%s", l.mnemonic);
+			for (int i = 0; i < l.argc; i++) {
+				if (!i) {
+					fprintf(stderr, "\t");
+				} else {
+					fprintf(stderr, ", ");
+				}
+				fprintf(stderr, "%s", l.argv[i].raw);
+			}
+		}
+		fprintf(stderr, "\n");
+#endif
 
 		if (l.line_state & FLAG(LINE_STATE_LABEL)) {	  /* If current line has a label */
 			add_label(&l);
@@ -447,7 +468,7 @@ parse_line(struct line *l, char *buffer)
 		fail("Unmatched bracket.\n");
 	}
 
-	syntax_handlers[g_config.syntax]->evaluate_args(l);
+	//syntax_handlers[g_config.syntax]->evaluate_args(l);
 }
 
 const struct mnemonic *

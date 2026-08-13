@@ -125,8 +125,6 @@ get_pseudo_op(struct line *line)
 	}
 
 	for (i = 0; i < pseudo_op_sz; i++) {
-		printf("NEXT OP %s\n", pseudo_ops[i].mnemonic);
-
 		const struct mnemonic *pseudo_op = &pseudo_ops[i];
 		if (!strcmp(line_mnemonic, pseudo_op->mnemonic)) {
 			return pseudo_op;
@@ -185,11 +183,11 @@ pseudo_set_file(struct context *ctx, struct line *line)
 #endif
 
 #define pseudo_set_data(T, line) { \
-	Data *data; \
+	struct data_entry *data; \
 	size_t i; \
 	int c = 0; \
 	for (i = 0; i < (line)->argc; i++) { \
-		data = init_data(salloc(sizeof(Data))); \
+		data = init_data(salloc(sizeof(struct data_entry))); \
 		data->address = address & address_mask; \
 		if ((line)->argv[i].type == ARG_TYPE_STRING) { \
 			data->type = DATA_TYPE_BYTES; \
@@ -222,7 +220,7 @@ static int pseudo_set_quad(struct context *ctx, struct line *line) { pseudo_set_
 	} \*/ \
 	long count = 0; \
 	/*char *end;*/ \
-	Data *data = init_data(salloc(sizeof(Data))); \
+	struct data_entry *data = init_data(salloc(sizeof(struct data_entry))); \
 	data->type = DATA_TYPE_BYTES; \
 	return count; \
 }
@@ -285,7 +283,7 @@ pseudo_include(struct context *ctx, struct line *line)
 static int
 pseudo_insert(struct context *ctx, struct line *line)
 {
-	Data *file_data;
+	struct data_entry *file_data;
 #if defined(GASMIC_HAVE_POSIX_FILE_IO)
 	int fd;
 	off_t size;
@@ -322,7 +320,7 @@ pseudo_insert(struct context *ctx, struct line *line)
 #endif /* defined(GASMIC_HAVE_POSIX_FILE_IO) */
 
 	while (size > 0) {
-		file_data = init_data(salloc(sizeof(Data)));
+		file_data = init_data(salloc(sizeof(struct data_entry)));
 		file_data->bytec = (uint8_t)((size > 255) ? 255 : size);
 		file_data->address = address;
 		file_data->type = DATA_TYPE_BYTES;

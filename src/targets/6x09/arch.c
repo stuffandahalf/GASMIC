@@ -112,7 +112,7 @@ static const Instruction I_ADCR_HD6309 = {
 	}
 };*/
 
-static const Instruction *instructions[] = {
+static const struct instruction *instructions[] = {
 	/*&I_ABX,
 	&I_ADC_ALL,
 	&I_ADC_HD6309,
@@ -121,13 +121,13 @@ static const Instruction *instructions[] = {
 };
 
 static void
-MC6809_process_line(struct line *line, const struct instruction_register *instr_reg, Data *data)
+MC6809_process_line(struct line *line, const struct instruction_register *instr_reg, struct data_entry *data)
 {
 	printdf(("Hello MC6809\n"));
 }
 
 static void
-HD6309_process_line(struct line *line, const struct instruction_register *instr_reg, Data *data)
+HD6309_process_line(struct line *line, const struct instruction_register *instr_reg, struct data_entry *data)
 {
 	printdf(("Hello HD6309\n"));
 }
