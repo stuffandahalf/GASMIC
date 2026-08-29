@@ -3,7 +3,8 @@
 
 #include "as.h"
 
-const struct mnemonic *get_pseudo_op(struct line *line);
-void parse_pseudo_op(struct line *line);
+//const struct mnemonic *get_pseudo_op(struct line *line);
+//void parse_pseudo_op(struct line *line);
+extern const struct mnemonic *pseudo_ops[];
 
 #endif /* GASMIC_PSEUDO_H */

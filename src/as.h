@@ -115,6 +115,7 @@ enum address_mode {
 	ADDR_MODE_INDEXED_INDIRECT = (FLAG(ADDR_MODE_INDEXED) | FLAG(ADDR_MODE_INDIRECT))
 };
 
+#if 0
 #define ADDRESS_MODE_COUNT (8)
 typedef struct {
 	char mnemonic[MAX_MNEMONIC_LEN];
@@ -129,6 +130,7 @@ typedef struct {
 		} addressing_modes[10];
 	} opcodes[ADDRESS_MODE_COUNT];
 } Instruction;
+#endif
 
 enum arg_type {
 	ARG_TYPE_UNPROCESSED,
@@ -235,8 +237,8 @@ typedef struct {
 	enum endian endianness;
 	enum syntax default_syntax;
 	const Register *registers;
-	const Instruction **instructions;
-	void (*process_line)(struct line *line, const struct instruction_register *instr_reg, Data *data);
+	const struct mnemonic **instructions;
+	//void (*process_line)(struct line *line, const struct instruction_register *instr_reg, Data *data);
 } Architecture;
 
 struct configuration {

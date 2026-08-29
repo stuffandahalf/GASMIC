@@ -32,6 +32,14 @@ static const Register registers[] = {
 #define MC6809_REGISTER(reg) (((reg) >= 0 && (reg) < HD6309_REG_E) ? &(registers[reg]) : NULL)
 #define HD6309_REGISTER(reg) (((reg) >= 0 && (reg) <= HD6309_REG_MD) ? &(registers[reg]) : NULL)
 
+
+int
+process_ABX(struct context *c, struct line *l)
+{
+	return 0;
+}
+static const struct mnemonic I_ABX = { "ABX", MC6809 | HD6309, &process_ABX };
+
 /*static const Instruction I_ABX = {
 	"ABX",
 	MC6809 | HD6309,
@@ -112,14 +120,15 @@ static const Instruction I_ADCR_HD6309 = {
 	}
 };*/
 
-static const Instruction *instructions[] = {
-	/*&I_ABX,
-	&I_ADC_ALL,
+static const struct mnemonic *instructions[] = {
+	&I_ABX,
+	/*&I_ADC_ALL,
 	&I_ADC_HD6309,
 	&I_ADCR_HD6309,*/
 	NULL
 };
 
+#if 0
 static void
 MC6809_process_line(struct line *line, const struct instruction_register *instr_reg, Data *data)
 {
@@ -131,6 +140,7 @@ HD6309_process_line(struct line *line, const struct instruction_register *instr_
 {
 	printdf(("Hello HD6309\n"));
 }
+#endif
 
 #define ARCH_INIT(arch_var) { \
 	ARCH_##arch_var = salloc(sizeof(Architecture)); \
@@ -143,7 +153,7 @@ HD6309_process_line(struct line *line, const struct instruction_register *instr_
 	ARCH_##arch_var->default_syntax = SYNTAX_MOTOROLA; \
 	ARCH_##arch_var->registers = registers; \
 	ARCH_##arch_var->instructions = instructions; \
-	ARCH_##arch_var->process_line = &arch_var##_process_line; \
+	/*ARCH_##arch_var->process_line = &arch_var##_process_line;*/ \
 }
 
 void

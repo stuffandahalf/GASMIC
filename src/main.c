@@ -458,18 +458,28 @@ parse_line(struct line *l, char *buffer)
 		fail("Unmatched bracket.\n");
 	}
 
-	syntax_handlers[g_config.syntax]->evaluate_args(l);
+	//syntax_handlers[g_config.syntax]->evaluate_args(l);
 }
 
 const struct mnemonic *
-get_instruction(struct line *line)
+match_instruction(struct line *line, const struct mnemonic **m, const char *prefix)
 {
-	//int i;
-	//const struct mnemonic *mnemonics = g_config.arch->instructions;
+	//const struct mnemonic **m = g_config.arch->instructions;
 
-	//for (i = 0; mnemonics[i]-> < 
+	const char *match = line->mnemonic;
+	if (prefix != NULL && strcasestr(match, prefix) == 0) {
+		match += strlen(prefix);
+	}
+	if (*match == '\0') {
+		return NULL;
+	}
 
-	return NULL;
+	printf("TEST \"%s\", %p -> %p -> \"%s\"\n", match, m, *m, (*m)->mnemonic);
+	while (*m != NULL && strcmp((*m)->mnemonic, match) /* && CHECK COMPATIBILITY */) {
+		m++;
+	}
+
+	return *m;
 }
 
 static void
@@ -481,11 +491,20 @@ evaluate_mnemonic(struct context *ctx, struct line *line)
 		return;
 	}
 
-	if ((m = get_pseudo_op(line)) != NULL) {
+	m = match_instruction(line, pseudo_ops, ".");
+	if (m == NULL) {
+		m = match_instruction(line, g_config.arch->instructions, NULL);
+	}
+	if (m == NULL) {
+		die("INVALID MNEMONIC \"%s\"\n", line->mnemonic);
+	}
+	m->evaluate(ctx, line);
+	//m = match_instruction(line, g_config.arch->instructions) !=
+	/*if ((m = get_pseudo_op(line)) != NULL) {
 		//m->forms[0].callback(line);
 	} else if ((m = get_instruction(line)) != NULL) {
-		//printf("FOUND INSTRUCTION %s\n", m->name);
-		//process_instruction(line);
-	}
+		printf("FOUND INSTRUCTION %s\n", m->mnemonic);
+		//process_inruction(line);
+	}*/
 }
 

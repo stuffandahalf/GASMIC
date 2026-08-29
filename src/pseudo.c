@@ -78,7 +78,8 @@ static int pseudo_org(struct context *ctx, struct line *line);
 	}*/ \
 }
 
-static const struct mnemonic pseudo_ops[] = {
+/* THIS NEEDS TO BE DOUBLE POINTERS */
+const struct mnemonic pseudo_ops[] = {
 	PSEUDO_OP("ARCH", &pseudo_set_arch, 1),
 	//PSEUDO_OP("FILE", &pseudo_set_file, 1),
 
@@ -98,7 +99,7 @@ static const struct mnemonic pseudo_ops[] = {
 	PSEUDO_OP("ORG", &pseudo_org, 1)
 	// PSEUDO_OP("SYNTAX", &pseudo_syntax, 1)
 };
-static const size_t pseudo_op_sz = sizeof(pseudo_ops) / sizeof(struct mnemonic);
+//static const size_t pseudo_op_sz = sizeof(pseudo_ops) / sizeof(struct mnemonic);
 
 /*struct pseudo_instruction *
 get_pseudo_op(struct line *line)
@@ -114,6 +115,7 @@ get_pseudo_op(struct line *line)
 	return NULL;
 }*/
 
+#if 0
 const struct mnemonic *
 get_pseudo_op(struct line *line)
 {
@@ -146,6 +148,7 @@ parse_pseudo_op(struct context *ctx, struct line *line)
 	}
 	pseudo_op->evaluate(ctx, line);
 }
+#endif
 
 
 static int
