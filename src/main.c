@@ -59,27 +59,35 @@ struct syntax_handler *syntax_handlers[] = {
 Architecture **architectures[] = { TARGETS NULL };  /* NULL terminated array of targets */
 #undef TARGET
 
+#define FAILTO(err, tgt) \
+	fprintf(stderr, "ERROR (%d): %s\n", (err), errmsgs[err < errmsgc ? (err) : 0]); \
+	goto tgt;
+
+#define ERR_MSG_UNKNOWN		0
+#define ERR_MSG_ARGS		1
+#define ERR_MSG_FOPEN		2
+const char *errmsgs[] = {
+	"Unknown error.",
+	"Invalid number of command line arguments.",
+	"Failed to open file."
+};
+size_t errmsgc = sizeof(errmsgs) / sizeof(errmsgs[0]);
+
 int
 main(int argc, char *const argv[])
 {
 	int rcd = 0;
 	size_t i;
+#ifndef NDEBUG
 	struct symbol *sym, *tmp_sym;
+#endif
 	//Data *data, *tmp_data;
 
 	init_targets();
 
-	/*FILE *in;*/
-	/*out = stdout;*/
-
 	if ((rcd = configure(argc, argv)) < 0) {
 		goto cleanup;
 	}
-
-	/*out = fopen(out_fname, "w+");*/
-	/*free(g_config.out_fname);*/
-	
-
 
 #if 0
 	init_address_mask();
@@ -89,25 +97,21 @@ main(int argc, char *const argv[])
 #endif
 
 	/* establish new context and handle file io */
+	fprintf(stderr, "in_fnamec = %zd\n", g_config.in_fnamec);
 	if (g_config.in_fnamec < 0) {
-		// TODO: error, no sources
-		goto cleanup;
-		//die("Invalid number of command line arguments.\n");
+		FAILTO(ERR_MSG_ARGS, cleanup);
 	} else if (g_config.in_fnamec == 0) {
 		if ((rcd = assemble("stdin", stdin, NULL)) < 0) {
-			// TODO: error, assembly failed
-			goto cleanup;
+			FAILTO(-rcd, cleanup);
 		}
 	} else {
 		for (i = 0; i < g_config.in_fnamec; i++) {
 			FILE *fp = fopen(g_config.in_fnames[i], "r");
 			if (!fp) {
-				// TODO: error, file open
-				goto cleanup;
+				FAILTO(ERR_MSG_FOPEN, cleanup);
 			}
 			if ((rcd = assemble(g_config.in_fnames[i], fp, NULL)) < 0) {
-				// TODO: error, assembly failed
-				goto cleanup;
+				FAILTO(-rcd, cleanup);
 			}
 
 			fclose(fp);
@@ -116,6 +120,7 @@ main(int argc, char *const argv[])
 
 	/* TODO: Resolve references here */
 
+#ifndef NDEBUG
 	printdf(("SYMBOLS\n"));
 	sym = symtab.first;
 	while (sym != NULL) {
@@ -127,6 +132,8 @@ main(int argc, char *const argv[])
 		sym = sym->next;
 		sfree(tmp_sym);
 	}
+#endif /* NDEBUG */
+
 	/*sfree(symtab->first->label)*/;
 	/*sym = NULL;*/
 
@@ -179,14 +186,7 @@ main(int argc, char *const argv[])
 	/*close(out);*/
 #endif
 
-
-/*early_exit:
-	destroy_targets();
-
-	return 0;*/
-
 cleanup:
-	sfree(g_config.in_fnames);
 	g_config.in_fnames = NULL;
 	g_config.in_fnamec = 0;
 	g_config.in_fname_size = 0;
@@ -196,11 +196,8 @@ cleanup:
 	release();
 	if (rcd < 0) {
 		rcd *= -1;
-		//fprintf(stderr, "%s\n", errors[rcd - 1]);
-
-		return rcd;
 	}
-	return 0;
+	return rcd;
 }
 
 
@@ -225,31 +222,54 @@ int
 assemble(const char *fname, FILE *fp, struct context *parent)
 {
 	struct line l;
-	struct context ctx = { fname, fp, parent, 1 };
+	struct context ctx = { fname, fp, parent, 0 };
 
 	while (fgets(buffer, LINEBUFFERSIZE, fp) != NULL) {
-		if (buffer[0] != '\0' && buffer[0] != '\n') {
-			/* initialize line state */
-			l.line_state = LINE_STATE_CLEAR;
-			l.address_mode = ADDR_MODE_INVALID;
-			l.addr_mode_post_op = POST_OP_NONE;
-			l.argc = 0;
+		ctx.line_num++;
+		if (buffer[0] == '\0' || buffer[0] == '\n') {
+			continue;
+		}
 
-			/* process line */
-			parse_line(&l, buffer);
+		/* initialize line state */
+		l.line_state = LINE_STATE_CLEAR;
+		l.address_mode = ADDR_MODE_INVALID;
+		l.addr_mode_post_op = POST_OP_NONE;
+		l.argc = 0;
 
-			if (l.line_state & FLAG(LINE_STATE_LABEL)) {	  /* If current line has a label */
-				add_label(&l);
-			}
-			if (l.line_state & FLAG(LINE_STATE_MNEMONIC)) {   /* If current line has a mnemonic */
-				//g_config.syntax.evaluate_args(&l);
-				//syntax_handlers[g_config.syntax]->evaluate_args(&l);
-				//evaluate_args(&l);
-
-				evaluate_mnemonic(&ctx, &l);
+		/* process line */
+		parse_line(&l, buffer);
+#ifndef NDEBUG
+		fprintf(stderr, "%zu\t", ctx.line_num);
+		if (l.line_state & LINE_STATE_LABEL) {
+			fprintf(stderr, "%s:", l.label);
+		} else {
+			fprintf(stderr, "\t");
+		}
+		fprintf(stderr, "\t");
+		if (l.line_state & LINE_STATE_MNEMONIC) {
+			fprintf(stderr, "%s", l.mnemonic);
+			for (int i = 0; i < l.argc; i++) {
+				if (!i) {
+					fprintf(stderr, "\t");
+				} else {
+					fprintf(stderr, ", ");
+				}
+				fprintf(stderr, "%s", l.argv[i].raw);
 			}
 		}
-		ctx.line_num++;
+		fprintf(stderr, "\n");
+#endif
+
+		if (l.line_state & FLAG(LINE_STATE_LABEL)) {	  /* If current line has a label */
+			add_label(&l);
+		}
+		if (l.line_state & FLAG(LINE_STATE_MNEMONIC)) {   /* If current line has a mnemonic */
+			//g_config.syntax.evaluate_args(&l);
+			//syntax_handlers[g_config.syntax]->evaluate_args(&l);
+			//evaluate_args(&l);
+
+			evaluate_mnemonic(&ctx, &l);
+		}
 	}
 	return 0;
 }
@@ -270,14 +290,6 @@ configure(int argc, char *const argv[])
 
 	while ((c = getopt(argc, argv, "-hm:o:f:e:")) != -1) {
 		switch (c) {
-		case 1:
-			printdf(("Found file argument %s\n", optarg));
-			if (g_config.in_fnamec == g_config.in_fname_size) {
-				g_config.in_fname_size += 2;
-				g_config.in_fnames = srealloc(g_config.in_fnames, g_config.in_fname_size);
-			}
-			g_config.in_fnames[g_config.in_fnamec++] = optarg;
-			break;
 		case 'm':	/* architecture */
 			g_config.arch = find_arch(optarg);
 			if (g_config.arch == NULL) {
@@ -304,10 +316,10 @@ configure(int argc, char *const argv[])
 		}
 	}
 
-	/*printdf(("argcount = %d\n", argc - optind));*/
+	printdf(("argcount = %d\n", argc - optind));
 
-	/*g_config.in_fnames = argv + sizeof(char) * optind;*/
-	/*g_config.in_fnamec = argc - optind;*/
+	g_config.in_fnames = argv + sizeof(char) * optind;
+	g_config.in_fnamec = argc - optind;
 
 	return 1;
 }

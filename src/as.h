@@ -14,27 +14,6 @@
 /*#include <console.h>
 #include <ansistyle.h>*/
 
-/* print if debug build *//*
-#ifndef NDEBUG
-*//* helper debug printf *//*
-static INLINE int h_printdf(const char *fname, const int linenum, const char *fmt, ...)
-{
-	int count = 0;
-	va_list args;
-	va_start(args, fmt);
-
-	count += printf("[%s:%d] >> ", fname, linenum);
-	count += vprintf(fmt, args);
-
-	va_end(args);
-	return count;
-}
-*//*#define printdf(...) h_printdf(__FILE__, __LINE__, __VA_ARGS__)*//*
-
-#else
-#define printdf(fmt, ...)
-#endif*/
-
 /* This is to stop clang-tidy from complaining about signed enum types */
 #ifdef __cplusplus
 #define FLAG(f) (f)
@@ -79,7 +58,7 @@ enum data_type {
 	DATA_TYPE_EXPRESSION,
 	DATA_TYPE_BYTES
 };
-typedef struct data_entry {
+struct data_entry {
 	enum data_type type;
 	size_t address;
 	uint8_t bytec;
@@ -88,12 +67,12 @@ typedef struct data_entry {
 		struct token *rpn_expr;
 	} contents;
 	struct data_entry *next;
-} Data;
+};
 
-typedef struct {
-	Data *first;
-	Data *last;
-} DataTab;
+struct datatab {
+	struct data_entry *first;
+	struct data_entry *last;
+};
 
 typedef struct {
 	char name[5];
@@ -117,7 +96,7 @@ enum address_mode {
 
 #if 0
 #define ADDRESS_MODE_COUNT (8)
-typedef struct {
+struct instruction {
 	char mnemonic[MAX_MNEMONIC_LEN];
 	uint8_t architectures;
 	uint8_t arg_order;
@@ -129,7 +108,7 @@ typedef struct {
 			uint64_t opcode;
 		} addressing_modes[10];
 	} opcodes[ADDRESS_MODE_COUNT];
-} Instruction;
+};
 #endif
 
 enum arg_type {
@@ -243,7 +222,7 @@ typedef struct {
 
 struct configuration {
 	char				*out_fname;
-	char				**in_fnames;
+	char				*const *in_fnames;
 	char				*export_fname;
 	size_t				in_fnamec;
 	size_t 				in_fname_size;
@@ -252,7 +231,7 @@ struct configuration {
 };
 
 extern struct symboltab symtab;
-extern DataTab *datatab;
+extern struct datatab *datatab;
 
 extern size_t address;
 extern size_t address_mask;
@@ -268,9 +247,9 @@ const Architecture *find_arch(const char *arch_name);
 const Register *find_reg(const char *name);
 
 int init_data_table();
-Data *init_data(Data *data);
+struct data_entry *init_data(struct data_entry *data);
 void add_label(struct line *line);
-void add_data(Data *data);
+void add_data(struct data_entry *data);
 
 void prepare_line(struct line *line);
 

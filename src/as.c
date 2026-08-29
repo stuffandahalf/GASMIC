@@ -12,7 +12,7 @@ struct symboltab symtab = {
 	.first = NULL,
 	.last = NULL
 };
-DataTab *datatab;
+struct datatab *datatab;
 
 /*
  * Resolve a label into it's complete representation
@@ -117,15 +117,15 @@ init_data_table()
 	if (datatab != NULL) {
 		return 0;
 	}
-	datatab = salloc(sizeof(DataTab));
+	datatab = salloc(sizeof(struct datatab));
 	datatab->first = NULL;
 	datatab->last = NULL;
 
 	return 1;
 }
 
-Data *
-init_data(Data *data)
+struct data_entry *
+init_data(struct data_entry *data)
 {
 	data->next = NULL;
 	data->type = DATA_TYPE_NONE;
@@ -135,9 +135,9 @@ init_data(Data *data)
 }
 
 void
-add_data(Data *data)
+add_data(struct data_entry *data)
 {
-	Data *next;
+	struct data_entry *next;
 
 	if (datatab->first == NULL) {
 		datatab->first = data;

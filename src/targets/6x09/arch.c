@@ -123,6 +123,7 @@ static const Instruction I_ADCR_HD6309 = {
 static const struct mnemonic *instructions[] = {
 	&I_ABX,
 	/*&I_ADC_ALL,
+	&I_ADC_ALL,
 	&I_ADC_HD6309,
 	&I_ADCR_HD6309,*/
 	NULL
@@ -130,13 +131,13 @@ static const struct mnemonic *instructions[] = {
 
 #if 0
 static void
-MC6809_process_line(struct line *line, const struct instruction_register *instr_reg, Data *data)
+MC6809_process_line(struct line *line, const struct instruction_register *instr_reg, struct data_entry *data)
 {
 	printdf(("Hello MC6809\n"));
 }
 
 static void
-HD6309_process_line(struct line *line, const struct instruction_register *instr_reg, Data *data)
+HD6309_process_line(struct line *line, const struct instruction_register *instr_reg, struct data_entry *data)
 {
 	printdf(("Hello HD6309\n"));
 }
