@@ -479,7 +479,7 @@ match_instruction(struct line *line, const struct mnemonic **m, const char *pref
 	//const struct mnemonic **m = g_config.arch->instructions;
 
 	const char *match = line->mnemonic;
-	if (prefix != NULL && strcasestr(match, prefix) == 0) {
+	if (prefix != NULL && strstr(match, prefix) == 0) {
 		match += strlen(prefix);
 	}
 	if (*match == '\0') {
