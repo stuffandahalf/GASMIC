@@ -121,13 +121,13 @@ static const Instruction I_ADCR_HD6309 = {
 };*/
 
 static const struct mnemonic *instructions[] = {
-	&I_ABX,
-	/*&I_ADC_ALL,
+	&I_ABX/*,
+	&I_ADC_ALL,
 	&I_ADC_ALL,
 	&I_ADC_HD6309,
 	&I_ADCR_HD6309,*/
-	NULL
 };
+static const size_t instructionc = sizeof(instructions) / sizeof(instructions[0]);
 
 #if 0
 static void
@@ -154,6 +154,7 @@ HD6309_process_line(struct line *line, const struct instruction_register *instr_
 	ARCH_##arch_var->default_syntax = SYNTAX_MOTOROLA; \
 	ARCH_##arch_var->registers = registers; \
 	ARCH_##arch_var->instructions = instructions; \
+	ARCH_##arch_var->instructionc = instructionc; \
 	/*ARCH_##arch_var->process_line = &arch_var##_process_line;*/ \
 }
 

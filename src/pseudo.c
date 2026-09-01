@@ -32,6 +32,7 @@
 #if 0
 static int pseudo_set_file(struct context *ctx, struct line *line);
 #endif
+#if 0
 static int pseudo_set_arch(struct context *ctx, struct line *line);
 static int pseudo_set_byte(struct context *ctx, struct line *line);
 static int pseudo_set_word(struct context *ctx, struct line *line);
@@ -45,6 +46,7 @@ static int pseudo_equ(struct context *ctx, struct line *line);
 static int pseudo_include(struct context *ctx, struct line *line);
 static int pseudo_insert(struct context *ctx, struct line *line);
 static int pseudo_org(struct context *ctx, struct line *line);
+#endif
 
 // static struct pseudo_instruction pseudo_ops[] = {
 // 	{ ".ARCH",		&pseudo_set_arch,			1 },
@@ -78,28 +80,6 @@ static int pseudo_org(struct context *ctx, struct line *line);
 	}*/ \
 }
 
-/* THIS NEEDS TO BE DOUBLE POINTERS */
-const struct mnemonic pseudo_ops[] = {
-	PSEUDO_OP("ARCH", &pseudo_set_arch, 1),
-	//PSEUDO_OP("FILE", &pseudo_set_file, 1),
-
-	PSEUDO_OP("DB", &pseudo_set_byte, -1),
-	PSEUDO_OP("DW", &pseudo_set_word, -1),
-	PSEUDO_OP("DD", &pseudo_set_double, -1),
-	PSEUDO_OP("DQ", &pseudo_set_quad, -1),
-
-	PSEUDO_OP("RESB", &pseudo_reserve_bytes, 1),
-	PSEUDO_OP("RESW", &pseudo_reserve_words, 1),
-	PSEUDO_OP("RESD", &pseudo_reserve_doubles, 1),
-	PSEUDO_OP("RESQ", &pseudo_reserve_quads, 1),
-
-	PSEUDO_OP("EQU", &pseudo_equ, 1),
-	PSEUDO_OP("INCLUDE", &pseudo_include, 1),
-	PSEUDO_OP("INSERT", &pseudo_insert, 1),
-	PSEUDO_OP("ORG", &pseudo_org, 1)
-	// PSEUDO_OP("SYNTAX", &pseudo_syntax, 1)
-};
-//static const size_t pseudo_op_sz = sizeof(pseudo_ops) / sizeof(struct mnemonic);
 
 /*struct pseudo_instruction *
 get_pseudo_op(struct line *line)
@@ -368,3 +348,68 @@ pseudo_org(struct context *ctx, struct line *line)
 	return 0;
 }
 
+static struct mnemonic pseudo_op_arch =
+	PSEUDO_OP("ARCH", &pseudo_set_arch, 1);
+#if 0
+static struct mnemonic pseudo_op_file =
+	PSEUDO_OP("FILE", &pseudo_set_file, 1);
+#endif
+
+static struct mnemonic pseudo_op_db =
+	PSEUDO_OP("DB", &pseudo_set_byte, -1);
+static struct mnemonic pseudo_op_dw =
+	PSEUDO_OP("DW", &pseudo_set_word, -1);
+static struct mnemonic pseudo_op_dd =
+	PSEUDO_OP("DD", &pseudo_set_double, -1);
+static struct mnemonic pseudo_op_dq =
+	PSEUDO_OP("DQ", &pseudo_set_quad, -1);
+
+static struct mnemonic pseudo_op_resb =
+	PSEUDO_OP("RESB", &pseudo_reserve_bytes, 1);
+static struct mnemonic pseudo_op_resw =
+	PSEUDO_OP("RESW", &pseudo_reserve_words, 1);
+static struct mnemonic pseudo_op_resd =
+	PSEUDO_OP("RESD", &pseudo_reserve_doubles, 1);
+static struct mnemonic pseudo_op_resq =
+	PSEUDO_OP("RESQ", &pseudo_reserve_quads, 1);
+
+static struct mnemonic pseudo_op_equ =
+	PSEUDO_OP("EQU", &pseudo_equ, 1);
+static struct mnemonic pseudo_op_include =
+	PSEUDO_OP("INCLUDE", &pseudo_include, 1);
+static struct mnemonic pseudo_op_insert =
+	PSEUDO_OP("INSERT", &pseudo_insert, 1);
+static struct mnemonic pseudo_op_org =
+	PSEUDO_OP("ORG", &pseudo_org, 1);
+#if 0
+static struct mnemonic pseudo_op_syntax =
+	PSEUDO_OP("SYNTAX", &pseudo_syntax, 1)
+#endif
+
+/* THIS NEEDS TO BE DOUBLE POINTERS */
+const struct mnemonic *pseudo_ops[] = {
+	&pseudo_op_arch,
+#if 0
+	&pseudo_op_file,
+#endif
+
+	&pseudo_op_db,
+	&pseudo_op_dw,
+	&pseudo_op_dd,
+	&pseudo_op_dq,
+
+	&pseudo_op_resb,
+	&pseudo_op_resw,
+	&pseudo_op_resd,
+	&pseudo_op_resq,
+
+	&pseudo_op_equ,
+	&pseudo_op_include,
+	&pseudo_op_insert,
+	&pseudo_op_org
+#if 0
+	,
+	&pseudo_op_syntax
+#endif
+};
+const size_t pseudo_opc = sizeof(pseudo_ops) / sizeof(pseudo_ops[0]);

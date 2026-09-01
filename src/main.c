@@ -474,43 +474,52 @@ parse_line(struct line *l, char *buffer)
 }
 
 const struct mnemonic *
-match_instruction(struct line *line, const struct mnemonic **m, const char *prefix)
+match_instruction(struct line *line, size_t nm, const struct mnemonic **m, const char *prefix)
 {
-	//const struct mnemonic **m = g_config.arch->instructions;
-
+	size_t i;
 	const char *match = line->mnemonic;
-	if (prefix != NULL && strstr(match, prefix) == 0) {
+	if (prefix != NULL && strstr(match, prefix) == match) {
 		match += strlen(prefix);
 	}
 	if (*match == '\0') {
 		return NULL;
 	}
 
-	printf("TEST \"%s\", %p -> %p -> \"%s\"\n", match, m, *m, (*m)->mnemonic);
-	while (*m != NULL && strcmp((*m)->mnemonic, match) /* && CHECK COMPATIBILITY */) {
-		m++;
+	for (i = 0; i < nm; i++) {
+		if (!strcmp(m[i]->mnemonic, match) &&
+				(m[i]->compatibility & g_config.arch->value)) {
+			return m[i];
+		}
 	}
-
-	return *m;
+	return NULL;
 }
 
 static void
 evaluate_mnemonic(struct context *ctx, struct line *line)
 {
+	char *c;
 	const struct mnemonic *m = NULL;
 
 	if (!line->mnemonic || line->mnemonic[0] == '\0') {
 		return;
 	}
 
-	m = match_instruction(line, pseudo_ops, ".");
+	/* uppercase mnemonic, should have already happened? */
+	for (c = line->mnemonic; *c != '\0'; c++) {
+		if ('a' <= *c && *c <= 'z') {
+			*c += 'A' - 'a';
+		}
+	}
+
+	m = match_instruction(line, pseudo_opc, pseudo_ops, ".");
 	if (m == NULL) {
-		m = match_instruction(line, g_config.arch->instructions, NULL);
+		m = match_instruction(line, g_config.arch->instructionc, g_config.arch->instructions, NULL);
 	}
 	if (m == NULL) {
 		die("INVALID MNEMONIC \"%s\"\n", line->mnemonic);
 	}
-	m->evaluate(ctx, line);
+	printf("MATCHED MNEMONIC \"%s\"\n", m->mnemonic);
+	//m->evaluate(ctx, line);
 	//m = match_instruction(line, g_config.arch->instructions) !=
 	/*if ((m = get_pseudo_op(line)) != NULL) {
 		//m->forms[0].callback(line);
