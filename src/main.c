@@ -1,11 +1,17 @@
 #include <stdio.h>
 #include <unistd.h>
+#include <ctype.h>
 #include "as.h"
 #include "smem.h"
 #include "targets.h"
 #include "formats.h"
 #include "pseudo.h"
 #include "arithmetic.h"
+
+
+#if 0 && (defined(__GLIBC__) || defined(__OpenBSD__))
+#define GNU_GETOPT 1
+#endif
 
 /*
  * For each input file
@@ -274,10 +280,17 @@ assemble(const char *fname, FILE *fp, struct context *parent)
 	return 0;
 }
 
+#ifdef GNU_GETOPT
+#define ARG_PREFIX "-"
+#else
+#define ARG_PREFIX "+"
+#endif
+
 static int
 configure(int argc, char *const argv[])
 {
 	static const char *const help_str = "Usage: %s [-m arch] [-o outfile] [-f outformat] [-e symfile]\n";
+	static const char *const arg_str = ARG_PREFIX "hm:o:f:e:";
 	int c;
 
 	g_config.arch = *architectures[0];
@@ -288,7 +301,7 @@ configure(int argc, char *const argv[])
 	g_config.in_fnames = salloc(sizeof(char *) * g_config.in_fname_size);
 	g_config.export_fname = NULL;
 
-	while ((c = getopt(argc, argv, "-hm:o:f:e:")) != -1) {
+	while ((c = getopt(argc, argv, arg_str)) != -1) {
 		switch (c) {
 		case 'm':	/* architecture */
 			g_config.arch = find_arch(optarg);
@@ -309,6 +322,13 @@ configure(int argc, char *const argv[])
 		case 'e':   /* export symbol table */
 			g_config.export_fname = optarg;
 			break;
+/* TODO: Add support for position-independent file arguments */
+#ifdef GNU_GETOPT
+		case '\1':
+			/* handle dynamic file list */
+			printf("FILE ARG \"%s\"\n", optarg);
+			break;
+#endif
 		case 'h':
 		case '?':
 			printf(help_str, argv[0]);
@@ -426,7 +446,6 @@ parse_line(struct line *l, char *buffer)
 				buffer = c;
 				buffer++;
 				l->line_state |= FLAG(LINE_STATE_MNEMONIC);
-				str_to_upper(l->mnemonic);
 			} else {
 				if (l->argc == LINE_ARG_MAX) {
 					fail("Too many arguments provided. (max %d)\n", LINE_ARG_MAX);
@@ -504,11 +523,8 @@ evaluate_mnemonic(struct context *ctx, struct line *line)
 		return;
 	}
 
-	/* uppercase mnemonic, should have already happened? */
 	for (c = line->mnemonic; *c != '\0'; c++) {
-		if ('a' <= *c && *c <= 'z') {
-			*c += 'A' - 'a';
-		}
+		*c = toupper(*c);
 	}
 
 	m = match_instruction(line, pseudo_opc, pseudo_ops, ".");
