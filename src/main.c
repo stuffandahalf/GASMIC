@@ -8,11 +8,6 @@
 #include "pseudo.h"
 #include "arithmetic.h"
 
-
-#if 0 && (defined(__GLIBC__) || defined(__OpenBSD__))
-#define GNU_GETOPT 1
-#endif
-
 /*
  * For each input file
  *   open new context
@@ -72,10 +67,12 @@ Architecture **architectures[] = { TARGETS NULL };  /* NULL terminated array of 
 #define ERR_MSG_UNKNOWN		0
 #define ERR_MSG_ARGS		1
 #define ERR_MSG_FOPEN		2
+#define ERR_MSG_MEM			3
 const char *errmsgs[] = {
 	"Unknown error.",
 	"Invalid number of command line arguments.",
-	"Failed to open file."
+	"Failed to open file.",
+	"Failed to allocate memory."
 };
 size_t errmsgc = sizeof(errmsgs) / sizeof(errmsgs[0]);
 
@@ -92,7 +89,7 @@ main(int argc, char *const argv[])
 	init_targets();
 
 	if ((rcd = configure(argc, argv)) < 0) {
-		goto cleanup;
+		FAILTO(-rcd, cleanup);
 	}
 
 #if 0
@@ -116,11 +113,11 @@ main(int argc, char *const argv[])
 			if (!fp) {
 				FAILTO(ERR_MSG_FOPEN, cleanup);
 			}
-			if ((rcd = assemble(g_config.in_fnames[i], fp, NULL)) < 0) {
+			rcd = assemble(g_config.in_fnames[i], fp, NULL);
+			fclose(fp);
+			if (rcd < 0) {
 				FAILTO(-rcd, cleanup);
 			}
-
-			fclose(fp);
 		}
 	}
 
@@ -193,15 +190,18 @@ main(int argc, char *const argv[])
 #endif
 
 cleanup:
+#ifdef GNU_GETOPT
+	g_config.in_fnamesz = 0;
+	free(g_config.in_fnames);
+#endif
 	g_config.in_fnames = NULL;
 	g_config.in_fnamec = 0;
-	g_config.in_fname_size = 0;
 
 	destroy_targets();
 	g_context = NULL;
 	release();
 	if (rcd < 0) {
-		rcd *= -1;
+		rcd = -rcd;
 	}
 	return rcd;
 }
@@ -244,6 +244,7 @@ assemble(const char *fname, FILE *fp, struct context *parent)
 
 		/* process line */
 		parse_line(&l, buffer);
+
 #ifndef NDEBUG
 		fprintf(stderr, "%zu\t", ctx.line_num);
 		if (l.line_state & LINE_STATE_LABEL) {
@@ -291,14 +292,16 @@ configure(int argc, char *const argv[])
 {
 	static const char *const help_str = "Usage: %s [-m arch] [-o outfile] [-f outformat] [-e symfile]\n";
 	static const char *const arg_str = ARG_PREFIX "hm:o:f:e:";
-	int c;
+	int rcd = 0, c;
 
 	g_config.arch = *architectures[0];
 	g_config.syntax = g_config.arch->default_syntax;
 	g_config.out_fname = "a.out";
-	g_config.in_fname_size = 1;
+	g_config.in_fnames = NULL;
 	g_config.in_fnamec = 0;
-	g_config.in_fnames = salloc(sizeof(char *) * g_config.in_fname_size);
+#ifdef GNU_GETOPT
+	g_config.in_fnamesz = 0;
+#endif
 	g_config.export_fname = NULL;
 
 	while ((c = getopt(argc, argv, arg_str)) != -1) {
@@ -322,11 +325,18 @@ configure(int argc, char *const argv[])
 		case 'e':   /* export symbol table */
 			g_config.export_fname = optarg;
 			break;
-/* TODO: Add support for position-independent file arguments */
 #ifdef GNU_GETOPT
-		case '\1':
-			/* handle dynamic file list */
-			printf("FILE ARG \"%s\"\n", optarg);
+		case '\1': /* position-independent files */
+			if (g_config.in_fnamec == g_config.in_fnamesz) {
+				g_config.in_fnamesz += 2;
+				g_config.in_fnames = realloc(g_config.in_fnames,
+						sizeof(g_config.in_fnames[0]) * g_config.in_fnamesz);
+				if (g_config.in_fnames == NULL) {
+					rcd = ERR_MSG_MEM;
+					goto err;
+				}
+			}
+			g_config.in_fnames[g_config.in_fnamec++] = optarg;
 			break;
 #endif
 		case 'h':
@@ -338,10 +348,19 @@ configure(int argc, char *const argv[])
 
 	printdf(("argcount = %d\n", argc - optind));
 
+#ifndef GNU_GETOPT
 	g_config.in_fnames = argv + sizeof(char) * optind;
 	g_config.in_fnamec = argc - optind;
-
-	return 1;
+#else
+err:
+	if (rcd) {
+		free(g_config.in_fnames);
+		g_config.in_fnamesz = 0;
+		g_config.in_fnames = NULL;
+		g_config.in_fnamec = 0;
+	}
+#endif
+	return -rcd;
 }
 
 static void

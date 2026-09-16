@@ -14,6 +14,12 @@
 /*#include <console.h>
 #include <ansistyle.h>*/
 
+
+#if defined(__GLIBC__) || defined(__OpenBSD__)
+#define GNU_GETOPT 1
+#endif
+
+
 /* This is to stop clang-tidy from complaining about signed enum types */
 #ifdef __cplusplus
 #define FLAG(f) (f)
@@ -223,10 +229,14 @@ typedef struct {
 
 struct configuration {
 	char				*out_fname;
-	char				*const *in_fnames;
-	char				*export_fname;
 	size_t				in_fnamec;
-	size_t 				in_fname_size;
+#ifdef GNU_GETOPT
+	size_t 				in_fnamesz;
+	char				**in_fnames;
+#else
+	char				*const *in_fnames;
+#endif
+	char				*export_fname;
 	enum syntax			syntax;
 	const Architecture 	*arch;
 };
