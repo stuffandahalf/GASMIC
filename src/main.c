@@ -7,6 +7,7 @@
 #include "formats.h"
 #include "pseudo.h"
 #include "arithmetic.h"
+#include "parser.h"
 
 /*
  * For each input file
@@ -25,7 +26,7 @@ char buffer[LINEBUFFERSIZE];
 
 static int configure(int argc, char *const argv[]);
 /*static void trim_str(char str[]);*/
-static void parse_line(struct line *l, char *buffer);
+//static void parse_line(struct line *l, char *buffer);
 static void evaluate_mnemonic(struct context *ctx, struct line *l);
 
 struct configuration g_config;
@@ -363,6 +364,7 @@ err:
 	return -rcd;
 }
 
+#if 0
 static void
 parse_line(struct line *l, char *buffer)
 {
@@ -510,6 +512,7 @@ parse_line(struct line *l, char *buffer)
 
 	//syntax_handlers[g_config.syntax]->evaluate_args(l);
 }
+#endif
 
 const struct mnemonic *
 match_instruction(struct line *line, size_t nm, const struct mnemonic **m, const char *prefix)

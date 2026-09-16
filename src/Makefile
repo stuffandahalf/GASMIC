@@ -1,7 +1,7 @@
 .POSIX:
 
 TARGET=gasmic
-OBJS=main.o as.o lang.o \
+OBJS=main.o as.o lang.o parser.o \
 	 smem.o arithmetic.o pseudo.o \
 	 formats/bin.o \
 	 syntax/common.o syntax/motorola.o \
