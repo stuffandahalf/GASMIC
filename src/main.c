@@ -27,7 +27,7 @@ char buffer[LINEBUFFERSIZE];
 static int configure(int argc, char *const argv[]);
 /*static void trim_str(char str[]);*/
 //static void parse_line(struct line *l, char *buffer);
-static void evaluate_mnemonic(struct context *ctx, struct line *l);
+//static void evaluate_mnemonic(struct context *ctx, struct line *l);
 
 struct configuration g_config;
 struct context *g_context;
@@ -48,14 +48,14 @@ line_processor *syntax_handlers[] = {
 	NULL
 };*/
 
-extern struct syntax_handler motorola_syntax;
+//extern struct syntax_handler motorola_syntax;
 //extern struct syntax_handler intel_syntax;
 //extern struct syntax_handler att_syntax;
-struct syntax_handler *syntax_handlers[] = {
-	&motorola_syntax,
+//struct syntax_handler *syntax_handlers[] = {
+	//&motorola_syntax,
 	//&intel_syntax,
 	//&att_syntax
-};
+//};
 
 #define TARGET(t) &ARCH_ ## t,
 Architecture **architectures[] = { TARGETS NULL };  /* NULL terminated array of targets */
@@ -244,7 +244,10 @@ assemble(const char *fname, FILE *fp, struct context *parent)
 		l.argc = 0;
 
 		/* process line */
-		parse_line(&l, buffer);
+		if (!parse_line(&l, buffer)) {
+			/* TODO: handle errors uniformly */
+			fprintf(stderr, "Failed to parse line: %s", buffer);
+		}
 
 #ifndef NDEBUG
 		fprintf(stderr, "%zu\t", ctx.line_num);
@@ -254,8 +257,9 @@ assemble(const char *fname, FILE *fp, struct context *parent)
 			fprintf(stderr, "\t");
 		}
 		fprintf(stderr, "\t");
-		if (l.line_state & LINE_STATE_MNEMONIC) {
-			fprintf(stderr, "%s", l.mnemonic);
+		//if (l.line_state & LINE_STATE_MNEMONIC) {
+		if (l.mnemonic != NULL) {
+			fprintf(stderr, "%s", l.mnemonic->mnemonic);
 			for (int i = 0; i < l.argc; i++) {
 				if (!i) {
 					fprintf(stderr, "\t");
@@ -276,7 +280,7 @@ assemble(const char *fname, FILE *fp, struct context *parent)
 			//syntax_handlers[g_config.syntax]->evaluate_args(&l);
 			//evaluate_args(&l);
 
-			evaluate_mnemonic(&ctx, &l);
+			//evaluate_mnemonic(&ctx, &l);
 		}
 	}
 	return 0;
@@ -514,6 +518,7 @@ parse_line(struct line *l, char *buffer)
 }
 #endif
 
+#if 0
 const struct mnemonic *
 match_instruction(struct line *line, size_t nm, const struct mnemonic **m, const char *prefix)
 {
@@ -534,7 +539,9 @@ match_instruction(struct line *line, size_t nm, const struct mnemonic **m, const
 	}
 	return NULL;
 }
+#endif
 
+#if 0
 static void
 evaluate_mnemonic(struct context *ctx, struct line *line)
 {
@@ -566,4 +573,5 @@ evaluate_mnemonic(struct context *ctx, struct line *line)
 		//process_inruction(line);
 	}*/
 }
+#endif
 

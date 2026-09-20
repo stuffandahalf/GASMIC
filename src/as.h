@@ -1,19 +1,9 @@
 #ifndef GASMIC_AS_H
 #define GASMIC_AS_H
 
-/*#include <stdarg.h>*/
-#include <stdio.h>
-/*////#include <stdlib.h>*/
-/*#include <string.h>
-#include <ctype.h>*/
 #include <inttypes.h>
 #include "lang.h"
-/*#include <lang.h>
-#include <smem.h>*/
-
-/*#include <console.h>
-#include <ansistyle.h>*/
-
+//#include "parser.h"
 
 #if defined(__GLIBC__) || defined(__OpenBSD__)
 #define GNU_GETOPT 1
@@ -53,7 +43,7 @@ struct symbol {
 	struct symbol *next;
 };
 
-struct symboltab{
+struct symboltab {
 	struct symbol *first;
 	struct symbol *last;
 	struct symbol *last_parent;
@@ -182,9 +172,11 @@ struct context {
 #define LINE_ARG_MAX 3
 struct line {
 	char *label;
-	char *mnemonic;
+	//char *mnemonic;
+	const struct mnemonic *mnemonic;
 	struct line_arg argv[LINE_ARG_MAX];
 	size_t argc;
+	//int error;
 	enum line_state line_state;
 	enum address_mode address_mode;
 	enum address_post_op addr_mode_post_op;
@@ -225,6 +217,7 @@ typedef struct {
 	const struct mnemonic **instructions;
 	size_t instructionc;
 	//void (*process_line)(struct line *line, const struct instruction_register *instr_reg, Data *data);
+	int (*parse_arg)(struct line *, const char *);
 } Architecture;
 
 struct configuration {

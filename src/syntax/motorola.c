@@ -167,7 +167,7 @@ static int
 process_motorola_syntax(struct line *l)
 {
 	int i;
-	printf("HERE %s", l->mnemonic);
+	//printf("HERE %s", l->mnemonic);
 	for (i = 0; i < l->argc; i++) {
 		printf("\t(%d) \"%s\"", i, l->argv[i].str);
 	}

@@ -1,8 +1,6 @@
 #ifndef GASMIC_PARSER_H
 #define GASMIC_PARSER_H 1
 
-#include "as.h"
-
 #define RULE(name) int parse_ ## name (struct line *, const char *)
 
 #define LCASE_RNG "abcdefghijklmnopqrstuvwxyz"
@@ -13,10 +11,17 @@
 #define ALPHANUM_RNG NUM_RNG ALPHA_RNG
 #define IDENT_RNG ALPHANUM_RNG
 
+struct line;
 
-int parse_line(struct line *, const char *);
+typedef int (*parse_token)(struct line *, const char *);
 
-int consume_seq(const char *, const char *);
+RULE(line);
+RULE(string);
+RULE(label);
+
+/* parser utilities */
+#define SEQ_CASEINSENSITIVE 1
+int consume_seq(const char *, const char *, int);
 int consume_range(const char *, const char *, int);
 int consume_spaces(const char *);
 

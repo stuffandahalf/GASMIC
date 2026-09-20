@@ -1,4 +1,5 @@
 #include "arch.h"
+#include "../../parser.h"
 
 Architecture *ARCH_MC6809;
 Architecture *ARCH_HD6309;
@@ -31,6 +32,26 @@ static const Register registers[] = {
 
 #define MC6809_REGISTER(reg) (((reg) >= 0 && (reg) < HD6309_REG_E) ? &(registers[reg]) : NULL)
 #define HD6309_REGISTER(reg) (((reg) >= 0 && (reg) <= HD6309_REG_MD) ? &(registers[reg]) : NULL)
+
+static int
+parse_arg(struct line *l, const char *buffer)
+{
+	int i = 0, n;
+	if ((n = parse_string(l, buffer + i))) {
+		i += n;
+		return n;
+	} else if ((n = parse_label(l, buffer + i))) {
+		i += n;
+		return n;
+	}
+	while (!consume_range(buffer + i, "\n, ", 1)) {
+		i++;
+	}
+#ifndef NDEBUG
+	//fprintf(stderr, "ARG %.*s\n", i, buffer);
+#endif
+	return i;
+}
 
 
 int
@@ -156,6 +177,7 @@ HD6309_process_line(struct line *line, const struct instruction_register *instr_
 	ARCH_##arch_var->instructions = instructions; \
 	ARCH_##arch_var->instructionc = instructionc; \
 	/*ARCH_##arch_var->process_line = &arch_var##_process_line;*/ \
+	ARCH_##arch_var->parse_arg = parse_arg; \
 }
 
 void

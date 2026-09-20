@@ -4,7 +4,6 @@ TARGET=gasmic
 OBJS=main.o as.o lang.o parser.o \
 	 smem.o arithmetic.o pseudo.o \
 	 formats/bin.o \
-	 syntax/common.o syntax/motorola.o \
 	 targets/6x09/arch.o
 #targets/z80/arch.o
 
