@@ -110,7 +110,8 @@ struct instruction {
 enum arg_type {
 	ARG_TYPE_UNPROCESSED,
 	ARG_TYPE_STRING,
-	ARG_TYPE_UNSIGNED,
+	ARG_TYPE_LAST
+	/*ARG_TYPE_UNSIGNED,
 	ARG_TYPE_SIGNED,
 	ARG_TYPE_EXPRESSION,
 	ARG_TYPE_REGISTER,
@@ -118,31 +119,20 @@ enum arg_type {
 	ARG_TYPE_INDIRECT,
 	ARG_TYPE_INDEX,
 	ARG_TYPE_INDEX_REGISTER,
-	ARG_TYPE_INDEX_CONSTANT
+	ARG_TYPE_INDEX_CONSTANT*/
 };
 
-struct line_arg {
-	enum arg_type type;
-	/*enum arg_state state;*/
-	/*enum address_mode addr_mode;*/
-	union {
-		char *raw;
-		char *str;
-		struct token *rpn_expr;
-		const Register *reg;
-		int64_t num;
-		uint64_t unum;
-		struct {
-			const Register *base;
-			union {
-				struct token *expression;
-				const Register *reg;
-			} offset;
-			int8_t pre_inc;
-			int8_t post_inc;
-		} indexed;
-	};
-};
+#define LINE_ARG(fields) \
+	struct { \
+		int type; \
+		union { \
+			char *raw; \
+			char *str; \
+			fields \
+		}; \
+	}
+typedef LINE_ARG() line_arg_t;
+#define ARG(args, i) ((line_arg_t *)((args) + g_config.arch->argsz * i))
 
 enum line_state {
 	LINE_STATE_CLEAR		= 0,
@@ -154,14 +144,6 @@ enum line_state {
 	LINE_STATE_BOUNDED		= (LINE_STATE_SINGLE_QUOTE | LINE_STATE_DOUBLE_QUOTE | LINE_STATE_BRACKET)
 };
 
-enum address_post_op {
-	POST_OP_NONE,
-	POST_OP_INC_SINGLE,
-	POST_OP_INC_DOUBLE,
-	POST_OP_DEC_SINGLE,
-	POST_OP_DEC_DOUBLE
-};
-
 struct context {
 	const char *fname;
 	FILE *fptr;
@@ -169,16 +151,16 @@ struct context {
 	size_t line_num;
 };
 
-#define LINE_ARG_MAX 3
+//#define LINE_ARG_MAX 3
 struct line {
 	char *label;
 	const struct mnemonic *mnemonic;
-	struct line_arg argv[LINE_ARG_MAX];
+	//struct line_arg argv[LINE_ARG_MAX];
+	void *argv;
 	size_t argc;
+	size_t argsz;
 	//int error;
 	enum line_state line_state;
-	enum address_mode address_mode;
-	enum address_post_op addr_mode_post_op;
 };
 
 typedef int (line_processor)(struct line *l);
@@ -208,15 +190,18 @@ struct mnemonic {
 typedef struct {
 	char *name;
 	int value;
+	size_t argsz; /* size of argument structure */
+	const struct mnemonic *instructions;
+	size_t instructionc;
+	//void (*process_line)(struct line *line, const struct instruction_register *instr_reg, Data *data);
+	int (*parse_arg)(struct line *, const char *);
+
+	/* possibly unnecessary values */
 	uint8_t byte_size;  /* bits per byte */
 	uint8_t bytes_per_address;
 	enum endian endianness;
 	enum syntax default_syntax;
 	const Register *registers;
-	const struct mnemonic *instructions;
-	size_t instructionc;
-	//void (*process_line)(struct line *line, const struct instruction_register *instr_reg, Data *data);
-	int (*parse_arg)(struct line *, const char *);
 } Architecture;
 
 struct configuration {

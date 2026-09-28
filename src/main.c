@@ -91,6 +91,7 @@ main(int argc, char *const argv[])
 	if ((rcd = configure(argc, argv))) {
 		goto cleanup;
 	}
+	printf("ARG_SIZE %zu\n", g_config.arch->argsz);
 
 #if 0
 	init_address_mask();
@@ -247,14 +248,13 @@ assemble(const char *fname, FILE *fp, struct context *parent)
 		/* initialize line state */
 		l.mnemonic = NULL;
 		l.line_state = LINE_STATE_CLEAR;
-		l.address_mode = ADDR_MODE_INVALID;
-		l.addr_mode_post_op = POST_OP_NONE;
 		l.argc = 0;
 
 		/* process line */
 		if (!parse_line(&l, buffer)) {
 			/* TODO: handle errors uniformly */
 			fprintf(stderr, "Failed to parse line: %s", buffer);
+			continue;
 		}
 
 #ifndef NDEBUG
@@ -274,7 +274,11 @@ assemble(const char *fname, FILE *fp, struct context *parent)
 				} else {
 					fprintf(stderr, ", ");
 				}
-				fprintf(stderr, "%s", l.argv[i].raw);
+				if (((line_arg_t *)l.argv)[i].type == ARG_TYPE_UNPROCESSED) {
+					fprintf(stderr, "%s", ((line_arg_t *)l.argv)[i].raw);
+				} else {
+					fprintf(stderr, "?");
+				}
 			}
 		}
 		fprintf(stderr, "\n");

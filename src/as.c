@@ -180,7 +180,7 @@ find_reg(const char *name)
 void
 prepare_line(struct line *line)
 {
-#if 1
+#if 0
 	size_t i;
 	struct token *tok;
 

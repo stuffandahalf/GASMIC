@@ -138,9 +138,13 @@ pseudo_set_arch(struct context *ctx, struct line *line)
 		fail("Cannot switch architecture after code.\n");
 	}
 
-	arch = find_arch(line->argv[0].str);
+	if (ARG(line->argv, 0)->type != ARG_TYPE_UNPROCESSED) {
+		fail ("Argument type invalid\n");
+	}
+
+	arch = find_arch(ARG(line->argv, 0)->str);
 	if (arch == NULL) {
-		fail("Failed to locate architecture %s.\n", line->argv[0].str);
+		fail("Failed to locate architecture %s.\n", ARG(line->argv, 0)->str);
 	}
 	g_config.arch = arch;
 	init_address_mask();
@@ -172,15 +176,15 @@ pseudo_set_file(struct context *ctx, struct line *line)
 	for (i = 0; i < (line)->argc; i++) { \
 		data = init_data(salloc(sizeof(struct data_entry))); \
 		data->address = address & address_mask; \
-		if ((line)->argv[i].type == ARG_TYPE_STRING) { \
+		if (ARG((line)->argv, i)->type == ARG_TYPE_STRING) { \
 			data->type = DATA_TYPE_BYTES; \
-			data->bytec = strlen((line)->argv[i].str); \
+			data->bytec = strlen(ARG((line)->argv, i)->str); \
 			data->contents.bytes = salloc(sizeof(uint8_t) * data->bytec); \
-			memcpy(data->contents.bytes, (line)->argv[i].str, data->bytec); \
+			memcpy(data->contents.bytes, ARG((line)->argv, i)->str, data->bytec); \
 		} else { \
 			data->type = DATA_TYPE_EXPRESSION; \
 			data->bytec = sizeof(T); \
-			data->contents.rpn_expr = (line)->argv[i].rpn_expr; \
+			/*data->contents.rpn_expr = (line)->argv[i].rpn_expr;*/ \
 		} \
 		c += data->bytec; \
 		address += data->bytec; \
@@ -228,7 +232,7 @@ pseudo_equ(struct context *ctx, struct line *line)
 	}
 
 	/* TODO: replace this with rpn arithmetic parsing */
-	symtab.last->value = strtol(line->argv[0].str, &num_end, 0);
+	symtab.last->value = strtol(ARG(line->argv, 0)->str, &num_end, 0);
 	/*if (line->argv[0] == num_end) {*/
 	if (*num_end != '\0') {
 		fail("Failed to parse given value.\n");
@@ -242,19 +246,19 @@ pseudo_include(struct context *ctx, struct line *line)
 {
 	FILE *fp;
 
-	if (line->argv[0].type != ARG_TYPE_STRING) {
+	if (ARG(line->argv, 0)->type != ARG_TYPE_STRING) {
 		//fail("File name is not a string. Did you forget to surround the file name in quotes?\n");
 		// TODO: error, arg is not a string
 		return -1;
 	}
 
-	fp = fopen(line->argv[0].str, "r");
+	fp = fopen(ARG(line->argv, 0)->str, "r");
 	if (!fp) {
 		// TODO: error failed to open file
 		return -1;
 	}
 
-	assemble(line->argv[0].str, fp, ctx);
+	assemble(ARG(line->argv, 0)->str, fp, ctx);
 	fclose(fp);
 
 	return 0;
@@ -272,11 +276,11 @@ pseudo_insert(struct context *ctx, struct line *line)
 	off_t size;
 	struct stat fstatus;
 
-	if (line->argv[0].type != ARG_TYPE_STRING) {
+	if (ARG(line->argv, 0)->type != ARG_TYPE_STRING) {
 		fail("Inserted file argument is not a string path.\n");
 	}
 
-	fd = open(line->argv[0].str, O_RDONLY);
+	fd = open(ARG(line->argv, 0)->str, O_RDONLY);
 	if (fd < 0) {
 		fail("Failed to open file.\n");
 	}
@@ -290,13 +294,13 @@ pseudo_insert(struct context *ctx, struct line *line)
 	FILE *inserted_file;
 	long size;
 
-	if (line->argv[0].type != ARG_TYPE_STRING) {
+	if (ARG(line->argv, 0)->type != ARG_TYPE_STRING) {
 		fail("Inserted file argument is not a string path.\n");
 	}
 
-	inserted_file = fopen(line->argv[0].str, "rb");
+	inserted_file = fopen(ARG(line->argv, 0)->str, "rb");
 	if (inserted_file == NULL) {
-		fail("Failed to open file \"%s\" to be inserted. Does the file exists?\n", line->argv[0].str);
+		fail("Failed to open file \"%s\" to be inserted. Does the file exists?\n", ARG(line->argv, 0)->str);
 	}
 
 	size = fsize(inserted_file);
@@ -327,7 +331,7 @@ pseudo_insert(struct context *ctx, struct line *line)
 	fclose(inserted_file);
 #endif /* defined(GASMIC_HAVE_POSIX_FILE_IO) */
 
-	printdf(("Inserted fname is %s\n", line->argv[0].str));
+	printdf(("Inserted fname is %s\n", ARG(line->argv, 0)->str));
 
 	return 0;
 }
@@ -336,7 +340,7 @@ static int
 pseudo_org(struct context *ctx, struct line *line)
 {
 	char *lend;
-	size_t new_address = strtoul(line->argv[0].str, &lend, 0) & address_mask;
+	size_t new_address = strtoul(ARG(line->argv, 0)->str, &lend, 0) & address_mask;
 	if (*lend == '\0') {
 		/*printdf(("new address is 0xzX\n", new_address));*/
 		printdf(("new address is 0x" SZXFMT "\n", new_address));

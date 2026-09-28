@@ -10,6 +10,12 @@
 Architecture *ARCH_MC6809;
 Architecture *ARCH_HD6309;
 
+enum mc6x09_arg_type {
+	MC6809_ARG_TYPE_TARGET = ARG_TYPE_LAST
+};
+
+typedef LINE_ARG(struct { } addr;) mc6809_line_arg_t;
+
 static const Register registers[] = {
 	{ "NONE", 0, MC6809 | HD6309 },
 	{ "A", 1, MC6809 | HD6309 },
@@ -169,6 +175,7 @@ HD6309_process_line(struct line *line, const struct instruction_register *instr_
 	ARCH_##arch_var->value = arch_var; \
 	/*strcpy(ARCH_##arch_var->name, arch_name);*/ \
 	ARCH_##arch_var->name = #arch_var; \
+	ARCH_##arch_var->argsz = sizeof(mc6809_line_arg_t); \
 	ARCH_##arch_var->byte_size = 8; \
 	ARCH_##arch_var->bytes_per_address = 2; \
 	ARCH_##arch_var->endianness = ARCH_ENDIAN_BIG; \
