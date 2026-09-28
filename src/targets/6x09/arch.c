@@ -73,25 +73,8 @@ process_ABX(struct context *c, struct line *l)
 	// opcode 0x3A
 	return 0;
 }
-//static const struct mnemonic I_ABX = { "ABX", MC6809 | HD6309, &process_ABX };
 
-/*static const Instruction I_ABX = {
-	"ABX",
-	MC6809 | HD6309,
-	ARG_ORDER_NONE,
-	{
-		{
-			MC6809_REGISTER(MC6809_REG_NONE),
-			{
-				{ ADDR_MODE_INHERENT, 1, 0x3A },
-				{ ADDR_MODE_INVALID, 0, 0 }
-			}
-		},
-		{ NULL, 0 }
-	}
-};
-
-static const Instruction I_ADC_ALL = {
+/*static const Instruction I_ADC_ALL = {
 	"ADC",
 	MC6809 | HD6309,
 	ARG_ORDER_TO_REG,

@@ -303,8 +303,12 @@ assemble(const char *fname, FILE *fp, struct context *parent)
 static int
 configure(int argc, char *const argv[])
 {
-	static const char *const help_str = "Usage: %s [-D symbol=value]... "
-		"[-m arch] [-o outfile] [-f outformat] [-e symfile]\n";
+	static const char *const help_str = "Usage: %s "
+		"[-D symbol=value]... "
+		"[-m arch] "
+		"[-o outfile] "
+		"[-f outformat] "
+		"[-e symfile]\n";
 	static const char *const arg_str = ARG_PREFIX "D:e:f:hm:o:";
 
 	int rcd = 0, c;

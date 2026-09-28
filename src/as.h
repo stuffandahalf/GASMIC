@@ -172,7 +172,6 @@ struct context {
 #define LINE_ARG_MAX 3
 struct line {
 	char *label;
-	//char *mnemonic;
 	const struct mnemonic *mnemonic;
 	struct line_arg argv[LINE_ARG_MAX];
 	size_t argc;
