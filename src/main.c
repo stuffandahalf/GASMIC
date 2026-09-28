@@ -61,14 +61,13 @@ line_processor *syntax_handlers[] = {
 Architecture **architectures[] = { TARGETS NULL };  /* NULL terminated array of targets */
 #undef TARGET
 
-#define FAILTO(err, tgt) \
-	fprintf(stderr, "ERROR (%d): %s\n", (err), errmsgs[err < errmsgc ? (err) : 0]); \
-	goto tgt;
-
-#define ERR_MSG_UNKNOWN		0
-#define ERR_MSG_ARGS		1
-#define ERR_MSG_FOPEN		2
-#define ERR_MSG_MEM			3
+enum errorcode {
+	ERR_MSG_UNKNOWN,
+	ERR_MSG_ARGS,
+	ERR_MSG_FOPEN,
+	ERR_MSG_MEM,
+	ERR_MSG_MAX
+};
 const char *errmsgs[] = {
 	"Unknown error.",
 	"Invalid number of command line arguments.",
@@ -89,8 +88,8 @@ main(int argc, char *const argv[])
 
 	init_targets();
 
-	if ((rcd = configure(argc, argv)) < 0) {
-		FAILTO(-rcd, cleanup);
+	if ((rcd = configure(argc, argv))) {
+		goto cleanup;
 	}
 
 #if 0
@@ -103,21 +102,23 @@ main(int argc, char *const argv[])
 	/* establish new context and handle file io */
 	fprintf(stderr, "in_fnamec = %zd\n", g_config.in_fnamec);
 	if (g_config.in_fnamec < 0) {
-		FAILTO(ERR_MSG_ARGS, cleanup);
+		rcd = ERR_MSG_ARGS;
+		goto cleanup;
 	} else if (g_config.in_fnamec == 0) {
 		if ((rcd = assemble("stdin", stdin, NULL)) < 0) {
-			FAILTO(-rcd, cleanup);
+			goto cleanup;
 		}
 	} else {
 		for (i = 0; i < g_config.in_fnamec; i++) {
 			FILE *fp = fopen(g_config.in_fnames[i], "r");
 			if (!fp) {
-				FAILTO(ERR_MSG_FOPEN, cleanup);
+				rcd = ERR_MSG_FOPEN;
+				goto cleanup;
 			}
 			rcd = assemble(g_config.in_fnames[i], fp, NULL);
 			fclose(fp);
-			if (rcd < 0) {
-				FAILTO(-rcd, cleanup);
+			if (rcd) {
+				goto cleanup;
 			}
 		}
 	}
@@ -201,8 +202,12 @@ cleanup:
 	destroy_targets();
 	g_context = NULL;
 	release();
-	if (rcd < 0) {
-		rcd = -rcd;
+	if (rcd != 0) {
+		if (rcd < 0 || rcd >= ERR_MSG_MAX) {
+			rcd = 0;
+		}
+		fprintf(stderr, "ERROR (%d): %s\n", (rcd), errmsgs[rcd]);
+		rcd = 1;
 	}
 	return rcd;
 }
@@ -230,14 +235,17 @@ assemble(const char *fname, FILE *fp, struct context *parent)
 {
 	struct line l;
 	struct context ctx = { fname, fp, parent, 0 };
+	//size_t length = 0;
 
 	while (fgets(buffer, LINEBUFFERSIZE, fp) != NULL) {
 		ctx.line_num++;
 		if (buffer[0] == '\0' || buffer[0] == '\n') {
 			continue;
 		}
+		//length = strlen(buffer);
 
 		/* initialize line state */
+		l.mnemonic = NULL;
 		l.line_state = LINE_STATE_CLEAR;
 		l.address_mode = ADDR_MODE_INVALID;
 		l.addr_mode_post_op = POST_OP_NONE;
@@ -295,8 +303,10 @@ assemble(const char *fname, FILE *fp, struct context *parent)
 static int
 configure(int argc, char *const argv[])
 {
-	static const char *const help_str = "Usage: %s [-m arch] [-o outfile] [-f outformat] [-e symfile]\n";
-	static const char *const arg_str = ARG_PREFIX "hm:o:f:e:";
+	static const char *const help_str = "Usage: %s [-D symbol=value]... "
+		"[-m arch] [-o outfile] [-f outformat] [-e symfile]\n";
+	static const char *const arg_str = ARG_PREFIX "D:e:f:hm:o:";
+
 	int rcd = 0, c;
 
 	g_config.arch = *architectures[0];
@@ -311,6 +321,13 @@ configure(int argc, char *const argv[])
 
 	while ((c = getopt(argc, argv, arg_str)) != -1) {
 		switch (c) {
+		case 'D':	/* define symbol */
+			break;
+		case 'e':   /* export symbol table */
+			g_config.export_fname = optarg;
+			break;
+		case 'f':	/* output file format */
+			break;
 		case 'm':	/* architecture */
 			g_config.arch = find_arch(optarg);
 			if (g_config.arch == NULL) {
@@ -324,11 +341,6 @@ configure(int argc, char *const argv[])
 				die("Failed to allocate new output file name");
 			}*/
 			g_config.out_fname = optarg;
-			break;
-		case 'f':	/* output file format */
-			break;
-		case 'e':   /* export symbol table */
-			g_config.export_fname = optarg;
 			break;
 #ifdef GNU_GETOPT
 		case '\1': /* position-independent files */
@@ -365,7 +377,7 @@ err:
 		g_config.in_fnamec = 0;
 	}
 #endif
-	return -rcd;
+	return rcd;
 }
 
 #if 0

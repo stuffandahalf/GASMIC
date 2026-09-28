@@ -214,7 +214,7 @@ typedef struct {
 	enum endian endianness;
 	enum syntax default_syntax;
 	const Register *registers;
-	const struct mnemonic **instructions;
+	const struct mnemonic *instructions;
 	size_t instructionc;
 	//void (*process_line)(struct line *line, const struct instruction_register *instr_reg, Data *data);
 	int (*parse_arg)(struct line *, const char *);

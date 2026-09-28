@@ -6,6 +6,7 @@
 
 static RULE(mnemonic);
 static RULE(args);
+static RULE(arg);
 
 int
 consume_seq(const char *line, const char *seq, int flags)
@@ -13,6 +14,7 @@ consume_seq(const char *line, const char *seq, int flags)
 	int i = 0;
 	char l, s;
 
+	//printf("SEQ \"%p\", CHAR '%c' (%d)\n", seq, line[i], line[i]);
 	while (line[i] != '\0' && seq[i] != '\0') {
 		l = line[i];
 		s = seq[i];
@@ -72,7 +74,7 @@ consume_comment(const char *line)
 
 	i += consume_seq(line + i, ";", 1);
 	if (i) {
-		while (!consume_range(line + i, "\n\0", 1)) {
+		while (line[i] != '\0' && !consume_range(line + i, "\n", 0)) {
 			i++;
 		}
 	}
@@ -95,12 +97,13 @@ parse_line(struct line *l, const char *buffer)
 	i += parse_label(l, buffer + i);
 	i += consume_spaces(buffer + i);
 	i += ms = parse_mnemonic(l, buffer + i);
-	i += consume_spaces(buffer + i);
+	//i += consume_spaces(buffer + i);
 	if (ms) {
 		/* parse_args */
 		i += parse_args(l, buffer + i);
 		//i += consume_spaces(buffer + i);
 	}
+	i += consume_spaces(buffer + i);
 	i += consume_comment(buffer + i);
 
 	if (buffer[i] != '\n' && buffer[i] != '\0') {
@@ -132,7 +135,6 @@ parse_label(struct line *l, const char *buffer)
 	int i = 0, ls, c;
 
 	i += parse_identifier(l, buffer + i);
-
 	i += c = consume_seq(buffer + i, ".", 0);
 	if (c) {
 		i += parse_identifier(l, buffer + i);
@@ -151,6 +153,7 @@ parse_label(struct line *l, const char *buffer)
 	}
 
 	/* resolve label */
+	//add_label(buffer, ls);
 
 	return i;
 }
@@ -162,7 +165,7 @@ parse_mnemonic(struct line *l, const char *buffer)
 	int j, k;
 
 	struct {
-		const struct mnemonic **tab;
+		const struct mnemonic *tab;
 		size_t tabsz;
 		const char *prefix;
 	} tabs[] = {
@@ -177,13 +180,17 @@ parse_mnemonic(struct line *l, const char *buffer)
 			tl += consume_seq(buffer + i, tabs[j].prefix, 0);
 		}
 		for (k = 0; !il && k < tabs[j].tabsz; k++) {
-			il = consume_seq(buffer + tl, tabs[j].tab[k]->mnemonic,
+			il = consume_seq(buffer + tl, tabs[j].tab[k].mnemonic,
 					SEQ_CASEINSENSITIVE);
 
 			if (il) {
-				l->mnemonic = tabs[j].tab[k];
+				l->mnemonic = &tabs[j].tab[k];
 			}
 		}
+	}
+
+	if (l->mnemonic == NULL) {
+		return 0;
 	}
 
 	i += tl + il;
@@ -199,19 +206,39 @@ parse_args(struct line *l, const char *buffer)
 	int ai;
 #endif
 
+	i += consume_spaces(buffer + i);
+	if (!i) {
+		/* junk characters after mnemonic */
+		return 0;
+	}
+	/*i += consume_spaces(buffer + i);
+	if (buffer[i] == '\0') {
+		return i;
+	}*/
 	do {
 		i += consume_spaces(buffer + i);
 #ifndef NDEBUG
 		ai = i;
 #endif
 		i += c = g_config.arch->parse_arg(l, buffer + i);
+		if (!c) {
+			i += c = parse_arg(l, buffer + i);
+		}
 #ifndef NDEBUG
-		fprintf(stderr, "ARG = %.*s\n", c, &buffer[ai]);
+		if (c) {
+			fprintf(stderr, "ARG = %.*s\n", c, &buffer[ai]);
+		}
 #endif
 		i += consume_spaces(buffer + i);
 	} while ((i += c = consume_seq(buffer + i, ",", 0)), c);
 	
 	return i;
+}
+
+static int
+parse_arg(struct line *l, const char *buffer)
+{
+	return 0;
 }
 
 int
@@ -224,7 +251,7 @@ parse_string(struct line *l, const char *buffer)
 	if (!(i += c = consume_seq(buffer + i, q, 0), c)) {
 		return 0;
 	}
-	while (!consume_seq(buffer + i, q, 0) || esc) {
+	while (buffer[i] != '\0' && (!consume_seq(buffer + i, q, 0) || esc)) {
 		esc = !esc && buffer[i] == '\\';
 		i++;
 	}

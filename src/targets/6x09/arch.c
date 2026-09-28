@@ -1,6 +1,12 @@
 #include "arch.h"
 #include "../../parser.h"
 
+#define INST(name, arch) { \
+	.mnemonic = (#name), \
+	.compatibility = arch, \
+	.evaluate = &process_##name \
+}
+
 Architecture *ARCH_MC6809;
 Architecture *ARCH_HD6309;
 
@@ -36,7 +42,10 @@ static const Register registers[] = {
 static int
 parse_arg(struct line *l, const char *buffer)
 {
+	return 0;
+#if 0
 	int i = 0, n;
+
 	if ((n = parse_string(l, buffer + i))) {
 		i += n;
 		return n;
@@ -44,22 +53,27 @@ parse_arg(struct line *l, const char *buffer)
 		i += n;
 		return n;
 	}
-	while (!consume_range(buffer + i, "\n, ", 1)) {
+	while (buffer[i] != '\0' && !consume_range(buffer + i, ";\n, ", 1)) {
 		i++;
 	}
 #ifndef NDEBUG
 	//fprintf(stderr, "ARG %.*s\n", i, buffer);
 #endif
 	return i;
+#endif
 }
 
 
 int
 process_ABX(struct context *c, struct line *l)
 {
+	if (l->argc != 0) {
+		return 0;
+	}
+	// opcode 0x3A
 	return 0;
 }
-static const struct mnemonic I_ABX = { "ABX", MC6809 | HD6309, &process_ABX };
+//static const struct mnemonic I_ABX = { "ABX", MC6809 | HD6309, &process_ABX };
 
 /*static const Instruction I_ABX = {
 	"ABX",
@@ -141,12 +155,15 @@ static const Instruction I_ADCR_HD6309 = {
 	}
 };*/
 
-static const struct mnemonic *instructions[] = {
-	&I_ABX/*,
+static const struct mnemonic instructions[] = {
+	INST(ABX, MC6809 | HD6309)
+#if 0
+	,
 	&I_ADC_ALL,
 	&I_ADC_ALL,
 	&I_ADC_HD6309,
-	&I_ADCR_HD6309,*/
+	&I_ADCR_HD6309,
+#endif
 };
 static const size_t instructionc = sizeof(instructions) / sizeof(instructions[0]);
 
