@@ -110,6 +110,7 @@ struct instruction {
 enum arg_type {
 	ARG_TYPE_UNPROCESSED,
 	ARG_TYPE_STRING,
+	ARG_TYPE_NUM,
 	ARG_TYPE_LAST
 	/*ARG_TYPE_UNSIGNED,
 	ARG_TYPE_SIGNED,
@@ -128,6 +129,7 @@ enum arg_type {
 		union { \
 			char *raw; \
 			char *str; \
+			long num; \
 			fields \
 		}; \
 	}
@@ -177,14 +179,11 @@ struct mnemonic {
 	char mnemonic[MAX_MNEMONIC_LEN];
 	int8_t compatibility;					// supported architectures for general instruction support
 	int (*evaluate)(struct context *ctx, struct line *l);
-	/*struct {
-		int8_t compatibility;
-		enum address_mode mode;
-		uint8_t opcodesz;
-		uint8_t opcode[MAX_OPCODE_LEN];
-		int8_t nargs;
-		line_processor *callback;
-	} forms[MAX_MNEMONIC_LEN];*/
+};
+
+struct basedef {
+	char *prefix;
+	int base;
 };
 
 typedef struct {
@@ -195,6 +194,8 @@ typedef struct {
 	size_t instructionc;
 	//void (*process_line)(struct line *line, const struct instruction_register *instr_reg, Data *data);
 	int (*parse_arg)(struct line *, const char *);
+	const struct basedef *basetab;
+	size_t basetabc;
 
 	/* possibly unnecessary values */
 	uint8_t byte_size;  /* bits per byte */

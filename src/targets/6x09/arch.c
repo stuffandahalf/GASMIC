@@ -42,6 +42,14 @@ static const Register registers[] = {
 //static const int regc = sizeof(registers) / sizeof(Register) - 1;
 #endif
 
+static const struct basedef basetab[] = {
+	{ .prefix = "$", .base = 16 },
+	{ .prefix = "&", .base = 10 },
+	{ .prefix = "@", .base = 8 },
+	{ .prefix = "%", .base = 2 }
+};
+static const size_t basetabc = sizeof(basetab) / sizeof(basetab[0]);
+
 #define MC6809_REGISTER(reg) (((reg) >= 0 && (reg) < HD6309_REG_E) ? &(registers[reg]) : NULL)
 #define HD6309_REGISTER(reg) (((reg) >= 0 && (reg) <= HD6309_REG_MD) ? &(registers[reg]) : NULL)
 
@@ -68,7 +76,6 @@ parse_arg(struct line *l, const char *buffer)
 	return i;
 #endif
 }
-
 
 int
 process_ABX(struct context *c, struct line *l)
@@ -176,6 +183,8 @@ HD6309_process_line(struct line *line, const struct instruction_register *instr_
 	/*strcpy(ARCH_##arch_var->name, arch_name);*/ \
 	ARCH_##arch_var->name = #arch_var; \
 	ARCH_##arch_var->argsz = sizeof(mc6809_line_arg_t); \
+	ARCH_##arch_var->basetab = basetab; \
+	ARCH_##arch_var->basetabc = basetabc; \
 	ARCH_##arch_var->byte_size = 8; \
 	ARCH_##arch_var->bytes_per_address = 2; \
 	ARCH_##arch_var->endianness = ARCH_ENDIAN_BIG; \

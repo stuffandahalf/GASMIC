@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
 #include "as.h"
 #include "parser.h"
@@ -7,6 +8,7 @@
 static RULE(mnemonic);
 static RULE(args);
 static RULE(arg);
+static RULE(number);
 
 int
 consume_seq(const char *line, const char *seq, int flags)
@@ -79,10 +81,12 @@ consume_comment(const char *line)
 		}
 	}
 
+#if 0
 #ifndef NDEBUG
 	if (i) {
-		fprintf(stderr, "COMMENT %.*s\n", i, line);
+		fprintf(stderr, "COMMENT \"%.*s\"\n", i, line);
 	}
+#endif
 #endif
 
 	return i;
@@ -99,7 +103,6 @@ parse_line(struct line *l, const char *buffer)
 	i += ms = parse_mnemonic(l, buffer + i);
 	//i += consume_spaces(buffer + i);
 	if (ms) {
-		/* parse_args */
 		i += parse_args(l, buffer + i);
 		//i += consume_spaces(buffer + i);
 	}
@@ -108,7 +111,7 @@ parse_line(struct line *l, const char *buffer)
 
 	if (buffer[i] != '\n' && buffer[i] != '\0') {
 #ifndef NDEBUG
-		fprintf(stderr, "LINE END? = %c (%d), REMAINING %s\n", buffer[i], buffer[i], &buffer[i]);
+		fprintf(stderr, "LINE END [%d]? = %c (%d), REMAINING %s\n", i, buffer[i], buffer[i], &buffer[i]);
 #endif
 		return 0;
 	}
@@ -202,33 +205,15 @@ static int
 parse_args(struct line *l, const char *buffer)
 {
 	int i = 0, c;
-#ifndef NDEBUG
-	int ai;
-#endif
 
 	i += consume_spaces(buffer + i);
 	if (!i) {
 		/* junk characters after mnemonic */
 		return 0;
 	}
-	/*i += consume_spaces(buffer + i);
-	if (buffer[i] == '\0') {
-		return i;
-	}*/
 	do {
 		i += consume_spaces(buffer + i);
-#ifndef NDEBUG
-		ai = i;
-#endif
-		i += c = g_config.arch->parse_arg(l, buffer + i);
-		if (!c) {
-			i += c = parse_arg(l, buffer + i);
-		}
-#ifndef NDEBUG
-		if (c) {
-			fprintf(stderr, "ARG = %.*s\n", c, &buffer[ai]);
-		}
-#endif
+		i += c = parse_arg(l, buffer + i);
 		i += consume_spaces(buffer + i);
 	} while ((i += c = consume_seq(buffer + i, ",", 0)), c);
 	
@@ -238,7 +223,39 @@ parse_args(struct line *l, const char *buffer)
 static int
 parse_arg(struct line *l, const char *buffer)
 {
-	return 0;
+	int o = 0, i = 0;
+
+	const parse_token tokens[] = {
+		parse_string,
+		parse_expr,
+		g_config.arch->parse_arg
+	};
+	size_t tokenc = sizeof(tokens) / sizeof(tokens[0]);
+
+	if (l->argc == l->argsz) {
+		/* need to allocate new argument */
+		if (!l->argsz) {
+			l->argsz = 1;
+		} else {
+			l->argsz += 2;
+		}
+		l->argv = realloc(l->argv, g_config.arch->argsz * l->argsz);
+		if (!l->argv) {
+			/* failed to allocate arguments */
+			return 0;
+		}
+	}
+
+	while (!o && i < tokenc) {
+		o += tokens[i++](l, buffer + o);
+	}
+
+	if (o) {
+		/* need to indicate a successful parse */
+		l->argc++;
+	}
+
+	return o;
 }
 
 int
@@ -257,6 +274,47 @@ parse_string(struct line *l, const char *buffer)
 	}
 	if (!(i += c = consume_seq(buffer + i, q, 0), c)) {
 		return 0;
+	}
+	return i;
+}
+
+int
+parse_expr(struct line *l, const char *buffer)
+{
+	return parse_number(l, buffer);
+}
+
+static int
+parse_number(struct line *l, const char *buffer)
+{
+	int i = 0, j, b = 10, c = 0;
+	long n = 0;
+
+#if 0
+	static const struct basedef *basetab[] = {
+		{ .prefix = "0x", .base = 16 },
+		{ .prefix = "0b", .base = 2 },
+		{ .prefix = "0", .base = 8 },
+		{ .prefix = "", .base = 10 }
+	}
+	const struct basedef *basetabtab[] = {
+		g_config.arch->basetab, &basetab
+	}
+#endif
+
+	for (j = 0; !c && j < g_config.arch->basetabc; j++) {
+		if ((i += c = consume_seq(buffer + i, g_config.arch->basetab[j].prefix, 0)), c) {
+			b = g_config.arch->basetab[j].base;
+		}
+	}
+	while ((i += c = consume_range(buffer + i, NUM_RNG, 1)), c) {
+		c = buffer[i - 1] - '0';
+		n = n * b + c;
+	};
+
+	if (i) {
+		ARG(l->argv, l->argc)->type = ARG_TYPE_NUM;
+		ARG(l->argv, l->argc)->num = n;
 	}
 	return i;
 }

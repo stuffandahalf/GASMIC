@@ -16,8 +16,9 @@ struct line;
 typedef int (*parse_token)(struct line *, const char *);
 
 RULE(line);
-RULE(string);
 RULE(label);
+RULE(string);
+RULE(expr);
 
 /* parser utilities */
 #define SEQ_CASEINSENSITIVE 1

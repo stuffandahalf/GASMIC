@@ -243,12 +243,21 @@ assemble(const char *fname, FILE *fp, struct context *parent)
 		if (buffer[0] == '\0' || buffer[0] == '\n') {
 			continue;
 		}
+#ifndef NDEBUG
+		char *c = strchr(buffer, '\n');
+		if (c) {
+			*c = '\0';
+		}
+		fprintf(stderr, "BUFFER[%zu] = \"%s\"\n", strlen(buffer), buffer);
+#endif
 		//length = strlen(buffer);
 
 		/* initialize line state */
 		l.mnemonic = NULL;
 		l.line_state = LINE_STATE_CLEAR;
+		l.argv = NULL;
 		l.argc = 0;
+		l.argsz = 0;
 
 		/* process line */
 		if (!parse_line(&l, buffer)) {
@@ -274,10 +283,13 @@ assemble(const char *fname, FILE *fp, struct context *parent)
 				} else {
 					fprintf(stderr, ", ");
 				}
-				if (((line_arg_t *)l.argv)[i].type == ARG_TYPE_UNPROCESSED) {
-					fprintf(stderr, "%s", ((line_arg_t *)l.argv)[i].raw);
-				} else {
+				switch (ARG(l.argv, i)->type) {
+				case ARG_TYPE_STRING:
+					fprintf(stderr, "%s", ARG(l.argv, i)->str);
+					break;
+				default:
 					fprintf(stderr, "?");
+					break;
 				}
 			}
 		}
@@ -287,12 +299,23 @@ assemble(const char *fname, FILE *fp, struct context *parent)
 		if (l.line_state & FLAG(LINE_STATE_LABEL)) {	  /* If current line has a label */
 			add_label(&l);
 		}
+#if 1
+		if (l.mnemonic) {
+			/* TODO: not ready for this yet */
+			//l.mnemonic->evaluate(&ctx, &l);
+		}
+#else
 		if (l.line_state & FLAG(LINE_STATE_MNEMONIC)) {   /* If current line has a mnemonic */
 			//g_config.syntax.evaluate_args(&l);
 			//syntax_handlers[g_config.syntax]->evaluate_args(&l);
 			//evaluate_args(&l);
 
 			//evaluate_mnemonic(&ctx, &l);
+		}
+#endif
+
+		if (l.argv) {
+			free(l.argv);
 		}
 	}
 	return 0;
