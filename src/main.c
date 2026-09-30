@@ -132,11 +132,11 @@ main(int argc, char *const argv[])
 	while (sym != NULL) {
 		printdf(("%s = %" PRId64 "\n", sym->label, sym->value));
 
-		sfree(sym->label);
-		sym->label = NULL;
+		//sfree(sym->label);
+		//sym->label = NULL;
 		tmp_sym = sym;
 		sym = sym->next;
-		sfree(tmp_sym);
+		free(tmp_sym);
 	}
 #endif /* NDEBUG */
 
@@ -253,8 +253,9 @@ assemble(const char *fname, FILE *fp, struct context *parent)
 		//length = strlen(buffer);
 
 		/* initialize line state */
-		l.mnemonic = NULL;
 		l.line_state = LINE_STATE_CLEAR;
+		l.label = NULL;
+		l.mnemonic = NULL;
 		l.argv = NULL;
 		l.argc = 0;
 		l.argsz = 0;
@@ -268,8 +269,8 @@ assemble(const char *fname, FILE *fp, struct context *parent)
 
 #ifndef NDEBUG
 		fprintf(stderr, "%zu\t", ctx.line_num);
-		if (l.line_state & LINE_STATE_LABEL) {
-			fprintf(stderr, "%s:", l.label);
+		if (l.label) {
+			fprintf(stderr, "%s:", l.label->label);
 		} else {
 			fprintf(stderr, "\t");
 		}
@@ -299,9 +300,11 @@ assemble(const char *fname, FILE *fp, struct context *parent)
 		fprintf(stderr, "\n");
 #endif
 
+#if 0
 		if (l.line_state & FLAG(LINE_STATE_LABEL)) {	  /* If current line has a label */
 			add_label(&l);
 		}
+#endif
 #if 1
 		if (l.mnemonic) {
 			/* TODO: not ready for this yet */

@@ -40,9 +40,9 @@ enum arg_order {
 };
 
 struct symbol {
-	char *label;
 	int64_t value;
 	struct symbol *next;
+	char label[0];
 };
 
 struct symboltab {
@@ -157,7 +157,8 @@ struct context {
 
 //#define LINE_ARG_MAX 3
 struct line {
-	char *label;
+	//char *label;
+	struct symbol *label;
 	const struct mnemonic *mnemonic;
 	//struct line_arg argv[LINE_ARG_MAX];
 	void *argv;
@@ -239,7 +240,8 @@ const Register *find_reg(const char *name);
 
 int init_data_table();
 struct data_entry *init_data(struct data_entry *data);
-void add_label(struct line *line);
+//void add_label(struct line *line);
+struct symbol *add_label(const char *, size_t);
 void add_data(struct data_entry *data);
 
 void prepare_line(struct line *line);

@@ -156,6 +156,7 @@ parse_label(struct line *l, const char *buffer)
 	}
 
 	/* resolve label */
+	l->label = add_label(buffer, ls);
 	//add_label(buffer, ls);
 
 	return i;

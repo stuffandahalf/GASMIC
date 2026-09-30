@@ -55,6 +55,42 @@ resolve_label(char *symbol)
 }
 
 
+struct symbol *
+add_label(const char *buffer, size_t len)
+{
+	struct symbol *parent = NULL, *self = NULL;
+	size_t plen = 0;
+
+	if (buffer[0] == '.') {
+		/* relative label, need to resolve */
+		parent = symtab.last_parent;
+		if (!parent) {
+			return NULL;
+		}
+		plen = strlen(parent->label);
+	}
+#ifndef NDEBUG
+	fprintf(stderr, "blen = %zu, plen = %zu\n", len, plen);
+#endif
+	self = malloc(sizeof(struct symbol) + sizeof(char) * (plen + len + 1));
+	if (!self) {
+		return NULL;
+	}
+	self->value = 0;
+	self->next = NULL;
+	if (parent && plen) {
+		strncpy(self->label, parent->label, plen);
+	}
+	strncpy(&self->label[plen], buffer, len);
+	self->label[plen + len] = '\0';
+#ifndef NDEBUG
+	fprintf(stderr, "LABEL[%d] = \"%.*s\" (resolved[%d] = %.*s)\n", (int)len, (int)len, buffer, (int)(plen + len), (int)(plen + len), self->label);
+#endif
+	
+	return self;
+}
+
+#if 0
 void
 add_label(struct line *line)
 {
@@ -110,6 +146,7 @@ add_label(struct line *line)
 	}
 	symtab.last = sym;
 }
+#endif
 
 int
 init_data_table()
