@@ -373,5 +373,5 @@ const struct mnemonic pseudo_ops[] = {
 	PSEUDO_OP("INSERT", &pseudo_insert, 1),
 	PSEUDO_OP("ORG", &pseudo_org, 1),
 };
-const size_t pseudo_opc = sizeof(pseudo_ops) / sizeof(pseudo_ops[0]);
+const size_t pseudo_opc = ELEM_COUNT(pseudo_ops);
 

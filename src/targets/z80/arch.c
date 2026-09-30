@@ -25,7 +25,7 @@ static const Register registers[] = {
 	{ "", 0, 0 }
 };
 #ifndef NDEBUG
-static const int regc = sizeof(registers) / sizeof(Register) - 1;
+static const int regc = ELEM_COUNT(registers) - 1;
 #endif
 
 #define Z80_REGISTER(reg) (((reg) >= 0 && (reg) <= Z80_REG_PC) ? &(registers[reg]) : NULL)

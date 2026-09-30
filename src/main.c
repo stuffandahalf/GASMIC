@@ -74,7 +74,7 @@ const char *errmsgs[] = {
 	"Failed to open file.",
 	"Failed to allocate memory."
 };
-size_t errmsgc = sizeof(errmsgs) / sizeof(errmsgs[0]);
+size_t errmsgc = ELEM_COUNT(errmsgs);
 
 int
 main(int argc, char *const argv[])
@@ -286,6 +286,9 @@ assemble(const char *fname, FILE *fp, struct context *parent)
 				switch (ARG(l.argv, i)->type) {
 				case ARG_TYPE_STRING:
 					fprintf(stderr, "%s", ARG(l.argv, i)->str);
+					break;
+				case ARG_TYPE_NUM:
+					fprintf(stderr, "%ld", ARG(l.argv, i)->num);
 					break;
 				default:
 					fprintf(stderr, "?");

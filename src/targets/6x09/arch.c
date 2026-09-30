@@ -39,7 +39,7 @@ static const Register registers[] = {
 	/*{ NULL, 0, 0 }*/
 };
 #ifndef NDEBUG
-//static const int regc = sizeof(registers) / sizeof(Register) - 1;
+//static const int regc = ELEM_COUNT(registers) - 1;
 #endif
 
 static const struct basedef basetab[] = {
@@ -48,7 +48,7 @@ static const struct basedef basetab[] = {
 	{ .prefix = "@", .base = 8 },
 	{ .prefix = "%", .base = 2 }
 };
-static const size_t basetabc = sizeof(basetab) / sizeof(basetab[0]);
+static const size_t basetabc = ELEM_COUNT(basetab);
 
 #define MC6809_REGISTER(reg) (((reg) >= 0 && (reg) < HD6309_REG_E) ? &(registers[reg]) : NULL)
 #define HD6309_REGISTER(reg) (((reg) >= 0 && (reg) <= HD6309_REG_MD) ? &(registers[reg]) : NULL)
@@ -161,7 +161,7 @@ static const struct mnemonic instructions[] = {
 	&I_ADCR_HD6309,
 #endif
 };
-static const size_t instructionc = sizeof(instructions) / sizeof(instructions[0]);
+static const size_t instructionc = ELEM_COUNT(instructions);
 
 #if 0
 static void

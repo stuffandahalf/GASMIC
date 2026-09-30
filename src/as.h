@@ -17,6 +17,8 @@
 #define FLAG(f) ((unsigned int)(f))
 #endif
 
+#define ELEM_COUNT(obj) (sizeof((obj)) / sizeof((obj)[0]))
+
 enum endian {
 	ARCH_ENDIAN_BIG = 1,
 	ARCH_ENDIAN_LITTLE = 2,

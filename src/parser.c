@@ -175,7 +175,7 @@ parse_mnemonic(struct line *l, const char *buffer)
 		{ pseudo_ops, pseudo_opc, "." },
 		{ g_config.arch->instructions, g_config.arch->instructionc, NULL }
 	};
-	size_t tabsz = sizeof(tabs) / sizeof(tabs[0]);
+	size_t tabsz = ELEM_COUNT(tabs);
 
 	for (j = 0; !il && j < tabsz; j++) {
 		il = 0, tl = i;
@@ -230,7 +230,7 @@ parse_arg(struct line *l, const char *buffer)
 		parse_expr,
 		g_config.arch->parse_arg
 	};
-	size_t tokenc = sizeof(tokens) / sizeof(tokens[0]);
+	size_t tokenc = ELEM_COUNT(tokens);
 
 	if (l->argc == l->argsz) {
 		/* need to allocate new argument */
@@ -287,35 +287,53 @@ parse_expr(struct line *l, const char *buffer)
 static int
 parse_number(struct line *l, const char *buffer)
 {
-	int i = 0, j, b = 10, c = 0;
-	long n = 0;
-
-#if 0
-	static const struct basedef *basetab[] = {
+	/* would prefer if octal could be 0 prefixed like in C */
+	static const struct basedef basetab[] = {
 		{ .prefix = "0x", .base = 16 },
 		{ .prefix = "0b", .base = 2 },
-		{ .prefix = "0", .base = 8 },
-		{ .prefix = "", .base = 10 }
-	}
-	const struct basedef *basetabtab[] = {
-		g_config.arch->basetab, &basetab
-	}
-#endif
+		{ .prefix = "0o", .base = 8 }
+	};
+	static size_t basetabsz = ELEM_COUNT(basetab);
 
-	for (j = 0; !c && j < g_config.arch->basetabc; j++) {
-		if ((i += c = consume_seq(buffer + i, g_config.arch->basetab[j].prefix, 0)), c) {
-			b = g_config.arch->basetab[j].base;
+	int i = 0, j, k, b = 10, c = 0, s = 0;
+	long n = 0;
+	char range[] = NUM_RNG UCASE_RNG;
+	char *p;
+
+	struct { const struct basedef *tab; size_t tabsz; } tabtab[] = {
+		{ g_config.arch->basetab, g_config.arch->basetabc },
+		{ basetab, basetabsz }
+	};
+	size_t tabtabc = ELEM_COUNT(tabtab);
+
+	for (k = 0; !c && k < tabtabc; k++) {
+		if (!tabtab[k].tab) {
+			continue;
+		}
+		for (j = 0; !c && j < tabtab[k].tabsz; j++) {
+			if ((i += c = consume_seq(buffer + i, tabtab[k].tab[j].prefix, SEQ_CASEINSENSITIVE)), c) {
+				b = tabtab[k].tab[j].base;
+			}
 		}
 	}
-	while ((i += c = consume_range(buffer + i, NUM_RNG, 1)), c) {
-		c = buffer[i - 1] - '0';
+
+	/* cap characters that can be used for digits */
+	range[b] = '\0';
+	while (buffer[i + s] != '\0' && (p = strchr(range, toupper(buffer[i + s])))) {
+		c = p - range;
 		n = n * b + c;
+
+		s++;
 	};
 
-	if (i) {
-		ARG(l->argv, l->argc)->type = ARG_TYPE_NUM;
-		ARG(l->argv, l->argc)->num = n;
+	if (s == 0) {
+		return 0;
 	}
+
+	i += s;
+	ARG(l->argv, l->argc)->type = ARG_TYPE_NUM;
+	ARG(l->argv, l->argc)->num = n;
+
 	return i;
 }
 
