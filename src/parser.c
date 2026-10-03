@@ -263,19 +263,33 @@ int
 parse_string(struct line *l, const char *buffer)
 {
 	int esc = 0;
+	//size_t l;
+	size_t start, length = 0;
 	static const char *q = "\"";
 
 	int i = 0, c;
 	if (!(i += c = consume_seq(buffer + i, q, 0), c)) {
 		return 0;
 	}
-	while (buffer[i] != '\0' && (!consume_seq(buffer + i, q, 0) || esc)) {
+
+	start = i;
+	while (buffer[i + length] != '\0' && (!consume_seq(buffer + i + length, q, 0) || esc)) {
 		esc = !esc && buffer[i] == '\\';
-		i++;
+		length++;
 	}
+	i += length;
+
 	if (!(i += c = consume_seq(buffer + i, q, 0), c)) {
 		return 0;
 	}
+
+	ARG(l->argv, l->argc)->str = malloc(length + 1);
+	if (!ARG(l->argv, l->argc)->str) {
+		return 0;
+	}
+	strncpy(ARG(l->argv, l->argc)->str, &buffer[start], length);
+	ARG(l->argv, l->argc)->type = ARG_TYPE_STRING;
+
 	return i;
 }
 

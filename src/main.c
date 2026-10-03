@@ -91,7 +91,6 @@ main(int argc, char *const argv[])
 	if ((rcd = configure(argc, argv))) {
 		goto cleanup;
 	}
-	printf("ARG_SIZE %zu\n", g_config.arch->argsz);
 
 #if 0
 	init_address_mask();
@@ -243,12 +242,14 @@ assemble(const char *fname, FILE *fp, struct context *parent)
 		if (buffer[0] == '\0' || buffer[0] == '\n') {
 			continue;
 		}
+#if 0
 #ifndef NDEBUG
 		char *c = strchr(buffer, '\n');
 		if (c) {
 			*c = '\0';
 		}
 		fprintf(stderr, "BUFFER[%zu] = \"%s\"\n", strlen(buffer), buffer);
+#endif
 #endif
 		//length = strlen(buffer);
 
@@ -286,7 +287,8 @@ assemble(const char *fname, FILE *fp, struct context *parent)
 				}
 				switch (ARG(l.argv, i)->type) {
 				case ARG_TYPE_STRING:
-					fprintf(stderr, "%s", ARG(l.argv, i)->str);
+					fprintf(stderr, "\"%s\"", ARG(l.argv, i)->str);
+					free(ARG(l.argv, i)->str);
 					break;
 				case ARG_TYPE_NUM:
 					fprintf(stderr, "%ld", ARG(l.argv, i)->num);
@@ -416,211 +418,4 @@ err:
 #endif
 	return rcd;
 }
-
-#if 0
-static void
-parse_line(struct line *l, char *buffer)
-{
-	register char *c;
-	struct line_arg *la = NULL;
-	enum arg_type arg_type = ARG_TYPE_UNPROCESSED;
-	for (c = buffer; *c != '\0'; c++) {
-		switch (*c) {
-		case '"':
-			if (l->line_state & FLAG(LINE_STATE_SINGLE_QUOTE)) {
-				break;
-			} else if (!(l->line_state & FLAG(LINE_STATE_DOUBLE_QUOTE)) && c != buffer) {
-				fail("Quotes must occur at the beginning of a field.\n");
-			}
-			l->line_state ^= FLAG(LINE_STATE_DOUBLE_QUOTE);
-			if (l->line_state & FLAG(LINE_STATE_DOUBLE_QUOTE)) {
-				arg_type = ARG_TYPE_STRING;
-				buffer++;
-			} else {
-				*c = '\0';
-			}
-			break;
-		case '\'':
-			if (l->line_state & FLAG(LINE_STATE_DOUBLE_QUOTE)) {
-				break;
-			} else if (!(l->line_state & FLAG(LINE_STATE_SINGLE_QUOTE)) && c != buffer) {
-				fail("Quotes must occur at the beginning of a field.\n");
-			}
-			l->line_state ^= FLAG(LINE_STATE_SINGLE_QUOTE);
-			if (l->line_state & FLAG(LINE_STATE_SINGLE_QUOTE)) {
-				arg_type = ARG_TYPE_STRING;
-				buffer++;
-			} else {
-				*c = '\0';
-			}
-			break;
-		case ']':
-			if (l->line_state & FLAG(LINE_STATE_BOUNDED)) {
-				break;
-			}
-			if (!(l->line_state & FLAG(LINE_STATE_BRACKET))) {
-				fail("']' requires '[' first.");
-			}
-		case '[':
-			if (l->line_state & FLAG(LINE_STATE_BOUNDED)) {
-				break;
-			}
-			l->line_state ^= FLAG(LINE_STATE_BRACKET);
-			break;
-
-		case '\t':
-		case ' ':
-			if (l->line_state & FLAG(LINE_STATE_BOUNDED)) {
-				break;
-			}
-			if (c == buffer) {
-				buffer++;
-			}
-			/*else if (l->line_state & LINE_STATE_MNEMONIC) {
-				fail("Mnemonic already set.\n");
-			}*/
-			else if (!(l->line_state & FLAG(LINE_STATE_MNEMONIC))) {
-				*c = '\0';
-				l->mnemonic = buffer;
-				l->line_state |= FLAG(LINE_STATE_MNEMONIC);
-				buffer = c;
-				buffer++;
-			}
-			break;
-		case ',':
-			/*if (c == buffer) {
-				break;
-			}*/
-			if (l->line_state & FLAG(LINE_STATE_BOUNDED)) {
-				break;
-			}
-			if (!(l->line_state & FLAG(LINE_STATE_MNEMONIC))) {
-				fail("No mnemonic preceding argument.\n");
-			}
-			if (l->argc == LINE_ARG_MAX) {
-				fail("Too many arguments provided. (max %d)\n", LINE_ARG_MAX);
-			}
-			la = &(l->argv[l->argc++]);
-			la->type = arg_type;
-			//la->state = ARG_STATE_CLEAR;
-			//la->addr_mode = ADDR_MODE_INVALID;
-			la->str = buffer;
-			*c = '\0';
-			buffer = c;
-			buffer++;
-			arg_type = ARG_TYPE_UNPROCESSED;
-			break;
-		case '\n':
-			if (l->line_state & (FLAG(LINE_STATE_SINGLE_QUOTE) | FLAG(LINE_STATE_DOUBLE_QUOTE))) {
-				fail("Unterminated string constant.\n");
-			}
-			*c = '\0';
-			if (!(l->line_state & FLAG(LINE_STATE_MNEMONIC))) {
-				l->mnemonic = buffer;
-				buffer = c;
-				buffer++;
-				l->line_state |= FLAG(LINE_STATE_MNEMONIC);
-			} else {
-				if (l->argc == LINE_ARG_MAX) {
-					fail("Too many arguments provided. (max %d)\n", LINE_ARG_MAX);
-				}
-				la = &(l->argv[l->argc++]);
-				la->type = arg_type;
-				la->str = buffer;
-				arg_type = ARG_TYPE_UNPROCESSED;
-				/* *c = '\0';*/
-			}
-			buffer = c;
-			buffer++;
-			break;
-		case ':':
-			if (l->line_state & FLAG(LINE_STATE_BOUNDED)) {
-				break;
-			} else if (l->line_state & FLAG(LINE_STATE_LABEL)) {
-				fail("Invalid label.\n");
-			} else if (l->line_state & FLAG(LINE_STATE_MNEMONIC)) {
-				fail("Label must occur at the beginning of a line.\n");
-			} else if (arg_type == ARG_TYPE_STRING) {
-				fail("Label cannot be a string literal.\n");
-			}
-			l->label = buffer;
-			*c = '\0';
-			buffer = c;
-			buffer++;
-
-			/*printdf("parsed literal label = %s\n", l->label);*/
-			l->line_state |= FLAG(LINE_STATE_LABEL);
-			break;
-		case ';':
-			return;
-		}
-		/*buffer++;	 // Why doesnt this work?*/
-	}
-	if (l->line_state & (FLAG(LINE_STATE_SINGLE_QUOTE) | FLAG(LINE_STATE_DOUBLE_QUOTE))) {
-		fail("Unmatched quote.\n");
-	}
-	if (l->line_state & FLAG(LINE_STATE_BRACKET)) {
-		fail("Unmatched bracket.\n");
-	}
-
-	//syntax_handlers[g_config.syntax]->evaluate_args(l);
-}
-#endif
-
-#if 0
-const struct mnemonic *
-match_instruction(struct line *line, size_t nm, const struct mnemonic **m, const char *prefix)
-{
-	size_t i;
-	const char *match = line->mnemonic;
-	if (prefix != NULL && strstr(match, prefix) == match) {
-		match += strlen(prefix);
-	}
-	if (*match == '\0') {
-		return NULL;
-	}
-
-	for (i = 0; i < nm; i++) {
-		if (!strcmp(m[i]->mnemonic, match) &&
-				(m[i]->compatibility & g_config.arch->value)) {
-			return m[i];
-		}
-	}
-	return NULL;
-}
-#endif
-
-#if 0
-static void
-evaluate_mnemonic(struct context *ctx, struct line *line)
-{
-	char *c;
-	const struct mnemonic *m = NULL;
-
-	if (!line->mnemonic || line->mnemonic[0] == '\0') {
-		return;
-	}
-
-	for (c = line->mnemonic; *c != '\0'; c++) {
-		*c = toupper(*c);
-	}
-
-	m = match_instruction(line, pseudo_opc, pseudo_ops, ".");
-	if (m == NULL) {
-		m = match_instruction(line, g_config.arch->instructionc, g_config.arch->instructions, NULL);
-	}
-	if (m == NULL) {
-		die("INVALID MNEMONIC \"%s\"\n", line->mnemonic);
-	}
-	printf("MATCHED MNEMONIC \"%s\"\n", m->mnemonic);
-	//m->evaluate(ctx, line);
-	//m = match_instruction(line, g_config.arch->instructions) !=
-	/*if ((m = get_pseudo_op(line)) != NULL) {
-		//m->forms[0].callback(line);
-	} else if ((m = get_instruction(line)) != NULL) {
-		printf("FOUND INSTRUCTION %s\n", m->mnemonic);
-		//process_inruction(line);
-	}*/
-}
-#endif
 

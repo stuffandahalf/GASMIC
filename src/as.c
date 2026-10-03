@@ -14,6 +14,7 @@ struct symboltab symtab = {
 };
 struct datatab *datatab;
 
+#if 0
 /*
  * Resolve a label into it's complete representation
  * returns a salloced char *.
@@ -53,6 +54,7 @@ resolve_label(char *symbol)
 
 	return complete_symbol;
 }
+#endif
 
 
 struct symbol *
@@ -65,15 +67,17 @@ add_label(const char *buffer, size_t len)
 		/* relative label, need to resolve */
 		parent = symtab.last_parent;
 		if (!parent) {
+			/* unresolved local label */
 			return NULL;
 		}
 		plen = strlen(parent->label);
 	}
 #ifndef NDEBUG
-	fprintf(stderr, "blen = %zu, plen = %zu\n", len, plen);
+	fprintf(stderr, "len = %zu, plen = %zu\n", len, plen);
 #endif
 	self = malloc(sizeof(struct symbol) + sizeof(char) * (plen + len + 1));
 	if (!self) {
+		/* failed to allocate */
 		return NULL;
 	}
 	self->value = 0;
@@ -86,6 +90,18 @@ add_label(const char *buffer, size_t len)
 #ifndef NDEBUG
 	fprintf(stderr, "LABEL[%d] = \"%.*s\" (resolved[%d] = %.*s)\n", (int)len, (int)len, buffer, (int)(plen + len), (int)(plen + len), self->label);
 #endif
+
+	/* register symbol in symbol table */
+	if (!symtab.first) {
+		symtab.first = self;
+	}
+	if (symtab.last) {
+		symtab.last->next = self;
+	}
+	symtab.last = self;
+	if (!parent) {
+		symtab.last_parent = self;
+	}
 	
 	return self;
 }

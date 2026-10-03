@@ -1,10 +1,10 @@
 	.org 0x100
 
 _start:
-    ;abx
+    abx
     ;adca #$5, "banana"
-	lda ,X++
-	ldb ,--Y
+	;lda ,X++
+	;ldb ,--Y
 
 .str:
     db "Hello World"
